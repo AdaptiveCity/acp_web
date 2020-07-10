@@ -1,0 +1,27 @@
+{% load static %}
+<!doctype html>
+<!-- this 'language' crapola is trying to stop Google Chrome *wrongly* offering to translate the pages -->
+<html lang="en" class="no translate">
+<head>
+    <meta charset="utf-8">
+    <meta name="google" content="notranslate">
+    <meta http-equiv="Content-Language" content="en">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="cdbb">
+
+    <link rel="shortcut icon" type="image/png" href="{% static 'images/favicon.png' %}"/>
+
+    <title>{% block title %}{% endblock %}</title>
+
+    <link rel="stylesheet" href="{% static 'css/cdbb.css' %}">
+    <script src="{% static 'js/cdbb.js' %}"></script>
+
+    {% block head %}{% endblock %}
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    {% block dialogs %}{% endblock %}
+    {% block content %}{% endblock %}
+    {% block lazy_script %}{% endblock %}
+</body>
+</html>

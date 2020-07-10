@@ -1,0 +1,19 @@
+{% extends "cdbb.html" %}
+{% load static %}
+{% block page_title %}CDBB Map Page{% endblock %}
+{% block title %}CDBB Map Page Title{% endblock %}
+
+{% block head %}
+    <!-- Our style -->
+    <link rel="stylesheet" href="{% static 'space/space.css' %}"/>
+
+    <!-- Our script -->
+    <script type="text/javascript">
+        FOOMAP = '{{ foo }}';
+    </script>
+    <script type="text/javascript" src="{% static 'space/space.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+    Map Template Hello World
+{% endblock %}

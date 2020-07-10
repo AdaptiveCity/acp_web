@@ -1,9 +1,8 @@
-# pages/urls.py
+# space/urls.py
 from django.urls import path
 
-from .views import homeView,mapView
+from .views import MapView
 
 urlpatterns = [
-    path('', homeView, name='home'),
-    path('map', mapView, name='map')
+    path('map', MapView.as_view(), name='map')
 ]

@@ -1,0 +1,19 @@
+{% extends "cdbb.html" %}
+{% load static %}
+{% block page_title %}CDBB Home Page{% endblock %}
+{% block title %}CDBB Home Page Title{% endblock %}
+
+{% block head %}
+    <!-- Our style -->
+    <link rel="stylesheet" href="{% static 'home/home.css' %}"/>
+
+    <!-- Our script -->
+    <script type="text/javascript">
+        FOO = '{{ foo }}';
+    </script>
+    <script type="text/javascript" src="{% static 'home/home.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+    Home Template Hello World
+{% endblock %}

@@ -1,11 +1,5 @@
-from django.shortcuts import render
+# space/views.py
+from django.views.generic import TemplateView
 
-# Create your views here.
-# pages/views.py
-from django.http import HttpResponse
-
-def homeView(request):
-    return HttpResponse('Home hello world')
-
-def mapView(request):
-    return HttpResponse('Map Hello, World!')
+class MapView(TemplateView):
+    template_name = 'space/map.html'
