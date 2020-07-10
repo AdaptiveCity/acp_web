@@ -94,10 +94,12 @@ ENV/
 .idea
 .DS_Store
 *.sqlite3
-secrets.py
 staticfiles/
 
 /media
 
 nohup.out
+
+secrets.py
+secrets/
 
