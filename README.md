@@ -10,6 +10,8 @@ ACP Web provides the web access to the ACP Platform, supporting three main capab
 
 This is a django application developed to be used with Python 3. To run the application follow these steps:
 
+Install as user `acp_prod`, using a separate account for `sudo` access where necessary.
+
 ```
 git clone https://github.com/AdaptiveCity/acp_web
 cd acp_web
@@ -39,3 +41,12 @@ Create database, user `acp_prod`
 systemctl status postgresql
 ```
 
+```
+sudo cp ~acp_prod/acp_web/nginx/includes2/acp_web.conf /etc/nginx/includes2/
+sudo nginx -t
+
+```
+
+```
+sudo service nginx restart
+```
