@@ -20,6 +20,8 @@ python3 -m pip install wheel
 python3 -m pip install -r requirements.txt
 ```
 
+Copy `~acp_prod/acp_web/secrets` directory from another server.
+
 ### Configure the database:
 Install and configure postgreSQL database
 ```
