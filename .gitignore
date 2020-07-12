@@ -103,3 +103,6 @@ nohup.out
 secrets.py
 secrets/
 
+*.log
+*.err
+
