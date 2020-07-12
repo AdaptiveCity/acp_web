@@ -1,12 +1,12 @@
 {% extends "cdbb.html" %}
 {% load static %}
-{% block page_title %}CDBB Building{% endblock %}
-{% block title %}CDBB Building Page Title{% endblock %}
+{% block page_title %}CDBB Floorspace{% endblock %}
+{% block title %}CDBB Floorspace Page Title{% endblock %}
 
 {% block head %}
     <!-- Our style sheets -->
     <link rel="stylesheet" href="{% static 'space/css/space.css' %}"/>
-    <link rel="stylesheet" type="text/css" href="{% static 'space/css/floor.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'space/css/floorspace.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'space/css/style.css' %}" />
 
     <!-- Local copy of d3 -->
@@ -19,7 +19,7 @@
     <script type="text/javascript" src="{% static 'space/js/viz_tools.js' %}"></script>
 
     <!-- building.js defines class SpaceBuilding -->
-    <script type='text/javascript' src="{% static 'space/js/floor.js' %}"></script>
+    <script type='text/javascript' src="{% static 'space/js/floorspace.js' %}"></script>
 
     <!-- Page local script -->
     <script type="text/javascript">
@@ -28,12 +28,11 @@
         API_READINGS = '{{ API_READINGS }}';
         API_SPACE = '{{ API_SPACE }}';
         CRATE_ID = '{{ CRATE_ID }}';
-        URL_FLOORSPACE = '{% url "space_floorspace" "crate_id" %}'
     </script>
 {% endblock %}
 
 {% block header_title %}
-Spatial Building and Sensor Data: FLOOR VIEW
+Spatial Building and Sensor Data: FLOORSPACE VIEW
 {% endblock %}
 
 {% block content %}
@@ -41,7 +40,8 @@ Spatial Building and Sensor Data: FLOOR VIEW
     <a href="{% url 'home' %}">Home</a> &gt;
     <a href="{% url 'space_map' %}">Map</a> &gt;
     Building &gt;
-    Floor {{ CRATE_ID }}
+    Floor &gt;
+    Floorspace {{ CRATE_ID }}
 </div>
 <div id="drawing_coords">0,0</div>
 
@@ -50,31 +50,19 @@ Spatial Building and Sensor Data: FLOOR VIEW
     </svg>
 </div>
 
-<div id="legend_and_buttons">
-    <div id="legend_container"></div>
-
-    <div id="button_wrapper">
-        <button type="button" onclick="show_rooms()" id="show_rooms" style="padding-left: 1em;">Sidebar</button>
-    </div>
-    <br>
-
-    <div id="button_wrapper">
-        <button type="button" onclick="hard_reset()" id="reset" style="padding-left: 1em;">Reset</button>
-    </div>
-    <br>
-    <br>
-    <div id="button_wrapper">
-        <button type="button" onclick="change_floor('SF')" id="change"
-            style="padding-left: 1em;">Sample button</button>
-    </div>
-
-
+<!-- TODO:change div ids so that no two would have same id -->
+<div id="bim_info">
+     <h2>BIM information</h2>
+     <div class="content" id="bim_content">
+     </div>
 </div>
-<div id="wrapper">
-    <div class="content" id="table_content">
-        <div id="table_container" class="csvTable"></div>
+
+ <div id="sensor_info">
+     <h2>Sensor information</h2>
+
+     <div class="content" id="sensor_content">
     </div>
-</div>
+ </div>
 
 <!-- TOOLTIP - will be made visible/invisible as mouse moves over sensors -->
 <div id="tooltip" class="tooltip">
@@ -85,7 +73,7 @@ Spatial Building and Sensor Data: FLOOR VIEW
 {% block lazy_script %}
 <script>
 console.log('lazy_script');
-var space_floor = new SpaceFloor();
-space_floor.init();
+var space_floorspace = new SpaceFloorspace();
+space_floorspace.init();
 </script>
 {% endblock %} <!-- lazy_script -->
