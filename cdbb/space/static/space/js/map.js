@@ -4,8 +4,6 @@ class SpaceRenderMap {
 
     constructor() {
         this.map;
-        //DEBUG this needs to change for django
-        this.baseurl='/wgb/building/'
     }
 
     init() {
@@ -119,7 +117,8 @@ class SpaceRenderMap {
     }
 
     building_page(crate_id){
-        window.location = 'building/'+crate_id;
+        // URL_BUILDING is set in the map.html template
+        window.location = URL_BUILDING.replace('crate_id',crate_id);
     }
 
     highlight(e) {
@@ -140,79 +139,6 @@ class SpaceRenderMap {
         });
     }
 
-    // Draw the building on the map
-    draw_wgb_svg(parent) {
-
-        let wgb_a = [52.2105, 0.09133] //[52.210499, 0.091332]
-        let wgb_b = [52.2114, 0.09274] //[52.211359, 0.092735]
-
-        let wgb_url = '/api/space/get/bim/WGB/0'; //API_SPACE + 'get/bim/WGB/0';
-
-        d3.svg(wgb_url, {
-            crossOrigin: "anonymous"
-        }).then(function (xml) {
-
-            var wgb_svg_data = xml.getElementsByTagName("polygon")[0];
-
-            wgb_bounds = [wgb_a, wgb_b];
-            var wgb_svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            wgb_svg.setAttribute('xmlns', "http://www.w3.org/2000/svg");
-            wgb_svg.setAttribute("viewBox", "0 0 600 600");
-            wgb_svg.appendChild(wgb_svg_data);
-            wgb_svg.setAttribute('id', 'wgb_svg')
-            var wgb_bounds = [wgb_a, wgb_b];
-            L.svgOverlay(wgb_svg, wgb_bounds, {
-                interactive: true
-            }).addTo(parent.map);
-
-            d3.selectAll('#WGB').style('fill', 'red').attr('transform', 'scale(0.77), rotate(15), translate(130,-50)');
-
-            d3.selectAll("#ifm,#WGB").style("fill", "red")
-            .on("mouseover", function (d) {
-                d3.select(this).transition().duration(300).style("fill", "yellow")
-            })
-            .on("mouseout", function (d) {
-                d3.select(this).transition().duration(300).style("fill", "red")
-            })
-            .on("click", function (d, i) {
-                window.location = parent.baseurl + this.id; //, '_blank')
-            })
-
-        });
-    }
-
-    // Draw the IfM building on the map
-    draw_ifm(parent) {
-        let ifm_a = [52.209147, 0.086865]
-        let ifm_b = [52.209759, 0.087799]
-        var ifm_svg_data = '<path id="ifm" class="st0" d="M42.4,0.1L0.1,333.6l288.3,36.5l42.2-333.5L42.4,0.1z M221.4,198.1l-107.7-13.6l14.2-112.2L235.6,86	L221.4,198.1z"/></svg>'
-        var svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        svgElement.setAttribute('xmlns', "http://www.w3.org/2000/svg");
-        svgElement.setAttribute("viewBox", "0 0 330.8 370.2");
-        svgElement.innerHTML = ifm_svg_data;
-
-        d3.selectAll('#WGB').style('fill', 'red').attr('transform', 'scale(0.77), rotate(15), translate(130,-50)');
-
-
-        var svgElementBounds = [ifm_a, ifm_b];
-        L.svgOverlay(svgElement, svgElementBounds, {
-            interactive: true
-        }).addTo(parent.map);
-
-        d3.selectAll('#WGB').style('fill', 'red').attr('transform', 'scale(0.77), rotate(15), translate(130,-50)');
-
-        d3.selectAll("#ifm,#WGB").style("fill", "red")
-            .on("mouseover", function (d) {
-                d3.select(this).transition().duration(300).style("fill", "yellow")
-            })
-            .on("mouseout", function (d) {
-                d3.select(this).transition().duration(300).style("fill", "red")
-            })
-            .on("click", function (d, i) {
-                window.open(baseurl + this.id);//, '_blank')
-            })
-    }
-
     findLatLng() {
         this.map.on('click',
             function (e) {
@@ -221,10 +147,6 @@ class SpaceRenderMap {
                 var lng = coord[1].split(')');
                 console.log(lat[1] + "," + lng[0]);
             });
-    }
-
-    addBuilding(){
-        return
     }
 
     draw_site(parent) {
