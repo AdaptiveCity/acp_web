@@ -27,6 +27,7 @@
         API_READINGS = '{{ API_READINGS }}';
         API_SPACE = '{{ API_SPACE }}';
         CRATE_ID = '{{ CRATE_ID }}';
+        URL_FLOOR = '{% url "space_floor" "crate_id" %}'
     </script>
 {% endblock %}
 
@@ -36,11 +37,11 @@ Spatial Building and Sensor Data: BUILDING VIEW
 
 {% block content %}
     <div class="breadcrumb">
-        <a href="{% url 'home' %}">Home</a> &gt; 
+        <a href="{% url 'home' %}">Home</a> &gt;
         <a href="{% url 'space_map' %}">Map</a> &gt;
-        Building {{settings.crate_id}}
-        <div id="drawing_coords">0,0</div>
+        Building {{ CRATE_ID }}
     </div>
+    <div id="drawing_coords">0,0</div>
 
     <div class="drawing_div" id='main_drawing_div'>
         <svg id="drawing_svg">

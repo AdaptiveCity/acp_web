@@ -183,7 +183,7 @@ class SpaceBuilding {
             .attr('class', 'floor')
 			//---on click load floor page---//
 			.on('click', function () {
-				window.location = '/wgb/floor/' + crate_id
+				window.location = URL_FLOOR.replace("crate_id",crate_id);
 			})
 			//---on mouseover make other floors less visible---//
 			.on('mouseover', function () {
