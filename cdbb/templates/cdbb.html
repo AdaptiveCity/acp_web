@@ -23,16 +23,24 @@
     <div id="page_header">
         <div id="header_left"><img src="{% static 'images/cambridge.png' %}"/></div>
         <div id="header_middle">{% block header_title %}{% endblock %}</div>
-    {% if user.is_authenticated %}
-        <div id="header_user">
-            <a href="{% url 'account' %}">
-                <img id="header_user_icon" src="{% static 'images/user_icon.png' %}"/>
-                <div id="header_user_name">{{ user.get_username }}</div>
-            </a>
-        </div>
+        {% if user.is_authenticated %}
+            <div id="header_user">
+                <a href="{% url 'account' %}">
+                    <img id="header_user_icon" src="{% static 'images/user_icon.png' %}"/>
+                    <div id="header_user_name">{{ user.get_username }}</div>
+                </a>
+            </div>
+        {% else %}
+            <div id="header_user">
+                <a href="{% url 'login' %}">
+                    <img id="header_user_icon" src="{% static 'images/user_icon.png' %}"/>
+                    <div id="header_user_name">login</div>
+                </a>
+            </div>
     {% endif %}
         <div id="header_right"><img src="{% static 'images/cdbb.png' %}"></div>
     </div>
+    {% block breadcrumbs %}{% endblock %}
     {% block dialogs %}{% endblock %}
     {% block content %}{% endblock %}
     {% block lazy_script %}{% endblock %}

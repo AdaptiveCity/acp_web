@@ -11,6 +11,19 @@
 Logout
 {% endblock %}
 
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <div class="breadcrumb">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/home_icon.png' %}" />
+        </a>
+    </div>
+    <div class="breadcrumb">
+        &gt; Logged Out
+    </div>
+</div>
+{% endblock %}
+
 {% block content %}
 <div class="center_container">
     <div class="center_item">

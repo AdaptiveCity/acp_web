@@ -11,6 +11,19 @@
 Login
 {% endblock %}
 
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <div class="breadcrumb">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/home_icon.png' %}" />
+        </a>
+    </div>
+    <div class="breadcrumb">
+        &gt; Login
+    </div>
+</div>
+{% endblock %}
+
 {% block content %}
 
   {% if form.errors %}
@@ -28,7 +41,7 @@ Login
 
 <div class="center_container">
     <div class="center_item">
-        <form method="post" action="{% url 'login' %}">
+        <form class="login_form" method="post" action="{% url 'login' %}">
         {% csrf_token %}
         <table>
           <tr>
@@ -40,7 +53,9 @@ Login
             <td>{{ form.password }}</td>
           </tr>
         </table>
-        <input type="submit" value="login" />
+        <div class="login_submit_container">
+            <input type="submit" value="login" />
+        </div>
         <input type="hidden" name="next" value="{{ next }}" />
         </form>
 

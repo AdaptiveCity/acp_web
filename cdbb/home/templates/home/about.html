@@ -15,7 +15,20 @@
 {% endblock %}
 
 {% block header_title %}
-BIM/RT: Background Information
+CDBB/RT: Background Information
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <div class="breadcrumb">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/home_icon.png' %}" />
+        </a>
+    </div>
+    <div class="breadcrumb">
+        &gt; About Us
+    </div>
+</div>
 {% endblock %}
 
 {% block content %}

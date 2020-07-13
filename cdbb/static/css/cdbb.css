@@ -6,7 +6,9 @@ body {
     background-color: lightblue; /* Again just for debug but hey, this is Cambridge */
 }
 
-/* PAGE HEADING CSS */
+/* ***************************************************************** */
+/* PAGE HEADING CSS                                                  */
+/* ***************************************************************** */
 
 #page_header {
     width: 100%;
@@ -43,6 +45,10 @@ body {
     margin-bottom: auto;
 }
 
+#header_user a {
+    text-decoration: none;
+}
+
 #header_user_icon {
     height: 70%;
     vertical-align: middle;
@@ -63,6 +69,27 @@ body {
 
 #header_right img {
     height: 100%;
+}
+
+/* ***************************************************************** */
+/* Breadcrumbs                                                       */
+/* ***************************************************************** */
+
+.breadcrumbs {
+    height: 35px;
+}
+
+.breadcrumb {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.breadcrumb img {
+    height: 30px;
+}
+
+.breadcrumb a {
+    text-decoration: none;
 }
 
 /* ***************************************************************** */
