@@ -1,0 +1,45 @@
+{% extends "cdbb.html" %}
+{% load static %}
+{% block page_title %}CDBB Account{% endblock %}
+{% block title %}CDBB Account{% endblock %}
+
+{% block head %}
+    <!-- Our style -->
+    <link rel="stylesheet" href="{% static 'home/css/home.css' %}"/>
+
+    <!-- Our script -->
+    <script type="text/javascript">
+        FOO = '{{ foo }}';
+    </script>
+    <script type="text/javascript" src="{% static 'home/js/home.js' %}"></script>
+{% endblock %}
+
+{% block header_title %}
+User Account
+{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+    <div class="account_info">
+        <div class="account_info_heading">
+            Your account information on this system:
+        </div>
+        <div class="account_field" id="account_username">Userid: {{ user.get_username }}</div>
+        <div class="account_field" id="account_fullname">Name: {{ user.get_full_name }}</div>
+        <div class="account_field" id="account_email">Email: {{ user.get_email }}</div>
+        <div class="account_field" id="account_date_joined">Date joined: {{ user.get_date_joined }}</div>
+    </div>
+    <div class="account_actions">
+        <div class="account_action"><a href="{% url 'logout' %}">Logout</a></div>
+    <div>
+{% else %}
+    <div>
+        <p>You are not logged in.</p>
+        <div class="account_actions">
+            <div class="account_action"><a href="{% url 'login' %}">Login</a></div>
+            <div class="account_action">Homepage</div>
+        <div>
+    </div>
+{% endif %}
+
+{% endblock %}

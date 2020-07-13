@@ -1,5 +1,6 @@
 # space/views.py
 from django.views.generic import TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.conf import settings
 
 class MapView(TemplateView):
@@ -13,7 +14,7 @@ class MapView(TemplateView):
             context['API_SENSORS'] = settings.API_SENSORS
             return context
 
-class BuildingView(TemplateView):
+class BuildingView(LoginRequiredMixin, TemplateView):
     # Template "acp_web/cdbb/space/templates/space/building.html"
     template_name = 'space/building.html'
 
@@ -27,7 +28,7 @@ class BuildingView(TemplateView):
             context['CRATE_ID'] = self.kwargs['crate_id']
             return context
 
-class FloorView(TemplateView):
+class FloorView(LoginRequiredMixin, TemplateView):
     # Template from "acp_web/cdbb/space/templates/space/"
     template_name = 'space/floor.html'
 
@@ -41,7 +42,7 @@ class FloorView(TemplateView):
             context['CRATE_ID'] = self.kwargs['crate_id']
             return context
 
-class FloorspaceView(TemplateView):
+class FloorspaceView(LoginRequiredMixin, TemplateView):
     # Template from "acp_web/cdbb/space/templates/space/"
     template_name = 'space/floorspace.html'
 

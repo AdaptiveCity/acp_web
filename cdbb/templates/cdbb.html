@@ -21,11 +21,14 @@
 </head>
 <body>
     <div id="page_header">
-        <div id="header_left"><img src="{% static 'images/cambridge.png' %}"></div>
+        <div id="header_left"><img src="{% static 'images/cambridge.png' %}"/></div>
         <div id="header_middle">{% block header_title %}{% endblock %}</div>
     {% if user.is_authenticated %}
         <div id="header_user">
-          User: {{ user.get_username }}
+            <a href="{% url 'account' %}">
+                <img id="header_user_icon" src="{% static 'images/user_icon.png' %}"/>
+                <div id="header_user_name">{{ user.get_username }}</div>
+            </a>
         </div>
     {% endif %}
         <div id="header_right"><img src="{% static 'images/cdbb.png' %}"></div>
