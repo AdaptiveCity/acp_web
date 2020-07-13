@@ -42,7 +42,9 @@ body {
     height: 100%;
 }
 
-/* CARD CSS (i.e. the stylish rectangular illustrated page links )*/
+/* ***************************************************************** */
+/* CARD CSS (i.e. the stylish rectangular illustrated page links )   */
+/* ***************************************************************** */
 
 .card {
     box-shadow: 3px 3px #808080;
@@ -82,4 +84,16 @@ body {
 .card_text_content {
     margin: 5px;
     vertical-align: middle;
+}
+
+/* ***************************************************************** */
+/* Generally useful CSS classes                                      */
+/* ***************************************************************** */
+
+.center_container {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    height: 60%;
+    width: 100%;
 }

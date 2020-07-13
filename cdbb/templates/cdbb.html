@@ -23,6 +23,11 @@
     <div id="page_header">
         <div id="header_left"><img src="{% static 'images/cambridge.png' %}"></div>
         <div id="header_middle">{% block header_title %}{% endblock %}</div>
+    {% if user.is_authenticated %}
+        <div id="header_user">
+          User: {{ user.get_username }}
+        </div>
+    {% endif %}
         <div id="header_right"><img src="{% static 'images/cdbb.png' %}"></div>
     </div>
     {% block dialogs %}{% endblock %}

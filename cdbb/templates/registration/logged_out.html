@@ -1,0 +1,21 @@
+{% extends "cdbb.html" %}
+{% load static %}
+{% block page_title %}CDBB Logout{% endblock %}
+{% block title %}CDBB Logout{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" href="{% static 'css/registration.css' %}">
+{% endblock %}
+
+{% block header_title %}
+Logout
+{% endblock %}
+
+{% block content %}
+<div class="center_container">
+    <div class="center_item">
+        <p>Logged out!</p>
+        <a href="{% url 'login'%}">Click here to login again.</a>
+    </div>
+</div>
+{% endblock %}
