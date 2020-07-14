@@ -8,6 +8,11 @@ class HomeView(TemplateView):
 class AboutView(TemplateView):
     template_name = 'home/about.html'
 
+class ResearchView(TemplateView):
+    template_name = 'home/research.html'
+
+class TimeView(TemplateView):
+    template_name = 'home/time.html'
+
 class AccountView(LoginRequiredMixin, TemplateView):
     template_name = 'home/account.html'
-    
