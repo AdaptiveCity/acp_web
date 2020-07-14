@@ -158,7 +158,7 @@ class VizTools {
                     .duration(200)
                     .style("opacity", .9);
 
-                let readings_url = API_READINGS + 'get/' + sensor_id;
+                let readings_url = API_READINGS + 'get/' + sensor_id +'/';
                 console.log('circle mouseover fetching', readings_url)
 
                 d3.json(readings_url, {

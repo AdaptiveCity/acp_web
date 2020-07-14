@@ -96,6 +96,11 @@ body {
 /* CARD CSS (i.e. the stylish rectangular illustrated page links )   */
 /* ***************************************************************** */
 
+.card_link {
+    text-decoration: none;
+    color: black;
+}
+
 .card {
     box-shadow: 3px 3px #808080;
     display: inline-block;
@@ -104,6 +109,7 @@ body {
     background-color: #f0f0f0;
     border-radius: 5px;
     margin: 10px;
+    vertical-align: top;
 }
 
 .card:hover {

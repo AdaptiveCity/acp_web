@@ -1,7 +1,7 @@
 {% extends "cdbb.html" %}
 {% load static %}
 {% block page_title %}CDBB Home Page{% endblock %}
-{% block title %}CDBB Home Page Title{% endblock %}
+{% block title %}CDBB Home{% endblock %}
 
 {% block head %}
     <!-- Our style -->
@@ -21,35 +21,53 @@ CDBB/RT: Real-time Building Information Platform
 {% block content %}
 
 <div class="card">
-    <div class="card_title">
-        About
-    </div>
-    <div class="card_image">
-        <a href="about">
-            <img src="{% static 'home/images/about.jpg' %}"/>
-        </a>
-    </div>
-    <div class="card_text">
-        <div class="card_text_content">
-            About  the team, and the work we're doing.
+        <div class="card_title">
+            About Us
         </div>
-    </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'about' %}">
+                <img src="{% static 'home/images/about.jpg' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                The motley crew.
+            </div>
+        </div>
 </div>
 
 <div class="card">
-    <div class="card_title">
-        Space
-    </div>
-    <div class="card_image">
-        <a href="space/map">
-            <img src="{% static 'space/images/space.png' %}"/>
-        </a>
-    </div>
-    <div class="card_text">
-        <div class="card_text_content">
-            Navigate a 'space' view of the building and sensor
-            data.
+        <div class="card_title">
+            Research
         </div>
-    </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'about' %}">
+                <img src="{% static 'home/images/research.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                This describes the research we do for the Smart Building of
+                the future, from construction through to long-term occupancy.
+            </div>
+        </div>
 </div>
+
+<div class="card">
+        <div class="card_title">
+            Space
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'space_map' %}">
+                <img src="{% static 'space/images/space.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                Navigate a 'space' view of the building and sensor
+                data.
+            </div>
+        </div>
+</div>
+
 {% endblock %}
