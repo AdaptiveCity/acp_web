@@ -12,7 +12,7 @@ class SpaceRenderMap {
 
     initMap(results) {
 
-        var stamenToner = L.tileLayer('http://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}.png', {
+        var stamenToner = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}.png', {
             attribution: 'Map tiles by Stamen Design, CC BY 3.0 - Map data © OpenStreetMap',
             subdomains: 'abcd',
             minZoom: 0,
@@ -63,7 +63,7 @@ class SpaceRenderMap {
 
         //this.draw_wgb(this);
 
-        //#DEBUG map_visualisation.js we want to get all the 'building' objects and iterate
+        //DEBUG map_visualisation.js we want to get all the 'building' objects and iterate
         this.get_bim_crate('WGB');
 
         this.get_bim_crate('lockdown_lab');
@@ -81,11 +81,13 @@ class SpaceRenderMap {
 
         request.addEventListener("load", function () {
             var crates = JSON.parse(request.responseText)
-            console.log("get_bim_crate returned:",crates);
+            console.log("get_bim_crate() returned:",crates);
             // Note the BIM api returns a list
             self.handle_bim_crate(self, crates[0]);
         });
-        request.open("GET", API_BIM+"get_gps/"+crate_id+"/0");
+        let api_url = API_BIM+"get_gps/"+crate_id+"/0/";
+        console.log("get_bim_crate() requesting "+api_url);
+        request.open("GET", api_url);
         request.send();
     }
 

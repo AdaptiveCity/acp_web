@@ -82,7 +82,9 @@ class SpaceFloorspace {
             // Note the BIM api returns a list
             parent.handle_floorspace_crate(parent, crate_obj[0]);
         });
-        request.open("GET", API_BIM + "get_xyz/" + CRATE_ID + "/0");
+        let api_url = API_BIM + "get_xyz/" + CRATE_ID + "/0/";
+        console.log("floorspace.js get_floorspace_crate() requesting "+api_url);
+        request.open("GET", api_url);
         request.send();
     }
 
@@ -107,9 +109,9 @@ class SpaceFloorspace {
     get_floor_svg(parent) {
 
         var space_api_url = API_SPACE + 'get_floor_number/' +
-            parent.floor_coordinate_system + '/' + parent.floor_number;
+            parent.floor_coordinate_system + '/' + parent.floor_number + '/';
 
-        console.log('get_floor_svg()', space_api_url);
+        console.log('get_floor_svg() requesting', space_api_url);
 
         var request = new XMLHttpRequest();
         request.overrideMimeType('application/xml');
@@ -267,7 +269,7 @@ class SpaceFloorspace {
         //   floor_coordinate_system
         //   floor_number
         // call /api/sensors/get_floor_number/<coordinate_system>/<floor_number>/
-        var sensors_api_url = API_SENSORS + 'get_bim/' + CRATE_ID
+        var sensors_api_url = API_SENSORS + 'get_bim/' + CRATE_ID + '/';
 
         console.log("get_sensors_metadata() ", sensors_api_url);
         request.open("GET", sensors_api_url);

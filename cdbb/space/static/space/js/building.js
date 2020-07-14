@@ -61,7 +61,7 @@ class SpaceBuilding {
         request.addEventListener("load", function () {
             parent.handle_building_space_data(parent, request.responseXML); // alternatively request.responseText
         });
-        var space_api_url = API_SPACE+"get/bim/"+crate_id+"/1";
+        var space_api_url = API_SPACE+"get/bim/"+crate_id+"/1/";
         console.log("get_building_space_data() http request: "+space_api_url)
         request.open("GET", space_api_url);
         request.send();

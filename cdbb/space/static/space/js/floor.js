@@ -83,7 +83,7 @@ class SpaceFloor {
             // Note the BIM api returns a list
             parent.handle_floor_crate(parent, crate_obj[0]);
         });
-        request.open("GET", API_BIM + "get/" + CRATE_ID + "/0");
+        request.open("GET", API_BIM + "get/" + CRATE_ID + "/0/");
         request.send();
     }
 
@@ -104,7 +104,7 @@ class SpaceFloor {
     get_floor_svg(parent) {
 
         var space_api_url = API_SPACE + 'get_floor_number/' +
-            parent.floor_coordinate_system + '/' + parent.floor_number;
+            parent.floor_coordinate_system + '/' + parent.floor_number + '/';
 
         console.log('get_floor_svg()', space_api_url);
 
@@ -274,7 +274,7 @@ async function fetch_sensors_counts(crate_id) {
         //   floor_number
         // call /api/sensors/get_floor_number/<coordinate_system>/<floor_number>/
         var sensors_api_url = API_SENSORS + "get_floor_number/" +
-            parent.floor_coordinate_system + "/" + parent.floor_number;
+            parent.floor_coordinate_system + "/" + parent.floor_number + '/';
 
         console.log("get_sensors_metadata() ", sensors_api_url);
         request.open("GET", sensors_api_url);
