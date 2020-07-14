@@ -30,17 +30,57 @@ Install and configure postgreSQL database
 sudo apt install postgresql postgresql-contrib postgis
 ```
 
-See
-```
-https://www.digitalocean.com/community/tutorials/how-to-use-postgresql-with-your-django-application-on-ubuntu-14-04
-```
-
-Create database, user `acp_prod`
-
+Check the PostgreSQL database is running:
 ```
 systemctl status postgresql
 ```
 
+See [this guide to setting up PostgreSQL for Django](https://www.digitalocean.com/community/tutorials/how-to-use-postgresql-with-your-django-application-on-ubuntu-14-04)
+
+Change to postgres user (created by the postgres install):
+```
+sudo su - postgres
+```
+Start the `psql` console:
+```
+psql
+```
+At the `psql` prompt, create database, user `acp_prod`
+```
+CREATE DATABASE acp_prod;
+```
+Create user `acp_prod` and permit to use database:
+```
+CREATE USER acp_prod WITH PASSWORD '<password>';
+```
+In the `acp_web/secrets/cdbb_settings.py` file ensure the DATABASES postgresql section
+includes your chosen password:
+```
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'acp_prod',
+        'USER': 'acp_prod',
+        'PASSWORD': '<password>',
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
+    }
+}
+```
+Set up postgresql settings & permission the `acp_prod` user:
+```
+ALTER ROLE acp_prod SET client_encoding TO 'utf8';
+ALTER ROLE acp_prod SET default_transaction_isolation TO 'read committed';
+ALTER ROLE acp_prod SET timezone TO 'Europe/London';
+GRANT ALL PRIVILEGES ON DATABASE acp_prod TO acp_prod;
+```
+As the `acp_prod` user you can now test PostgreSQL access with:
+```
+psql
+```
+(Ctrl-D to quit)
+
+Now as a sudo user:
 ```
 sudo cp ~acp_prod/acp_web/nginx/includes2/acp_web.conf /etc/nginx/includes2/
 sudo nginx -t
@@ -49,4 +89,21 @@ sudo nginx -t
 
 ```
 sudo service nginx restart
+```
+As `acp_prod` user:
+```
+cd ~acp_prod/acp_web/cdbb
+source ../venv/bin/activate
+python3 manage.py makemigrations
+```
+This last command will typically say (at this stage) 'No changes detected'.
+Now do the migrations that setup the initial tables:
+```
+python3 manage.py migrate
+```
+Create a superuser (you can use your own id, rather than 'acp_prod'). The password is
+safely stored salted and hashed. Other superusers can easily be added if required later via
+the simple Django `/admin/` web interface.
+```
+python3 manage.py createsuperuser
 ```
