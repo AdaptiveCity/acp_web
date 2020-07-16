@@ -3,6 +3,7 @@
 
 body {
     font-style: italic; /* This was initially just for style debug, but actually I quite like the retro vibe */
+    font-family: serif;
     background-color: lightblue; /* Again just for debug but hey, this is Cambridge */
 }
 
@@ -27,7 +28,6 @@ body {
 }
 
 #header_middle {
-    /* background-color: pink; */
     font-size: 32px;
     text-align: center;
     display: inline-block;
@@ -89,6 +89,7 @@ body {
 }
 
 .breadcrumb a {
+    color: inherit;
     text-decoration: none;
 }
 

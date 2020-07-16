@@ -35,14 +35,29 @@
 Spatial Building and Sensor Data: FLOORSPACE VIEW
 {% endblock %}
 
-{% block content %}
-<div class="breadcrumb">
-    <a href="{% url 'home' %}">Home</a> &gt;
-    <a href="{% url 'space_map' %}">Map</a> &gt;
-    Building &gt;
-    Floor &gt;
-    Floorspace {{ CRATE_ID }}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <div class="breadcrumb">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/home_icon.png' %}" />
+        </a>
+    </div>
+    <div class="breadcrumb">
+        &gt; <a href="{% url 'space_map' %}">Map</a>
+    </div>
+    <div class="breadcrumb">
+        &gt; Building
+    </div>
+    <div class="breadcrumb">
+        &gt; Floor
+    </div>
+    <div class="breadcrumb">
+        &gt; Floorspace {{ CRATE_ID }}
+    </div>
 </div>
+{% endblock %}
+
+{% block content %}
 <div id="drawing_coords">0,0</div>
 
 <div class="drawing_div" id="main_drawing_div">
@@ -72,8 +87,8 @@ Spatial Building and Sensor Data: FLOORSPACE VIEW
 <!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
 {% block lazy_script %}
 <script>
-console.log('lazy_script');
-var space_floorspace = new SpaceFloorspace();
-space_floorspace.init();
+    console.log('lazy_script');
+    var space_floorspace = new SpaceFloorspace();
+    space_floorspace.init();
 </script>
 {% endblock %} <!-- lazy_script -->

@@ -35,12 +35,23 @@
 Spatial Building and Sensor Data: BUILDING VIEW
 {% endblock %}
 
-{% block content %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
     <div class="breadcrumb">
-        <a href="{% url 'home' %}">Home</a> &gt;
-        <a href="{% url 'space_map' %}">Map</a> &gt;
-        Building {{ CRATE_ID }}
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/home_icon.png' %}" />
+        </a>
     </div>
+    <div class="breadcrumb">
+        &gt; <a href="{% url 'space_map' %}">Map</a>
+    </div>
+    <div class="breadcrumb">
+        &gt; Building {{ CRATE_ID }}
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
     <div id="drawing_coords">0,0</div>
 
     <div class="drawing_div" id='main_drawing_div'>
