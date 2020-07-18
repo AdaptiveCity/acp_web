@@ -1,17 +1,16 @@
 {% extends "cdbb.html" %}
 {% load static %}
-{% block title %}CDBB Sensor Chart{% endblock %}
+{% block title %}CDBB Sensor Select{% endblock %}
 
 {% block head %}
     <!-- Our style sheets -->
-    <link rel="stylesheet" type="text/css" href="{% static 'sensor/css/chart.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'sensor/css/select.css' %}" />
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 
     <!-- chart.js defines class SensorChart-->
-    <script type='text/javascript' src="{% static 'sensor/js/time_chart.js' %}"></script>
+    <script type='text/javascript' src="{% static 'sensor/js/select.js' %}"></script>
 
     <!-- Page local script -->
     <script type="text/javascript">
@@ -19,13 +18,11 @@
         var API_SENSORS = '{{ API_SENSORS }}';
         var API_READINGS = '{{ API_READINGS }}';
         var API_SPACE = '{{ API_SPACE }}';
-        var ACP_ID = '{{ ACP_ID }}';
-        var SENSOR_REALTIME = '{{ SENSOR_REALTIME }}';
     </script>
 {% endblock %}
 
 {% block header_title %}
-Sensor data TIME chart
+Select Sensor
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -36,7 +33,7 @@ Sensor data TIME chart
         </a>
     </div>
     <div class="breadcrumb">
-         &gt; Chart {{ ACP_ID }}
+         &gt; Select Sensor
     </div>
 </div>
 {% endblock %}
@@ -52,6 +49,25 @@ Sensor data TIME chart
         </div>
     </div>
     <div class="selection_input">
+        <div class="input_label">Source:</div>
+        <div class="input_box">
+            <select id="source" name="source" onchange="getSensor()">
+                <option>Select source</option>
+                <option>mqtt_acp</option>
+                <option>mqtt_ttn</option>
+                <option>mqtt_csn</option>
+            </select>
+        </div>
+    </div>
+    <div class="selection_input">
+        <div class="input_label">Sensor:</div>
+        <div class="input_box">
+            <select id="sensor" name="sensor" onchange="getFeature()">
+                <option value="">Select sensor</option>
+            </select>
+        </div>
+    </div>
+    <div class="selection_input">
         <div class="input_label">Feature:</div>
         <div class="input_box">
             <select id="feature" name="feature">
@@ -59,17 +75,10 @@ Sensor data TIME chart
             </select>
         </div>
     </div>
-    <button id="updateButton" onclick="chart_init()">Update</button>
+    <button id="updateButton" onclick="chart_init()">Show sensor</button>
 </form>
 
 </div> <!-- end selection_wrapper -->
-
-<div class="chart_wrapper">
-  <div id="loading">
-    <img src="{% static 'sensor/images/loader.gif' %}"></img>
-  </div>
-  <canvas id="chart_canvas"></canvas>
-</div><!-- end chart_wrapper -->
 
 {% endblock %} <!-- end content -->
 
@@ -79,6 +88,6 @@ Sensor data TIME chart
     console.log('lazy_script');
     //var space_floor = new SpaceFloor();
     //space_floor.init();
-    chart_init();
+    select_init();
 </script>
 {% endblock %} <!-- lazy_script -->
