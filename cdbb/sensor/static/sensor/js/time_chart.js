@@ -5,12 +5,6 @@
 //***********  LOAD VARS FROM SERVER    ******************************************
 //********************************************************************************
 
-var YYYY = '2020'; //{{config_yyyy}}; // Year e.g. 2016
-var MM = '07'; //{{config_MM}};     // Month e.g. 07 = July
-var DD = '17'; //{{config_dd}};     // day e.g. 23
-
-var YYYYMMDD = YYYY+'/'+MM+'/'+DD; //'{{config_yyyy}}/{{config_MM}}/{{config_dd}}';
-
 var feed_id = 'mqtt_acp'; //''{{config_feed_id}}';
 
 var plot_date; // date of currently displayed plot (initialized from YYYY/MM/DD)
@@ -45,52 +39,55 @@ var CHART_Y_MAX = 40; // FIX limit of Y axis
 var feature_label = "Temperature (celcius)"; //DEBUG get from metadata
 
 var loading_el; // loading element animated gif
-var readings_date = new Date().toISOString().split('T')[0];
 var readings_source = "mqtt_acp";
 var readings_feature = "temperature";
 var today = new Date().toISOString().split('T')[0];
 
 // Called on page load
 function init() {
+    if (YYYY=='') {
+        plot_date = new Date().toISOString().split('T')[0];
+    }
+    else {
+        plot_date = YYYY+'-'+MM+'-'+DD;
+    }
+
+    // set up onclick calls for day/week forwards/back buttons
+    document.getElementById("back_1_week").onclick = function () { date_shift(-7) };
+    document.getElementById("back_1_day").onclick = function () { date_shift(-1) };
+    document.getElementById("forward_1_week").onclick = function () { date_shift(7) };
+    document.getElementById("forward_1_day").onclick = function () { date_shift(1) };
+
     loading_el = document.getElementById('loading');
 
-   var form_date = document.getElementById("form_date");
+    var form_date = document.getElementById("form_date");
 
-   form_date.setAttribute('value', readings_date);
+    form_date.setAttribute('value', plot_date);
 
-   var updateButton = document.getElementById('updateButton');
-   updateButton.addEventListener("click", function(){
-     myNewChart.destroy();
-   });
+    var updateButton = document.getElementById('updateButton');
+    updateButton.addEventListener("click", function(){
+        myNewChart.destroy();
+    });
 
-   document.getElementById("feature").value = readings_feature;
+    // test if YYYY/MM/DD is TODAY'S DATE
+    //if (today.getFullYear()==YYYY && today.getMonth()==(MM-1) && today.getDate()==DD)
+    //{
+    //  console.log('plotting today - reloading in 6 minutes');
+    //  setTimeout( function () { location.reload(); }, 6 * 60 * 1000 );
+    //}
 
-   plot_date = new Date(YYYY,MM-1,DD); // as loaded in page template config_ values;
+    // set up layout / axes of scatterplot
+    init_chart();
 
-   var today = new Date();
-
-   // test if YYYY/MM/DD is TODAY'S DATE
-   if (today.getFullYear()==YYYY && today.getMonth()==(MM-1) && today.getDate()==DD)
-   {
-     console.log('plotting today - reloading in 6 minutes');
-     setTimeout( function () { location.reload(); }, 6 * 60 * 1000 );
-   }
-
-   // set up layout / axes of scatterplot
-   init_chart();
-
-   get_readings();
+    get_readings();
 
 }
 
-
 // Use API_READINGS to retrieve requested sensor readings
 function get_readings() {
-    var readings_url = API_READINGS + 'historicaldata/'
-                        + '?sensor=' + ACP_ID
-                        + '&date=' + readings_date
-                        + '&source=' + readings_source
-                        + '&feature=' + readings_feature;
+    var readings_url = API_READINGS + 'get_day/' + ACP_ID + '/' +
+                      '?date=' + plot_date +
+                      '&metadata=true';
 
     console.log("using readings URL: "+readings_url);
 
@@ -102,13 +99,37 @@ function get_readings() {
     }).done(handle_readings);
   }
 
+// API http call has returned these results { readings: ..., sensor_metadata: ...}
 function handle_readings(results) {
+    console.log('handle_readings()', results);
 
-    console.log('handle_readings()');
+    var readings = results["readings"];
+
+    var sensor_metadata = results["sensor_metadata"];
 
     loading_el.className = 'loading_hide'; // set style "display: none"
 
-    draw_chart(results["data"]);
+    update_select_area(sensor_metadata);
+
+    draw_chart(readings, sensor_metadata);
+}
+
+// Populate the 'select' area at the top of the page using info from
+// the sensor metadata, e.g. the list of 'features'.
+function update_select_area(sensor_metadata) {
+    var feature_select = document.getElementById("form_feature");
+    var features = sensor_metadata["acp_type_info"]["features"];;
+    for (const feature in features) {
+        console.log("feature: "+feature);
+        const option = document.createElement('option');
+        const text = document.createTextNode(features[feature]["short_name"]);
+        // set option text
+        option.appendChild(text);
+        // and option value
+        option.setAttribute('value',feature);
+        // add the option to the select box
+        feature_select.appendChild(option);
+    }
 }
 
 // Subscribe to RTMonitor to receive incremental data points and update chart
@@ -205,11 +226,11 @@ function init_chart()
     chart_yAxis = d3.axisLeft().scale(chart_yScale).ticks(10);
 
     // setup chart functions where d = the zone transit record
-    chart_xValue = function(d) { return make_date(d.ts);}; // data -> value
+    chart_xValue = function(d) { return make_date(d.acp_ts);}; // data -> value
     chart_xMap = function(d) { return chart_xScale(chart_xValue(d));}; // data -> display
 
     //DEBUG the location of the charted y value should be in metadata
-    chart_yValue = function(d) { return d.val;}, // data -> value
+    chart_yValue = function(d) { return d.payload_cooked.temperature; }, // data -> value
     chart_yMap = function(d) { return chart_yScale(Math.min(chart_yValue(d), CHART_Y_MAX));}; // data -> display
 
     // setup fill color
@@ -274,9 +295,9 @@ function init_chart()
 }
 
 // ****************************************************************************
-// *********  Update the chart with transit data        ***********************
+// *********  Update the chart with sensor readings data **********************
 // ****************************************************************************
-function draw_chart(readings)
+function draw_chart(readings, sensor_metadata)
 {
     console.log('Drawing chart size='+readings.length, readings);
 
@@ -336,8 +357,9 @@ function draw_chart(readings)
                    .style("opacity", 0);
           });
 
+      // *******************************
       // add text for latest datapoint
-
+      // *******************************
       var p = readings[readings.length - 1];
 
       chart_svg.append("svg:rect")
@@ -349,7 +371,7 @@ function draw_chart(readings)
           .attr('ry', 6)
           .style('fill', 'white')
 
-      var p_time = make_date(p.ts);
+      var p_time = make_date(p.acp_ts);
       var p_time_str = ' @ '+('0'+p_time.getHours()).slice(-2)+':'+('0'+p_time.getMinutes()).slice(-2);
       chart_svg.append("svg:text")
           .attr('x', chart_xMap(p))
@@ -358,27 +380,27 @@ function draw_chart(readings)
           .style('font-size', '22px')
           .style('fill', '#333')
           //DEBUG property name for chart should be in config metadata
-          .text(p.val + p_time_str);
+          .text(p.payload_cooked.temperature + p_time_str);
 
 } // end draw_chart
 
  // Create a plot TOOLTIP our of the point data
 //debug write this tooltip_html() for acp_web
-function tooltip_html(d)
+function tooltip_html(p)
 {
     var str = 'DEBUG';
     //DEBUG this property should be configurable
-    if (d.val) {
-      str += '<br/>Val:'+d.val.toFixed(1);
+    if (p.payload_cooked.temperature) {
+      str += '<br/>Temperature:'+p.payload_cooked.temperature.toFixed(1);
     }
-    str += '<br/>Time:' + make_date(d.ts);
-    if (d.journey) //debug get tooltip value from data
+    str += '<br/>Time:' + make_date(p.acp_ts);
+    if (p.journey) //debug get tooltip value from data
     {
         str += '<br/>'+JSON.stringify(d.journey).replace(/,/g,', ');
     }
-    if (d.route_id)
+    if (p.route_id)
     {
-        str += '<br/>Route: '+d.route_id; // only if from GTFS feedhandler
+        str += '<br/>Route: '+p.route_id; // only if from GTFS feedhandler
     }
     return str;
 }
@@ -392,25 +414,27 @@ function date_shift(n)
 {
     console.log('date_shift()');
 
-    new_date = new Date(YYYY,MM-1,DD); // as loaded in page template config_ values;
+    let new_date = new Date(YYYY,MM-1,DD); // as loaded in page template config_ values;
 
     new_date.setDate(new_date.getDate()+n);
 
-    new_year = new_date.getFullYear();
-    new_month = ("0" + (new_date.getMonth()+1)).slice(-2);
-    new_day = ("0" + new_date.getDate()).slice(-2);
+    let new_year = new_date.getFullYear();
+    let new_month = ("0" + (new_date.getMonth()+1)).slice(-2);
+    let new_day = ("0" + new_date.getDate()).slice(-2);
 
     console.log(new_year+'-'+new_month+'-'+new_day);
-    window.location.href = '?date='+new_year+'-'+new_month+'-'+new_day;
+    window.location.href = '?date='+new_year+'-'+new_month+'-'+new_day+'&metadata=true';
 }
 
 // Return a javascript Date, given EITHER a UTC timestamp or a ISO 8601 datetime string
 function make_date(ts)
 {
     var t;
-    if (isFinite(ts))
+
+    var ts_float = parseFloat(ts);
+    if (!Number.isNaN(ts))
     {
-        t = new Date(ts*1000);
+        t = new Date(ts_float*1000);
     }
     else
     {
