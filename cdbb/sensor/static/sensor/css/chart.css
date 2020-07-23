@@ -69,10 +69,6 @@ input[type=date], select {
     height: 60%;
 }
 
-#myChart {
-    display: inline-block;
-}
-
 .loading_show {
     display: block;
 }
@@ -104,8 +100,8 @@ input[type=date], select {
 }
 
 #chart {
-    width: 95vw;
-    height: calc(100vh - 250px);
+    width: 97vw;
+    height: calc(100vh - 200px);
     margin: 5px 5px 5px 10px;
 }
 

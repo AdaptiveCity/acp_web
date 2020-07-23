@@ -40,6 +40,9 @@ var CHART_END_TIME = 24;  // end chart at midnight
 
 var CHART_DOT_RADIUS = 6; // size of dots on scatterplot
 
+var readings; // holds readings returned by API call
+var sensor_metadata; // holds sensor metadata returned by API call
+
 // from sensor_metadata
 var feature_id;          // temperature
 var feature_short_name;  // temp
@@ -79,18 +82,6 @@ function init() {
 
     form_date.setAttribute('value', plot_date);
 
-    //var updateButton = document.getElementById('updateButton');
-    //updateButton.addEventListener("click", function(){
-    //    myNewChart.destroy();
-    //});
-
-    // test if YYYY/MM/DD is TODAY'S DATE
-    //if (today.getFullYear()==YYYY && today.getMonth()==(MM-1) && today.getDate()==DD)
-    //{
-    //  console.log('plotting today - reloading in 6 minutes');
-    //  setTimeout( function () { location.reload(); }, 6 * 60 * 1000 );
-    //}
-
     init_reading_popup();
 
     // set up layout / axes of scatterplot
@@ -120,18 +111,18 @@ function get_readings() {
 function handle_readings(results) {
     console.log('handle_readings()', results);
 
-    var readings = results["readings"];
+    readings = results["readings"];
 
-    var sensor_metadata = results["sensor_metadata"];
+    sensor_metadata = results["sensor_metadata"];
 
     loading_el.className = 'loading_hide'; // set style "display: none"
 
     handle_sensor_metadata(sensor_metadata);
 
     // Setup onchange callbacks to update chart on feature or date changes
-    init_select_changes();
+    init_feature_select();
 
-    draw_chart(readings, sensor_metadata);
+    draw_chart();
 }
 
 // Populate the 'select' area at the top of the page using info from
@@ -186,12 +177,23 @@ function handle_sensor_metadata(sensor_metadata) {
     }
 }
 
-function init_select_changes() {
+function init_feature_select() {
     console.log("init_select_changes()");
     feature_select_el.value = feature_id;
-
+    feature_select_el.onchange = onchange_feature_select;
 }
 
+function onchange_feature_select() {
+    console.log("onchange_feature_select",window.location.href);
+    var features = sensor_metadata["acp_type_info"]["features"];
+    feature_id = feature_select_el.value;
+    feature_short_name = features[feature_id]['short_name'];
+    feature_long_name = features[feature_id]['long_name'];
+    feature_jsonpath = features[feature_id]['jsonpath'];
+    feature_range = features[feature_id]['range'];
+    update_url(feature_id,plot_date);
+    draw_chart();
+}
 // Subscribe to RTMonitor to receive incremental data points and update chart
 function plot_realtime() {
     var client_data = {};
@@ -243,7 +245,8 @@ function plot_realtime() {
         tempData.datasets[0].data.shift();
         var now = new Date();
         tempData.labels.push(now.getHours());
-        myNewChart.update();
+        //DEBUG this var not used in this version of chart page
+        //myNewChart.update();
       }
     };
 }
@@ -282,12 +285,15 @@ function init_chart()
 // ****************************************************************************
 // *********  Update the chart with sensor readings data **********************
 // ****************************************************************************
-function draw_chart(readings, sensor_metadata)
+function draw_chart()
 {
     console.log('Drawing chart size='+readings.length, readings);
 
     // do nothing if no data is available
     if (readings.length == 0) return;
+
+    // Erase of previous drawn chart
+    chart_svg.selectAll("*").remove();
 
     /*
      * value accessor - returns the value to encode for a given data object.
@@ -323,14 +329,13 @@ function draw_chart(readings, sensor_metadata)
     //chart_cValue = function(d) { return d.route_id; },
     chart_color = function (d) {
         if (chart_yValue(d) == null) {
-            return "gray";
+            return "yellow";
         }
         if (chart_yValue(d) > feature_range[1])
         {
           return 'red';
         }
-        //DEBUG fix this:
-        return (d.route_id==null || d.route_id=="") ? 'green' : 'yellow';
+        return 'green';
     };
 
     // **********************
@@ -481,9 +486,19 @@ function tooltip_html(p)
 // move page to new date +n days from current date
 function date_shift(n)
 {
+    let year, month, day;
     console.log('date_shift()');
+    if (YYYY == '') {
+        year = plot_date.slice(0,4);
+        month = plot_date.slice(5,7);
+        day = plot_date.slice(8,10);
+    } else {
+        year = YYYY;
+        month = MM;
+        day = DD;
+    }
 
-    let new_date = new Date(YYYY,MM-1,DD); // as loaded in page template config_ values;
+    let new_date = new Date(year,month-1,day); // as loaded in page template config_ values;
 
     new_date.setDate(new_date.getDate()+n);
 
@@ -492,7 +507,7 @@ function date_shift(n)
     let new_day = ("0" + new_date.getDate()).slice(-2);
 
     console.log(new_year+'-'+new_month+'-'+new_day);
-    window.location.href = '?date='+new_year+'-'+new_month+'-'+new_day+'&metadata=true';
+    window.location.href = '?date='+new_year+'-'+new_month+'-'+new_day+'&feature='+feature_id;
 }
 
 // Return a javascript Date, given EITHER a UTC timestamp or a ISO 8601 datetime string
@@ -545,4 +560,12 @@ function show_reading_popup(d) {
 function hide_reading_popup() {
     console.log("reading_popup hide")
     reading_popup_el.style.display = "none";
+}
+
+function update_url(feature, date) {
+    var searchParams = new URLSearchParams(window.location.search)
+    searchParams.set("feature", feature);
+    searchParams.set("date", date);
+    var newRelativePathQuery = window.location.pathname + '?' + searchParams.toString();
+    history.pushState(null, '', newRelativePathQuery);
 }
