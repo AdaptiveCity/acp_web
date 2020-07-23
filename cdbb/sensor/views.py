@@ -5,7 +5,13 @@ from django.conf import settings
 
 # Templates from "acp_web/cdbb/sensor/templates/sensor/"
 
-class ChartView(LoginRequiredMixin, TemplateView):
+class SensorHomeView(TemplateView):
+    template_name = 'sensor/sensor_home.html'
+
+class SensorResearchView(TemplateView):
+    template_name = 'sensor/sensor_research.html'
+
+class SensorChartView(LoginRequiredMixin, TemplateView):
     template_name = 'sensor/chart.html'
 
     # We override get_context_data to return the vars to embed in the template
@@ -40,5 +46,41 @@ class ChartView(LoginRequiredMixin, TemplateView):
 
             return context
 
-class SelectView(LoginRequiredMixin, TemplateView):
+class SensorSelectView(LoginRequiredMixin, TemplateView):
     template_name = 'sensor/select.html'
+
+class SensorListView(LoginRequiredMixin, TemplateView):
+    template_name = 'sensor/sensor_list.html'
+
+    def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            context['API_BIM'] = settings.API_BIM
+            context['API_SENSORS'] = settings.API_SENSORS
+
+            # e.g. &feature=temperature
+            selected_feature = self.request.GET.get('feature',None)
+            if selected_feature is not None:
+                print("ListView feature in request '"+selected_feature)
+                context['FEATURE'] = selected_feature
+            else:
+                print("ListView no feature",kwargs)
+
+            return context
+
+class SensorTypesView(TemplateView):
+    template_name = 'sensor/sensor_types.html'
+
+    def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            context['API_BIM'] = settings.API_BIM
+            context['API_SENSORS'] = settings.API_SENSORS
+
+            # e.g. &feature=temperature
+            selected_feature = self.request.GET.get('feature',None)
+            if selected_feature is not None:
+                print("ListView feature in request '"+selected_feature)
+                context['FEATURE'] = selected_feature
+            else:
+                print("ListView no feature",kwargs)
+
+            return context
