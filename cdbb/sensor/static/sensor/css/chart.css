@@ -120,6 +120,11 @@ input[type=date], select {
   shape-rendering: crispEdges;
 }
 
+.axis_label {
+    font-size: 18px;
+    stroke: grey;
+}
+
 .dot {
   stroke: #000;
 }
@@ -151,12 +156,37 @@ input[type=date], select {
   opacity: 0.7;
 }
 
-.grid path {
+/* .grid path {
   stroke-width: 0;
-}
+} */
 
 .capacity_line {
   fill: none;
   stroke: red;
   stroke-width: 1.5px;
+}
+
+#reading_popup {
+    position: absolute;
+    left: 30px;
+    top: 30px;
+    height: 85%;
+    width: 60%;
+    display: none;
+    background-color: white;
+    border-radius: 20px;
+    padding: 20px;
+}
+
+#reading_close {
+    float: right;
+    cursor: pointer;
+}
+
+#reading_content {
+    overflow-y: auto;
+    height: 100%;
+    font-family: monospace;
+    font-style: normal;
+    font-size: 0.7em;
 }

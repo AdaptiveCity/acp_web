@@ -18,15 +18,26 @@ class ChartView(LoginRequiredMixin, TemplateView):
             context['API_SPACE'] = settings.API_SPACE
             context['SENSOR_REALTIME'] = settings.SENSOR_REALTIME
             context['ACP_ID'] = self.kwargs['acp_id']
+
+            # &date=YYYY-MM-DD
             selected_date = self.request.GET.get('date',None)
             if selected_date is not None:
-                print("ChartView date in request '"+selected_date+"' "+str(len(selected_date)))
+                print("ChartView date in request '"+selected_date)
                 if len(selected_date) == 10:
                     context['YYYY'] = selected_date[0:4]
                     context['MM'] = selected_date[5:7]
                     context['DD'] = selected_date[8:10]
             else:
                 print("ChartView no date",kwargs)
+
+            # &feature=temperature
+            selected_feature = self.request.GET.get('feature',None)
+            if selected_feature is not None:
+                print("ChartView feature in request '"+selected_feature)
+                context['FEATURE'] = selected_feature
+            else:
+                print("ChartView no feature",kwargs)
+
             return context
 
 class SelectView(LoginRequiredMixin, TemplateView):

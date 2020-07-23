@@ -16,15 +16,13 @@
 
     <!-- Page local script -->
     <script type="text/javascript">
-        var API_BIM = '{{ API_BIM }}';
-        var API_SENSORS = '{{ API_SENSORS }}';
         var API_READINGS = '{{ API_READINGS }}';
-        var API_SPACE = '{{ API_SPACE }}';
         var ACP_ID = '{{ ACP_ID }}';
-        var SENSOR_REALTIME = '{{ SENSOR_REALTIME }}';
+        var SENSOR_REALTIME = '{{ SENSOR_REALTIME }}'; // URL for rtmonitor websocket
         var YYYY = '{{ YYYY }}';
         var MM = '{{ MM }}';
         var DD = '{{ DD }}';
+        var FEATURE = '{{ FEATURE }}'; // e.g. 'temperature'
     </script>
 {% endblock %}
 
@@ -78,6 +76,15 @@ Sensor data TIME chart
   </div>
   <!-- <canvas id="chart_canvas"></canvas> -->
 </div><!-- end chart_wrapper -->
+
+<!-- div to hold pop-up full reading -->
+<div id="reading_popup">
+    <div id="reading_close">
+        <img src="{% static 'sensor/images/reading_close.png' %}"/>
+    </div>
+    <pre id="reading_content">
+    </pre>
+</div>
 
 {% endblock %} <!-- end content -->
 
