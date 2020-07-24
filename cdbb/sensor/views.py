@@ -60,6 +60,17 @@ class SensorView(LoginRequiredMixin, TemplateView):
 
             return context
 
+class SensorTypeView(LoginRequiredMixin, TemplateView):
+    template_name = 'sensor/sensor_type.html'
+
+    def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            context['API_BIM'] = settings.API_BIM
+            context['API_SENSORS'] = settings.API_SENSORS
+            context['ACP_TYPE_ID'] = self.kwargs['acp_type_id']
+
+            return context
+
 class SensorListView(LoginRequiredMixin, TemplateView):
     template_name = 'sensor/sensor_list.html'
 
