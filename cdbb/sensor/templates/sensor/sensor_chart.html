@@ -12,7 +12,7 @@
     <script src="{% static 'js/jsonpath.js' %}" charset="utf-8"></script>
 
     <!-- chart.js defines class SensorChart-->
-    <script type='text/javascript' src="{% static 'sensor/js/time_chart.js' %}"></script>
+    <script type='text/javascript' src="{% static 'sensor/js/sensor_chart.js' %}"></script>
 
     <!-- Page local script -->
     <script type="text/javascript">
@@ -38,7 +38,15 @@ Sensor data TIME chart
         </a>
     </div>
     <div class="breadcrumb">
-         &gt; Chart {{ ACP_ID }}
+        &gt; <a href="{% url 'sensor_home' %}">Sensors</a>
+    </div>
+
+    <div class="breadcrumb">
+        &gt; <a href="{% url 'sensor' ACP_ID %}">{{ ACP_ID }}</a>
+    </div>
+
+    <div class="breadcrumb">
+         &gt; Chart
     </div>
 </div>
 {% endblock %}

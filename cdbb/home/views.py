@@ -11,8 +11,5 @@ class AboutView(TemplateView):
 class ResearchView(TemplateView):
     template_name = 'home/research.html'
 
-class TimeView(TemplateView):
-    template_name = 'home/time.html'
-
 class AccountView(LoginRequiredMixin, TemplateView):
     template_name = 'home/account.html'

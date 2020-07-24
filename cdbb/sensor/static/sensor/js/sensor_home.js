@@ -9,3 +9,5 @@ class SensorHome {
     init() {
         console.log("Sensor Home");
     }
+
+} // end class SensorHome
