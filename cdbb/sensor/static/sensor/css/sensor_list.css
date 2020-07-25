@@ -27,10 +27,20 @@
   border-collapse: collapse; /* Collapse borders */
   width: 100%; /* Full-width */
   border: 1px solid #ddd; /* Add a grey border */
-  font-size: 18px; /* Increase font-size */
+  /* font-size: 18px; /* Increase font-size */
+  font-style: normal;
+  font-family: sans-serif;
+}
+
+#sensor_list_table .odd_row {
+    background-color: #ccccff;
+}
+
+#sensor_list_table .even_row {
+    background-color: #bbbbee;
 }
 
 #sensor_list_table th, #sensor_list_table td {
   text-align: left; /* Left-align text */
-  padding: 12px; /* Add padding */
+  padding: 3px; /* Add padding */
 }
