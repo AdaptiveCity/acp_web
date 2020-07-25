@@ -4,3 +4,33 @@
     /* height: 500px; */
     background-color: pink;
 }
+
+#list_search {
+    /* width: 100%; */
+}
+
+#list_search_input {
+  background-image: url('searchicon.png'); /* Add a search icon to input */
+  background-position: 10px 12px; /* Position the search icon */
+  background-repeat: no-repeat; /* Do not repeat the icon image */
+  width: 80%; /* Full-width */
+  font-size: 16px; /* Increase font-size */
+  padding: 12px 20px 12px 40px; /* Add some padding */
+  border: 1px solid #ddd; /* Add a grey border */
+  margin-bottom: 12px; /* Add some space below the input */
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+#sensor_list_table {
+  border-collapse: collapse; /* Collapse borders */
+  width: 100%; /* Full-width */
+  border: 1px solid #ddd; /* Add a grey border */
+  font-size: 18px; /* Increase font-size */
+}
+
+#sensor_list_table th, #sensor_list_table td {
+  text-align: left; /* Left-align text */
+  padding: 12px; /* Add padding */
+}

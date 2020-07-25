@@ -153,7 +153,7 @@ class SpaceRenderMap {
 
     draw_site(parent) {
 
-        var url = API_SENSORS + 'get_gps';
+        var url = API_SENSORS + 'get_gps/';
 
         console.log('fetching', url);
 

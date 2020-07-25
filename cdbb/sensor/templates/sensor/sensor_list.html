@@ -11,7 +11,9 @@
 
     <!-- Page local script -->
     <script type="text/javascript">
-        var API_SENSORS = '{{ API_SENSORS }}';
+        var API_SENSORS = "{{ API_SENSORS }}";
+        var SENSOR_LINK = "{% url 'sensor' 'acp_id' %}"; // we will replace id as required
+        var SENSOR_TYPE_LINK = "{% url 'sensor_type' 'acp_type_id' %}";
         var FEATURE = '{{ FEATURE }}'; // e.g. 'temperature'
     </script>
 {% endblock %}
@@ -36,7 +38,14 @@ Sensor list
 
 {% block content %}
 
+<!-- A search box that can be used to filter results -->
+<div id="list_search">
+    <!-- JS will add an "onkeyup" event handler -->
+    <input type="text" id="list_search_input" placeholder="Filter (multiple words will work)..."/>
+</div>
+
 <div id="sensor_list">
+    <!-- JS will embed a row-per-sensor table in this div -->
 </div>
 
 {% endblock %} <!-- end content -->
