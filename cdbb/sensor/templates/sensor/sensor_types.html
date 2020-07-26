@@ -1,6 +1,6 @@
 {% extends "cdbb.html" %}
 {% load static %}
-{% block title %}CDBB Sensor types{% endblock %}
+{% block title %}CDBB Sensor Types{% endblock %}
 
 {% block head %}
     <!-- Our style sheets -->
@@ -11,7 +11,9 @@
 
     <!-- Page local script -->
     <script type="text/javascript">
-        var API_SENSORS = '{{ API_SENSORS }}';
+        var API_SENSORS = "{{ API_SENSORS }}";
+        var SENSOR_LIST_LINK = "{% url 'sensor_list' %}";
+        var SENSOR_TYPE_LINK = "{% url 'sensor_type' 'acp_type_id' %}";
         var FEATURE = '{{ FEATURE }}'; // e.g. 'temperature'
     </script>
 {% endblock %}
@@ -36,7 +38,16 @@ Sensor types
 
 {% block content %}
 
+<!-- A search box that can be used to filter results -->
+<div id="list_search">
+    <!-- JS will add an "onkeyup" event handler -->
+    <input type="text" id="list_search_input" placeholder="Filter (multiple words will work)..."/>
+</div>
+
 <div id="sensor_types">
+    <table id="sensor_types_table">
+    <!-- JS will embed a row-per-sensor-type -->
+    </table>
 </div>
 
 {% endblock %} <!-- end content -->

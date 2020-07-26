@@ -76,16 +76,15 @@ class SensorListView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-            context['API_BIM'] = settings.API_BIM
             context['API_SENSORS'] = settings.API_SENSORS
 
             # e.g. &feature=temperature
             selected_feature = self.request.GET.get('feature',None)
             if selected_feature is not None:
-                print("ListView feature in request '"+selected_feature)
+                print("SensorListView feature in request '"+selected_feature)
                 context['FEATURE'] = selected_feature
             else:
-                print("ListView no feature",kwargs)
+                print("SensorListView no feature",kwargs)
 
             return context
 
@@ -94,15 +93,14 @@ class SensorTypesView(TemplateView):
 
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-            context['API_BIM'] = settings.API_BIM
             context['API_SENSORS'] = settings.API_SENSORS
 
             # e.g. &feature=temperature
             selected_feature = self.request.GET.get('feature',None)
             if selected_feature is not None:
-                print("ListView feature in request '"+selected_feature)
+                print("SensorTypesView feature in request '"+selected_feature)
                 context['FEATURE'] = selected_feature
             else:
-                print("ListView no feature",kwargs)
+                print("SensorTypesView no feature",kwargs)
 
             return context
