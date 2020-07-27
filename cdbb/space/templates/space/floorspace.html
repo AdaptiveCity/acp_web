@@ -1,7 +1,6 @@
 {% extends "cdbb.html" %}
 {% load static %}
-{% block page_title %}CDBB Floorspace{% endblock %}
-{% block title %}CDBB Floorspace Page Title{% endblock %}
+{% block title %}CDBB Floorspace {{ CRATE_ID }}{% endblock %}
 
 {% block head %}
     <!-- Our style sheets -->
@@ -15,7 +14,9 @@
     <!-- JS SCRIPT for space snd building -->
     <script type="text/javascript" src="{% static 'space/js/space.js' %}"></script>
 
-    <!-- viz_tools contains some common rendering functions -->
+    <!-- viz_tools contains some common rendering functions, uses parse_readings, jsonpath -->
+    <script type="text/javascript" src="{% static 'js/jsonpath.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/parse_readings.js' %}"></script>
     <script type="text/javascript" src="{% static 'space/js/viz_tools.js' %}"></script>
 
     <!-- building.js defines class SpaceBuilding -->

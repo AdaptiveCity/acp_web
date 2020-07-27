@@ -1,6 +1,9 @@
 "use strict"
 
-// uses API_READINGS, SENSOR_LINK
+// uses:
+//   API_READINGS
+//   SENSOR_LINK
+//   js/parse_readings.js
 
 class VizTools {
     //----------------------------------------------//
@@ -16,6 +19,7 @@ class VizTools {
 
     init() {
         this.tooltip_div = d3.select('#tooltip');
+        this.parse_readings = new ParseReadings();
     }
 
     /* Thanks to http://bl.ocks.org/phil-pedruco/7557092 for the table code */
@@ -158,17 +162,21 @@ class VizTools {
                     .duration(200)
                     .style("opacity", .9);
 
-                let readings_url = API_READINGS + 'get/' + sensor_id +'/';
+                // Create API url for sensor reading AND metadata
+                let readings_url = API_READINGS + 'get/' + sensor_id +'/?metadata=true';
                 console.log('circle mouseover fetching', readings_url)
 
                 d3.json(readings_url, {
                     crossOrigin: "anonymous"
                 }).then(function (received_data) {
                     console.log('tooltips() raw', received_data)
-                    let sensor_readings = self.formatString(received_data[sensor_id]);
-                    console.log('tooltips() cooked', sensor_readings)
+                    let reading = received_data["reading"];
+                    let sensor_metadata = received_data["sensor_metadata"];
+                    let reading_obj = self.parse_readings.parse_reading(reading, sensor_metadata);
+                    let tooltip_info = self.parsed_reading_to_html(reading_obj);
+                    console.log('tooltips() parsed_reading:', reading_obj);
 
-                    self.tooltip_div.html(sensor_id + "<br/>" + sensor_readings) //+ "<br/>" + "acp_sensor"
+                    self.tooltip_div.html(sensor_id + "<br/>" + tooltip_info) //+ "<br/>" + "acp_sensor"
                         .style("left", (x) + "px")
                         .style("top", (y) + "px")
                         .style("display","block");
@@ -198,16 +206,16 @@ class VizTools {
 
     }
 
-    formatString(json_string) {
-        if (json_string == null) {
+    parsed_reading_to_html(reading_obj) {
+        if (reading_obj == null) {
             return ["<br/>no data"];
         }
         let formatted = []
-        for (let [key, value] of Object.entries(json_string)) {
-            if (key === "device") {
-                continue;
-            }
-            formatted.push("<br>" + `${key}: ${value}`);
+        for (let [key, value_obj] of Object.entries(reading_obj)) {
+            let feature_name = value_obj["name"];
+            let feature_value = value_obj["value"];
+
+            formatted.push("<br>" + `${feature_name}: ${feature_value}`);
         }
         return formatted
     }
