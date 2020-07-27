@@ -135,6 +135,8 @@ class SpaceFloorspace {
 
         let floorspace_polygons = parent.page_floor_svg.querySelectorAll("#"+CRATE_ID);
 
+        d3.select("#"+CRATE_ID).attr("style","stroke: #448844");
+
         console.log("handle_floor_svg",polygons.length,"polygons");
 
         parent.set_svg_transform(parent, floorspace_polygons, 0.25);
