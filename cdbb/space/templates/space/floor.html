@@ -23,12 +23,14 @@
 
     <!-- Page local script -->
     <script type="text/javascript">
-        API_BIM = '{{ API_BIM }}';
-        API_SENSORS = '{{ API_SENSORS }}';
-        API_READINGS = '{{ API_READINGS }}';
-        API_SPACE = '{{ API_SPACE }}';
-        CRATE_ID = '{{ CRATE_ID }}';
-        URL_FLOORSPACE = '{% url "space_floorspace" "crate_id" %}'
+        var API_BIM = '{{ API_BIM }}';
+        var API_SENSORS = '{{ API_SENSORS }}';
+        var API_READINGS = '{{ API_READINGS }}';
+        var API_SPACE = '{{ API_SPACE }}';
+        var CRATE_ID = '{{ CRATE_ID }}';
+        var FLOORSPACE_LINK = '{% url "space_floorspace" "crate_id" %}';
+        var SENSOR_LINK = "{% url 'sensor' 'acp_id' %}"; // we will replace id as required
+
     </script>
 {% endblock %}
 

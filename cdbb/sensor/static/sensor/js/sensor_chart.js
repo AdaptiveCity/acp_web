@@ -46,7 +46,7 @@ var sensor_metadata; // holds sensor metadata returned by API call
 // from sensor_metadata
 var feature_id;          // temperature
 var feature_short_name;  // temp
-var feature_long_name;   // temperature
+var feature_name;   // temperature
 var feature_jsonpath;    // $.payload_cooked.temperature
 var feature_jsonpath_ts = '$.acp_ts'; // timestamp
 var feature_range;       // [0,40]
@@ -162,7 +162,7 @@ function handle_sensor_metadata(sensor_metadata) {
             console.log("Defaulting to feature "+feature);
             feature_id = feature;
             feature_short_name = features[feature_id]['short_name'];
-            feature_long_name = features[feature_id]['long_name'];
+            feature_name = features[feature_id]['name'];
             feature_jsonpath = features[feature_id]['jsonpath'];
             feature_range = features[feature_id]['range'];
             break;
@@ -171,7 +171,7 @@ function handle_sensor_metadata(sensor_metadata) {
     else {
         feature_id = FEATURE;
         feature_short_name = features[feature_id]['short_name'];
-        feature_long_name = features[feature_id]['long_name'];
+        feature_name = features[feature_id]['name'];
         feature_jsonpath = features[feature_id]['jsonpath'];
         feature_range = features[feature_id]['range'];
     }
@@ -188,7 +188,7 @@ function onchange_feature_select() {
     var features = sensor_metadata["acp_type_info"]["features"];
     feature_id = feature_select_el.value;
     feature_short_name = features[feature_id]['short_name'];
-    feature_long_name = features[feature_id]['long_name'];
+    feature_name = features[feature_id]['name'];
     feature_jsonpath = features[feature_id]['jsonpath'];
     feature_range = features[feature_id]['range'];
     update_url(feature_id,plot_date);
@@ -406,7 +406,7 @@ function draw_chart()
     .attr("y", -40)
     .attr("dy", ".71em")
     .style("text-anchor", "end")
-    .text(feature_long_name);
+    .text(feature_name);
 
     // *****************************************
     // draw readings dots
@@ -473,7 +473,7 @@ function tooltip_html(p)
     var str = '';
     //DEBUG this property should be configurable
     if (jsonPath(p,feature_jsonpath) != false) { //p.payload_cooked.temperature) {
-      str += '<br/>'+feature_long_name+':'+jsonPath(p, feature_jsonpath); //p.payload_cooked.temperature.toFixed(1);
+      str += '<br/>'+feature_name+':'+jsonPath(p, feature_jsonpath); //p.payload_cooked.temperature.toFixed(1);
     }
     str += '<br/>Time:' + make_date(p.acp_ts);
     return str;

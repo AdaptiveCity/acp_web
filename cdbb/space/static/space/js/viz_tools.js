@@ -1,6 +1,6 @@
 "use strict"
 
-// uses API_READINGS
+// uses API_READINGS, SENSOR_LINK
 
 class VizTools {
     //----------------------------------------------//
@@ -188,16 +188,12 @@ class VizTools {
                     .attr("r", previous_circle_radius);
 
             })
+            // On a user 'click' of a sensor icon, jump to the 'sensor' page.
             .on('click', function (d) {
-
                 let sensor_id = this.id;
-
-                let url = 'http://127.0.0.1:8080/charts/'; //elsys-eye-044501
-
-                console.log('click', url + sensor_id)
-
-                window.location = url+sensor_id;
-
+                let sensor_url = SENSOR_LINK.replace('acp_id', sensor_id);
+                console.log('click', sensor_url)
+                window.location = sensor_url;
             });
 
     }

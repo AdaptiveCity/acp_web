@@ -13,6 +13,10 @@
     <script type="text/javascript">
         var API_SENSORS = '{{ API_SENSORS }}';
         var ACP_ID = '{{ ACP_ID }}'; // e.g. 'temperature'
+        // Note this embeds "acp_type_id" in the link, to be replaced in the JS
+        var SENSOR_TYPE_LINK = "{% url 'sensor_type' 'acp_type_id' %}";
+        // This link will embed the correct acp_id value as was given for this page
+        var SENSOR_CHART_LINK = "{% url 'sensor_chart' acp_id %}";
     </script>
 {% endblock %}
 
@@ -37,6 +41,10 @@ Sensor {{ ACP_ID }}
 {% endblock %}
 
 {% block content %}
+
+<div id="sensor_chart_link">
+    <a href="{% url 'sensor_chart' acp_id %}">View Sensor Data</a>
+</div>
 
 <div id="sensor_info">
 </div>

@@ -169,7 +169,7 @@ class SensorList {
                     if (!first) {
                         features_txt += ', ';
                     }
-                    features_txt += sensor_features[feature_id]['long_name'];
+                    features_txt += sensor_features[feature_id]['name'];
                     first = false;
                 }
             } else {

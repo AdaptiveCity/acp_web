@@ -176,8 +176,8 @@ class SpaceFloor {
                 });
             })
             .on('click', function (d) {
-                // URL_FLOORSPACE set in template with "crate_id" string placeholder
-                window.location = URL_FLOORSPACE .replace("crate_id",this.id);
+                // FLOORSPACE_LINK set in template with "crate_id" string placeholder
+                window.location = FLOORSPACE_LINK .replace("crate_id",this.id);
                 console.log('CLICKED ON FLOOR_PLAN', d3.select(this))
             });
 
