@@ -34,8 +34,13 @@ class Sensor {
     handle_sensor_metadata(parent, sensor_metadata) {
         console.log("handle_sensor_metadata got", sensor_metadata);
 
+        let type_info  = {};
         // clone "acp_type_info" into its own jsonobject and remove from sensor_metadata
-        let type_info = JSON.parse(JSON.stringify(sensor_metadata["acp_type_info"]));
+        try {
+            type_info = JSON.parse(JSON.stringify(sensor_metadata["acp_type_info"]));
+        } catch (err) {
+            console.log("handle_sensor_metadata parse error for acp_type_info");
+        }
         delete sensor_metadata.acp_type_info;
 
         // Display the Sensor Metadata jsonobject

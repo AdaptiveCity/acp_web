@@ -125,7 +125,7 @@ input[type=date], select {
   stroke: #000;
 }
 
-.tooltip {
+#chart_tooltip {
   position: absolute;
   width: 400px;
   /* height: 28px; */
@@ -136,6 +136,7 @@ input[type=date], select {
   border: 0px;
   border-radius: 8px;
   pointer-events: none;
+  opacity: 0; /* start with div invisible */
 }
 
 .error {
