@@ -315,15 +315,22 @@ function draw_chart(readings, feature)
 
     //DEBUG the location of the charted y value should be in metadata
     chart_yValue = function(d) {
-        let y_val = jsonPath(d, feature['jsonpath']); //d.payload_cooked.temperature;
-        //console.log("chart_yValue",d,y_val);
-        if (y_val == false) {
+
+        // Note jsonPath always returns a list of result, or false if path not found.
+        let path_val = jsonPath(d, feature['jsonpath']); //d.payload_cooked.temperature;
+        //console.log("chart_yValue path_val",d,path_val);
+        if (path_val == false) {
             console.log("chart_yValue returning null")
             return null;
-        } else {
-            return y_val;
         }
-
+        let y_val = path_val[0];
+        if (y_val == false) {
+            return 0;
+        }
+        if (y_val == true) {
+            return 1;
+        }
+        return y_val;
     }; // data -> value
 
     // setup fill color for chart dots
