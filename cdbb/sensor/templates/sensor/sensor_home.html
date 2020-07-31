@@ -47,11 +47,28 @@ Sensors
 
 <div class="card">
         <div class="card_title">
+            Sensor types
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'sensor_types' %}">
+                <img src="{% static 'images/elsys_ems.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                View details on each type of sensor we have installed, from which you
+                can also view the list of sensors of that type.
+            </div>
+        </div>
+</div>
+
+<div class="card">
+        <div class="card_title">
             Sensor List
         </div>
         <div class="card_image">
             <a class="card_link" href="{% url 'sensor_list' %}">
-                <img src="{% static 'home/images/sensor.png' %}"/>
+                <img src="{% static 'sensor/images/sensor_list.png' %}"/>
             </a>
         </div>
         <div class="card_text">
@@ -75,23 +92,6 @@ Sensors
             <div class="card_text_content">
                 Navigate a spatial view of the building and sensor
                 data.
-            </div>
-        </div>
-</div>
-
-<div class="card">
-        <div class="card_title">
-            Sensor types
-        </div>
-        <div class="card_image">
-            <a class="card_link" href="{% url 'sensor_types' %}">
-                <img src="{% static 'home/images/about.jpg' %}"/>
-            </a>
-        </div>
-        <div class="card_text">
-            <div class="card_text_content">
-                View details on each type of sensor we have installed, from which you
-                can also view the list of sensors of that type.
             </div>
         </div>
 </div>

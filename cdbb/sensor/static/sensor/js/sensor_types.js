@@ -135,7 +135,7 @@ class SensorTypes {
             if (!first) {
                 features_txt += ', ';
             }
-            features_txt += type_features[feature_id]['long_name'];
+            features_txt += type_features[feature_id]['name'];
             first = false;
         }
         let features_td = document.createElement('td');
