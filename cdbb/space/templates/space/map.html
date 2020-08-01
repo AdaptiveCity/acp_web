@@ -45,6 +45,19 @@
 Spatial Building and Sensor Data: MAP VIEW
 {% endblock %}
 
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <div class="breadcrumb">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/home_icon.png' %}" />
+        </a>
+    </div>
+    <div class="breadcrumb">
+        &gt; Map
+    </div>
+</div>
+{% endblock %}
+
 {% block content %}
     <div id="map"></div>
 {% endblock %}
