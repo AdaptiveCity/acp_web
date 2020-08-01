@@ -1,5 +1,11 @@
 "use strict"
 
+// Template provides global vars:
+//      API_BIM  -- Building Information API base
+//      API_SENSORS -- Sensors metadata API base
+//      BUILDING_LINK -- links to building page, e.g. /space/building/crate_id/
+//      SENSOR_LINK -- links to sensor page, e.g. /sensor/sensor/acp_id/
+
 class SpaceRenderMap {
 
     constructor() {
@@ -7,10 +13,21 @@ class SpaceRenderMap {
     }
 
     init() {
-        this.draw_site(this);
+
+        // Display the map, with chosen settings
+        this.init_map();
+
+        // Set up a function to be called if the map is clicked
+        // Currently writes lat/lng of click to js console.
+        this.init_map_click();
+
+        // Note the code is 'async' from here, both of these functions will do XMLHttpRequests
+        this.get_gps_sensors(this);
+        this.get_buildings(this);
     }
 
-    initMap(results) {
+    // Display the map, not yet populated with sensors / buildings.
+    init_map() {
 
         var stamenToner = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}.png', {
             attribution: 'Map tiles by Stamen Design, CC BY 3.0 - Map data © OpenStreetMap',
@@ -47,43 +64,31 @@ class SpaceRenderMap {
 
         info_widget.addTo(this.map);
 
-        var spider = L.markerClusterGroup();
+        this.markers_layer = L.markerClusterGroup();
 
-        var markers = results['sensors']
-        for (var i = 0; i < markers.length; ++i) {
-            var marker = L.marker(new L.LatLng(markers[i].acp_lat, markers[i].acp_lng), {
-                title: markers[i].sensor
-            });
+        this.map.addLayer(this.markers_layer);
+    }
 
-            marker.bindPopup(markers[i].sensor);
-            spider.addLayer(marker);
-        }
-
-        this.map.addLayer(spider);
-
-        //this.draw_wgb(this);
-
+    get_buildings(parent) {
         //DEBUG map_visualisation.js we want to get all the 'building' objects and iterate
-        this.get_bim_crate('WGB');
+        parent.get_bim_crate(parent, 'WGB');
 
-        this.get_bim_crate('lockdown_lab');
+        parent.get_bim_crate(parent, 'lockdown_lab');
 
-        this.get_bim_crate('IFM')
-
+        parent.get_bim_crate(parent, 'IFM')
     }
 
     // Use BIM api to get data for crate
-    get_bim_crate(crate_id){
+    get_bim_crate(parent, crate_id){
         console.log("Getting boundary for "+crate_id);
-        self = this;
-        var request = new XMLHttpRequest();
+        let request = new XMLHttpRequest();
         request.overrideMimeType('application/json');
 
         request.addEventListener("load", function () {
             var crates = JSON.parse(request.responseText)
             console.log("get_bim_crate() returned:",crates);
             // Note the BIM api returns a list
-            self.handle_bim_crate(self, crates[0]);
+            parent.handle_bim_crate(parent, crates[0]);
         });
         let api_url = API_BIM+"get_gps/"+crate_id+"/0/";
         console.log("get_bim_crate() requesting "+api_url);
@@ -91,39 +96,44 @@ class SpaceRenderMap {
         request.send();
     }
 
-    handle_bim_crate(self, crate) {
-        self.draw_crate(self, crate);
+    handle_bim_crate(parent, crate) {
+        parent.draw_crate(parent, crate);
     }
 
-    draw_crate(self, crate) {
+    draw_crate(parent, crate) {
         var crate_id = crate['crate_id'];
         console.log("draw_crate",crate["crate_id"]);
         for (var i in crate["acp_boundary_gps"]) {
             var boundary = crate["acp_boundary_gps"][i];
             var latlngs = boundary["boundary"];
-                self.draw_boundary(self, crate_id, latlngs, boundary["boundary_type"]);
+                parent.draw_boundary(parent, crate_id, latlngs, boundary["boundary_type"]);
         }
     }
 
-    draw_boundary(self, crate_id, latlngs, boundary_type) {
+    draw_boundary(parent, crate_id, latlngs, boundary_type) {
         var color = boundary_type == "boundary" ? 'red' : 'yellow'
         var polygon = L.polygon(latlngs, {color: color, weight: 1});
         if (boundary_type == "boundary") {
             polygon.on({
-                'mouseover': self.highlight,
-                'mouseout': self.normal,
-                'click': function (e) { self.building_page(crate_id) }
+                'mouseover': parent.highlight_boundary,
+                'mouseout': parent.normal_boundary,
+                'click': function (e) { parent.building_page(crate_id) }
             });
         }
-        polygon.addTo(self.map);
+        polygon.addTo(parent.map);
     }
 
+    // Trigger the browser to move to our 'building' page.
     building_page(crate_id){
-        // URL_BUILDING is set in the map.html template
-        window.location = URL_BUILDING.replace('crate_id',crate_id);
+        // BUILDING_LINK is set in the map.html template e.g. "/space/building/crate_id/"
+        // Note we **replace** the "crate_id" string with the actual required id. This is the most straightforward
+        // way to have Django provide 'template' urls with this Javascript being robust as the API structure
+        // evolves during development.
+        window.location = BUILDING_LINK.replace('crate_id',crate_id);
     }
 
-    highlight(e) {
+    // Change building boundary color on mouseover
+    highlight_boundary(e) {
         var layer = e.target;
         layer.setStyle({
             color: 'blue',
@@ -132,7 +142,7 @@ class SpaceRenderMap {
         });
     }
 
-    normal(e) {
+    normal_boundary(e) {
         var layer = e.target;
         layer.setStyle({
             color: 'red',
@@ -141,7 +151,9 @@ class SpaceRenderMap {
         });
     }
 
-    findLatLng() {
+    // Set up function to handle a click on the map
+    // Currently writes lat/lng to the console
+    init_map_click() {
         this.map.on('click',
             function (e) {
                 var coord = e.latlng.toString().split(',');
@@ -151,20 +163,42 @@ class SpaceRenderMap {
             });
     }
 
-    draw_site(parent) {
+    // Called from init().
+    // Will use sensors API to get sensors with "acp_location": {"system": "GPS" ... }
+    get_gps_sensors(parent){
+        console.log('Getting GPS sensors');
+        let gps_sensors_url = API_SENSORS + 'get_gps/';
+        let request = new XMLHttpRequest();
+        request.overrideMimeType('application/json');
 
-        var url = API_SENSORS + 'get_gps/';
-
-        console.log('fetching', url);
-
-        d3.json(url, {
-            crossOrigin: "anonymous"
-        }).then(function (received_data) {
-
-            parent.initMap(received_data);
-            parent.findLatLng();
-
+        request.addEventListener("load", function () {
+            var gps_sensors = JSON.parse(request.responseText)
+            console.log("get_gps_sensors() returned:",gps_sensors);
+            parent.handle_gps_sensors(parent, gps_sensors);
         });
+        console.log("get_gps_sensors() requesting "+gps_sensors_url);
+        request.open("GET", gps_sensors_url);
+        request.send();
+    }
+
+    handle_gps_sensors(parent, gps_sensors) {
+        var sensors = gps_sensors['sensors']
+        for (var acp_id in sensors) {
+            let sensor = sensors[acp_id];
+            console.log("handle_gps_sensors() adding ",sensors[acp_id]);
+            let marker = L.marker(new L.LatLng(sensor.acp_location.lat,
+                                               sensor.acp_location.lng),
+                                               { title: sensor.acp_id }
+            );
+
+            // See 'building_page()' above for which we use these tweakable links from Django
+            let popup_html = '<a href="'+SENSOR_LINK.replace('acp_id',acp_id)+'">'+acp_id+'</a>';
+            if ('description' in sensor) {
+                popup_html += '<br/>'+sensor['description'];
+            }
+            marker.bindPopup(popup_html);
+            parent.markers_layer.addLayer(marker);
+        }
     }
 
 } // end class SpaceRenderMap

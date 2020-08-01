@@ -46,12 +46,15 @@ Sensor {{ ACP_ID }}
     <a href="{% url 'sensor_chart' acp_id %}">View Sensor Data</a>
 </div>
 
+
 <div id="sensor_info">
+    <h2>Sensor Metadata</h2>
+    <!-- javascript will add  <pre id="sensor_metadata">...</pre> -->
 </div>
 
-<div id="type_heading">Sensor type <div id="type_heading_type"></div> :</div>
-
 <div id="type_info">
+    <h2>Sensor Type Metadata for type <div id="type_heading_type"></div></h2>
+    <!-- javascript will add  <pre id="sensor_type_metadata">...</pre> -->
 </div>
 
 {% endblock %} <!-- end content -->

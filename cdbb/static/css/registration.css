@@ -11,6 +11,11 @@ body {
     height: 100%;
 }
 
+.login_form table {
+    border-collapse: separate;
+    border-spacing: 40px;
+}
+
 .login_form tr {
     border: 1px solid black;
 }

@@ -45,14 +45,19 @@ class Sensor {
 
         // Display the Sensor Metadata jsonobject
         let sensor_metadata_txt = JSON.stringify(sensor_metadata, null, 2);
-        parent.sensor_info_el.innerHTML = "<pre>" + this.escapeHTML(sensor_metadata_txt) + "</pre>";
+        let sensor_el = document.createElement('pre');
+        sensor_el.id = 'sensor_metadata';
+        sensor_el.innerHTML = this.escapeHTML(sensor_metadata_txt);
+        parent.sensor_info_el.appendChild(sensor_el);
 
+        // Display the Sensor Type Metadata object
         // Add the acp_type_id as a heading on the type_info section
         parent.type_heading_type_el.innerHTML = sensor_metadata.acp_type_id;
-
-        // Display the Sensor Type jsononbject
         let type_txt = JSON.stringify(type_info, null, 2);
-        parent.type_info_el.innerHTML = "<pre>" + this.escapeHTML(type_txt) + "</pre>";
+        let type_el = document.createElement('pre');
+        type_el.id = 'sensor_type_metadata';
+        type_el.innerHTML = this.escapeHTML(type_txt);
+        parent.type_info_el.appendChild(type_el);
     }
 
     escapeHTML(str) {

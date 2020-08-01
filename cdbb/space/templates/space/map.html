@@ -34,7 +34,10 @@
     <script type="text/javascript">
         API_BIM = '{{ API_BIM }}';
         API_SENSORS = '{{ API_SENSORS }}';
-        URL_BUILDING = "{% url 'space_building' 'crate_id' %}";
+        // Note we use a 'dummy' crate_id (using the 'crate_id' literal string) so the javascript
+        // can replace it with the actual id required such as 'WGB'
+        BUILDING_LINK = "{% url 'space_building' 'crate_id' %}";
+        SENSOR_LINK = "{% url 'sensor' 'acp_id' %}";
     </script>
 {% endblock %}
 
