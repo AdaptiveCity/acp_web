@@ -52,6 +52,7 @@ class SensorTypes {
     handle_sensor_types(parent, sensor_types) {
         console.log("handle_sensor_types got", sensor_types);
 
+        // Note types_list is a DICTIONARY
         let types_list = sensor_types["types"];
 
         // Display the Sensor List Types jsononbject
@@ -63,11 +64,13 @@ class SensorTypes {
         parent.sensor_types_table_el.appendChild(heading_tr);
 
         // Construct and append the row for each sensor type
-        for (let i=0; i<types_list.length; i++) {
-            let sensor_type = types_list[i];
+        let even_row = false;
+        for (let acp_type_id in types_list) {
+            let sensor_type = types_list[acp_type_id];
             // make_row will return a 'tr' element containing the sensor info
             let sensor_row = parent.make_row(sensor_type);
-            sensor_row.className = (i % 2 == 0) ? "even_row" : "odd_row";
+            sensor_row.className = even_row ? "even_row" : "odd_row";
+            even_row = !even_row;
             parent.sensor_types_table_el.appendChild(sensor_row);
         }
     }

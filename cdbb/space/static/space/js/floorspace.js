@@ -271,7 +271,7 @@ class SpaceFloorspace {
         //   floor_coordinate_system
         //   floor_number
         // call /api/sensors/get_floor_number/<coordinate_system>/<floor_number>/
-        var sensors_api_url = API_SENSORS + 'get_bim/' + CRATE_ID + '/';
+        var sensors_api_url = API_SENSORS + 'get_bim/' + parent.floor_coordinate_system +'/'+ CRATE_ID + '/';
 
         console.log("get_sensors_metadata() ", sensors_api_url);
         request.open("GET", sensors_api_url);
@@ -283,8 +283,8 @@ class SpaceFloorspace {
 
         let txt = JSON.stringify(sensors, null, 2);
 
-        if (txt === '[]') {
-            txt = 'no sensors are present in this crate'
+        if (sensors == {}) {
+            txt = 'no sensors are present in this crate';
         }
 
         // Display the json sensor metadata on the page in #SENSOR_container
@@ -296,19 +296,20 @@ class SpaceFloorspace {
         let rad = 0.25; // radius of sensor icon in METERS (i.e. XYZF before transform)
 
         //iterate through results to extract data required to show sensors on the floorplan
-        for (let sensor in sensors) {
+        for (let acp_id in sensors) {
+            let sensor = sensors[acp_id];
+            console.log('handle_sensor_metadata() ',acp_id, sensor);
             try {
-                let x_value = sensors[sensor]['acp_location_xyz']['x']
+                let x_value = sensor['acp_location_xyz']['x']
                 // Note y is NEGATIVE for XYZF (anti-clockwise) -> SVG (clockwise)
-                let y_value = -sensors[sensor]['acp_location_xyz']['y']
-                let floor_id = sensors[sensor]['acp_location_xyz']['f']
-                let sensor_id = sensors[sensor]['acp_id'];
+                let y_value = -sensor['acp_location_xyz']['y']
+                let floor_id = sensor['acp_location_xyz']['f']
 
                 d3.select("#bim_request").append("circle")
                     .attr("cx", x_value)
                     .attr("cy", y_value)
                     .attr("r", rad)
-                    .attr("id", sensor_id)
+                    .attr("id", acp_id)
                     .style("opacity", opac)
                     .style("fill", "purple")
                     .attr("transform", parent.svg_transform);

@@ -54,7 +54,7 @@ class SensorList {
         console.log("handle_sensor_list got", sensor_list);
 
         // We will convert the sensor_list['types'] list into an object for easier lookup.
-        let types_obj = parent.make_types_obj(parent, sensor_list['types']);
+        let types_obj = sensor_list['types'];
 
         // Display the Sensor List jsononbject
         //let sensor_list_txt = JSON.stringify(sensor_list, null, 2);
@@ -66,27 +66,15 @@ class SensorList {
         parent.sensor_list_table_el.appendChild(heading_tr);
 
         // Construct and append the row for each sensor
-        for (let i=0; i<sensors.length; i++) {
-            let sensor = sensors[i];
+        let even_row = true; // for color of row
+        for (let acp_id in sensors) {
+            let sensor = sensors[acp_id];
             // make_row will return a 'tr' element containing the sensor info
             let sensor_row = parent.make_row(sensor, types_obj);
-            sensor_row.className = (i % 2 == 0) ? "even_row" : "odd_row";
+            sensor_row.className = even_row ? "even_row" : "odd_row";
+            even_row = !even_row;
             parent.sensor_list_table_el.appendChild(sensor_row);
         }
-    }
-
-    // make_types_obj converts a *list* of sensor types into an object with '<acp_type_id' properties.
-    // I.e. list [ {type_info}, {type_info} ... ] becomes object:
-    // as { <acp_type_id>: { type info },  ... }
-    // This provides a convenient 'types_obj[acp_type_id]' lookup, rather than searching a list.
-    // We *could* standardize on objects instead of lists in the API, but haven't decided yet.
-    make_types_obj(parent, types_list) {
-        let types_obj = {};
-        for (let i=0; i<types_list.length;i++) {
-            let sensor_type_info = types_list[i];
-            types_obj[sensor_type_info['acp_type_id']] = sensor_type_info;
-        }
-        return types_obj;
     }
 
     // Return a 'tr' for the heading of the display table

@@ -281,6 +281,9 @@ async function fetch_sensors_counts(crate_id) {
         request.send();
     }
 
+    // Returns a "list object" (i.e. dictionary on acp_id) of sensors on
+    // given floor#/coordinate system
+    //   { "sensors": { "rad-ath-0099" : { <sensor metadata> }, ... }}
     handle_sensors_metadata(parent, results) {
         console.log("handle_sensors_metadata() loaded", results);
 
