@@ -80,9 +80,9 @@ class SpaceFloorspace {
         request.addEventListener("load", function () {
             var crate_obj = JSON.parse(request.responseText)
             // Note the BIM api returns a list
-            parent.handle_floorspace_crate(parent, crate_obj[0]);
+            parent.handle_floorspace_crate(parent, crate_obj[CRATE_ID]);
         });
-        let api_url = API_BIM + "get_xyz/" + CRATE_ID + "/0/";
+        let api_url = API_BIM + "get_xyzf/" + CRATE_ID + "/0/";
         console.log("floorspace.js get_floorspace_crate() requesting "+api_url);
         request.open("GET", api_url);
         request.send();
@@ -128,6 +128,13 @@ class SpaceFloorspace {
     handle_floor_svg(parent, xml) {
         console.log("handle_floor_svg() loaded floor SVG", xml);
         let scale = 8.3; //DEBUG
+
+        // Remove the "floor" crate from the SVG
+        let floors = xml.querySelectorAll('polygon[data-crate_type=floor]');
+        floors.forEach( function (el) {
+            console.log("removing crate "+el.id);
+            el.remove();
+        });
 
         parent.append_svg(parent,xml.querySelector('#bim_request'));
 
@@ -185,7 +192,7 @@ class SpaceFloorspace {
                 });
             })
             .on('click', function (d) {
-                window.location = '/wgb/floorspace/' + this.id;
+                window.location = FLOORSPACE_LINK.replace('crate_id',this.id);
                 console.log('CLICKED ON FLOOR_PLAN', d3.select(this))
             });
 
@@ -298,6 +305,12 @@ class SpaceFloorspace {
         //iterate through results to extract data required to show sensors on the floorplan
         for (let acp_id in sensors) {
             let sensor = sensors[acp_id];
+            // Skip sensors that don't have xyz coords
+            //DEBUG we *could* put them in some default position relative to crate
+            if ( !sensor.hasOwnProperty('acp_location_xyz')) {
+                console.log('skipping missing acp_location_xyz',acp_id);
+                continue;
+            }
             console.log('handle_sensor_metadata() ',acp_id, sensor);
             try {
                 let x_value = sensor['acp_location_xyz']['x']
@@ -315,7 +328,7 @@ class SpaceFloorspace {
                     .attr("transform", parent.svg_transform);
 
             } catch (error) {
-                console.log(error)
+                console.log(acp_id, error)
             }
 
         }

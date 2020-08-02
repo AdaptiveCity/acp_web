@@ -88,7 +88,7 @@ class SpaceRenderMap {
             var crates = JSON.parse(request.responseText)
             console.log("get_bim_crate() returned:",crates);
             // Note the BIM api returns a list
-            parent.handle_bim_crate(parent, crates[0]);
+            parent.handle_bim_crate(parent, crates[crate_id]);
         });
         let api_url = API_BIM+"get_gps/"+crate_id+"/0/";
         console.log("get_bim_crate() requesting "+api_url);

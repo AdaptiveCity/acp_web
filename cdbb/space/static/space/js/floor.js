@@ -79,9 +79,9 @@ class SpaceFloor {
         request.overrideMimeType('application/json');
 
         request.addEventListener("load", function () {
-            var crate_obj = JSON.parse(request.responseText)
-            // Note the BIM api returns a list
-            parent.handle_floor_crate(parent, crate_obj[0]);
+            var crates_dict = JSON.parse(request.responseText)
+            // Note the BIM api returns a dictionary
+            parent.handle_floor_crate(parent, crates_dict[CRATE_ID]);
         });
         request.open("GET", API_BIM + "get/" + CRATE_ID + "/0/");
         request.send();
@@ -123,6 +123,13 @@ class SpaceFloor {
     handle_floor_svg(parent, xml) {
         console.log("handle_floor_svg() loaded floor SVG", xml);
         let scale = 8.3; //DEBUG
+
+        // Remove the "floor" crate from the SVG
+        let floors = xml.querySelectorAll('polygon[data-crate_type=floor]');
+        floors.forEach( function (el) {
+            console.log("removing crate "+el.id);
+            el.remove();
+        });
 
         parent.append_svg(parent,xml.querySelector('#bim_request'));
 
