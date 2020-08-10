@@ -336,8 +336,11 @@ function draw_chart(readings, feature)
     // setup fill color for chart dots
     //chart_cValue = function(d) { return d.route_id; },
     chart_color = function (d) {
+        if ('acp_event' in d) {
+            return '#ffff88';
+        }
         if (chart_yValue(d) == null) {
-            return "yellow";
+            return "#888888";
         }
         if (chart_yValue(d) > feature['range'][1])
         {

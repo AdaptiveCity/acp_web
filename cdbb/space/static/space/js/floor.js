@@ -124,11 +124,20 @@ class SpaceFloor {
         console.log("handle_floor_svg() loaded floor SVG", xml);
         let scale = 8.3; //DEBUG
 
-        // Remove the "floor" crate from the SVG
+        // Parent of the SVG polygons is <g id="bim_request"...>
+        let bim_request = xml.getElementById('bim_request');
+
+        // Remove the "floor" or "building" crates from the SVG
         let floors = xml.querySelectorAll('polygon[data-crate_type=floor]');
         floors.forEach( function (el) {
-            console.log("removing crate "+el.id);
-            el.remove();
+            console.log("moving floor polygon to beginning: "+el.id);
+            //el.remove();
+            bim_request.prepend(el);
+        });
+        let buildings = xml.querySelectorAll('polygon[data-crate_type=building]');
+        buildings.forEach( function (el) {
+            console.log("moving building polygon to beginning: "+el.id);
+            bim_request.prepend(el);
         });
 
         parent.append_svg(parent,xml.querySelector('#bim_request'));
