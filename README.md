@@ -132,3 +132,30 @@ the simple Django `/admin/` web interface.
 ```
 python3 manage.py createsuperuser
 ```
+
+## Collect the static files
+
+In the `~acp_prod/acp_web/cdbb` directory:
+```
+./manage.py collectstatic
+```
+
+## Run acp_web
+
+Test run `acp_web` from the `~acp_prod/acp_web/cdbb` directory:
+```
+source ../venv/bin/activate
+python3 manage.py runserver 0.0.0.0:8000
+```
+Test running acp_web by visiting (for example) `https://<servername>/space/map/`.
+
+If there are problems, bypass nginx by visiting `http://<servername>:8000/space/map/`.
+
+`acp_web` will generally be run via `~/acp_web/run.sh`.  Create a crontab entry to have this happen on a server restart:
+```
+crontab -e
+```
+add contents:
+```
+@reboot /home/acp_prod/acp_web/run.sh
+```
