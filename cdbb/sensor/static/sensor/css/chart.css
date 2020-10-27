@@ -99,6 +99,13 @@ input[type=date], select {
   display: inline-block;
 }
 
+#zoom_hint {
+    display: inline-block;
+}
+
+/* #######################
+# SVG Chart css
+####################### */
 #chart {
     width: 97vw;
     height: calc(100vh - 200px);
@@ -129,7 +136,7 @@ input[type=date], select {
   position: absolute;
   width: 400px;
   /* height: 28px; */
-  text-align: center;
+  /* text-align: center;*/
   padding: 2px;
   font: 12px sans-serif;
   background: lightsteelblue;
