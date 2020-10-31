@@ -52,6 +52,8 @@ function init() {
     // set up layout / axes of scatterplot
     init_chart();
 
+    // Can use get_local_readings() to shim the API (copywrite jb2328)
+    //get_local_readings();
     get_readings();
 
 }
@@ -71,6 +73,17 @@ function get_readings() {
       headers: {"Access-Control-Allow-Origin": "*"},
     }).done(handle_readings);
   }
+
+// Alternative to get_readings() using local file for sensors API response
+function get_local_readings() {
+    console.log('loading data')
+
+    d3.json("sample_8x8_data.json").then(function (data) {
+        handle_readings(data);
+        console.log(data)
+    });
+  }
+
 
 // API http call has returned these results { readings: ..., sensor_metadata: ...}
 function handle_readings(results) {
@@ -535,20 +548,12 @@ function draw_chart(readings, feature) {
                 show_reading_popup(d);
             })
             .on("mouseover", function (d) {
-                chart_tooltip_el.transition()
-                    .duration(500)
-                    .style("opacity", 0);
-                chart_tooltip_el.transition()
-                    .duration(200)
-                    .style("opacity", .9);
-                chart_tooltip_el.html(tooltip_html(d, feature))
-                    .style("left", (d3.event.pageX + 5) + "px")
-                    .style("top", (d3.event.pageY - 28) + "px");
+                mouseover_interactions(d, feature);
             })
             .on("mouseout", function (d) {
                 chart_tooltip_el.transition()
                     .duration(500)
-                    .style("opacity", 0);
+                    .style("opacity", 1);
             });
     }
 
@@ -569,15 +574,7 @@ function draw_chart(readings, feature) {
             show_reading_popup(d);
         })
         .on("mouseover", function (d) {
-            chart_tooltip_el.transition()
-                .duration(500)
-                .style("opacity", 0);
-            chart_tooltip_el.transition()
-                .duration(200)
-                .style("opacity", .9);
-            chart_tooltip_el.html(tooltip_html(d, feature))
-                .style("left", (d3.event.pageX + 5) + "px")
-                .style("top", (d3.event.pageY - 28) + "px");
+            mouseover_interactions(d, feature);
         })
         .on("mouseout", function (d) {
             chart_tooltip_el.transition()
@@ -617,6 +614,109 @@ function draw_chart(readings, feature) {
 } // end draw_chart
 
 
+//created a 'bag' function that has d3 interactivity for hover over circles
+//I thought it was easier than having duplicated chunks of code
+function mouseover_interactions(d, feature) {
+    chart_tooltip_el.transition()
+        .duration(500)
+        .style("opacity", 0);
+    chart_tooltip_el.transition()
+        .duration(200)
+        .style("opacity", .9);
+    chart_tooltip_el.html(tooltip_html(d, feature))
+        .style("left", (d3.event.pageX + 5) + "px")
+        .style("top", (d3.event.pageY - 28) + "px");
+
+        //heatmap is within try/catch since not all sensors have 8x8s
+    try {
+        draw_heatmap(d);
+    } catch (error) {
+        console.log('no elsys eye: ', error)
+    }
+}
+//draw an 8x8 matrix for elsys-eye sensors
+function draw_heatmap(d) {
+    //list for reformatted data
+    let grid_data = [];
+
+    //data cleanup
+    for (let i = 0; i < d.payload_cooked.grideye.length; i++) {
+        grid_data.push({
+            'value': d.payload_cooked.grideye[i],
+            'id': i,
+            'y_pos': Math.floor(i / 8),
+            'x_pos': Math.floor(i % 8)
+        });
+    }
+
+    // set the dimensions and margins of the graph
+    let tt_margin = {
+            top: 15,
+            right: 15,
+            bottom: 15,
+            left: 15
+        },
+        tt_width = 250 - tt_margin.left - tt_margin.right,
+        tt_height = 250 - tt_margin.top - tt_margin.bottom;
+
+    // append the svg object to the body of the page
+    let tt_svg = d3.select('#chart_tooltip')
+        .append("svg")
+        .attr("width", tt_width + tt_margin.left + tt_margin.right)
+        .attr("height", tt_height + tt_margin.top + tt_margin.bottom)
+        .append("g")
+        .attr("transform",
+            "translate(" + tt_margin.left + "," + tt_margin.top + ")");
+
+    // Labels of row and columns
+    let myGroups = [0, 1, 2, 3, 4, 5, 6, 7]
+    let myVars = [0, 1, 2, 3, 4, 5, 6, 7]
+
+    // Build X scales and axis:
+    let x = d3.scaleBand()
+        .range([0, tt_width])
+        .domain(myGroups)
+        .padding(0.01);
+
+    // tt_svg.append("g")
+    //     .attr("transform", "translate(0," + tt_height + ")")
+    //     .call(d3.axisBottom(x))
+
+    // Build X scales and axis:
+    let y = d3.scaleBand()
+        .range([0, tt_height])
+        .domain(myVars)
+        .padding(0.01);
+
+    // tt_svg.append("g")
+    //     .call(d3.axisLeft(y));
+
+    // Build color scale
+    let myColor = d3.scaleSequential(d3.interpolateTurbo)
+        .domain([-5, 35])
+
+    tt_svg.selectAll()
+        .data(grid_data, function (d, i) {
+            return d;
+        })
+        .enter()
+        .append("rect")
+        .attr("x", function (d) {
+            return x(d.x_pos)
+        })
+        .attr("y", function (d) {
+            return y(d.y_pos)
+        })
+        .attr("width", x.bandwidth())
+        .attr("height", y.bandwidth())
+        .style("fill", function (d) {
+            return myColor(d.value)
+        });
+
+    console.log('showing 8x8', grid_data)
+}
+
+
 // Create a plot TOOLTIP our of the point data
 //debug write this tooltip_html() for acp_web
 function tooltip_html(p, feature) {
@@ -626,10 +726,13 @@ function tooltip_html(p, feature) {
                      ('0' + p_time.getMinutes()).slice(-2) + ':' +
                      ('0' + p_time.getSeconds()).slice(-2);
     let tz = p_time.toTimeString().match(/\((.+)\)/)[1];
-    str += p_time_str + ' ' + tz;
+
     if (jsonPath(p, feature['jsonpath']) != false) {
         str += '<br/>'+feature['name'] + ':' + jsonPath(p, feature['jsonpath']);
     }
+
+    str += '<br/>'+p_time_str + ' ' + tz;
+
     return str;
 }
 
