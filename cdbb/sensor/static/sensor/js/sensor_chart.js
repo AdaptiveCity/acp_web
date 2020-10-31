@@ -553,7 +553,7 @@ function draw_chart(readings, feature) {
             .on("mouseout", function (d) {
                 chart_tooltip_el.transition()
                     .duration(500)
-                    .style("opacity", 1);
+                    .style("opacity", 0);
             });
     }
 
