@@ -143,6 +143,38 @@ body {
     vertical-align: middle;
 }
 
+.card_block_outer {
+    width: 100%;
+    text-align: center;
+}
+
+.card_block_inner {
+    display: inline-block;
+}
+
+.card_divider {
+    display: grid;
+    grid-template-columns: auto min-content auto;
+}
+
+.card_divider_left {
+    height: 2px;
+    background-color: #ffffff;
+    margin-top: 12px;
+    margin-right: 25px;
+}
+
+.card_divider_center {
+    white-space: nowrap;
+}
+
+.card_divider_right {
+    height: 2px;
+    background-color: #ffffff;
+    margin-top: 12px;
+    margin-left: 25px;
+}
+
 /* ***************************************************************** */
 /* Generally useful CSS classes                                      */
 /* ***************************************************************** */
