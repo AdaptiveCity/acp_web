@@ -104,10 +104,10 @@ function handle_readings(results) {
 
     loading_el.className = 'loading_hide'; // set style "display: none"
 
-    let features = handle_sensor_metadata(sensor_metadata);
+    //let features = handle_sensor_metadata(sensor_metadata);
 
     // Setup onchange callbacks to update chart on feature or date changes
-    let feature = init_feature_select(readings, features);
+    let feature = init_feature_select(readings, sensor_metadata);
 
     if (feature != null) {
         set_date_onclicks(feature['feature_id']);
@@ -130,7 +130,7 @@ function handle_sensor_metadata(sensor_metadata) {
     return [];
 }
 
-function init_feature_select(readings, features) {
+function init_feature_select(readings, sensor_metadata) {
     console.log("init_feature_select()");
     // ***************************************
     // Update selection dropdown on page
@@ -143,6 +143,9 @@ function init_feature_select(readings, features) {
     let selected_feature = null; // Will return this value
 
     let feature_count = 0;
+    let features = sensor_metadata["acp_type_info"]["features"]
+    let feature_id = null;
+
     // add a select option for each feature in the sensor metadata
     for (const feature in features) {
         console.log("feature: " + feature);
@@ -162,13 +165,18 @@ function init_feature_select(readings, features) {
         return null;
     } else if (FEATURE == '') {
         console.log("No feature given in page request");
-        for (const feature in features) {
-            console.log("Defaulting to feature " + feature);
-            let feature_id = feature;
-            selected_feature = features[feature_id];
-            selected_feature['feature_id'] = feature_id;
-            break;
+        if ("feature_default" in sensor_metadata["acp_type_info"]) {
+            feature_id = sensor_metadata["acp_type_info"]["feature_default"];
+            console.log("Using 'feature_default'",feature_id);
+        } else {
+            for (const feature in features) {
+                console.log("Defaulting to random feature " + feature);
+                feature_id = feature;
+                break;
+            }
         }
+        selected_feature = features[feature_id];
+        selected_feature["feature_id"] = feature_id;
     } else {
         selected_feature = features[FEATURE];
         selected_feature['feature_id'] = FEATURE;
@@ -361,7 +369,7 @@ function draw_chart(readings, feature) {
         if (y_val == true) {
             return 1;
         }
-        return y_val;
+        return parseFloat(y_val);
     }; // data -> value
 
     // setup fill color for chart dots
