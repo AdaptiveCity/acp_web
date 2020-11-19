@@ -696,11 +696,12 @@ function draw_cbar(d, feature) {
             } else return colorScale(d);
         });
 
-
+        //text showing range on left/right
         viz_tools.add_text(cbar_svg,feature.range[0],x_range_offset,0, "0.75em","translate(0,0) rotate(-90)") // 0 is the offset from the left
         viz_tools.add_text(cbar_svg,feature.range[1],x_range_offset,3, "0.75em","translate(" + c_conf.width + ",0) rotate(-90)")// 3 is the offset from the right
+        //actual value under the black bar
+        viz_tools.add_text(cbar_svg,raw_value,mapped_value+x_bar_offset,25, "0.75em","translate("+0+",0)")// 3 is the offset from the right
 
-     
     //drop one line
     cbar_svg = d3.select('#chart_tooltip')
         .append("g")
