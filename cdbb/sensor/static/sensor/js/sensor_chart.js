@@ -23,6 +23,7 @@ var chart_height;
 var chart_svg; // chart svg element
 var chart_graph; // chart svg element
 
+var viz_tools = new VizTools();
 
 // Called on page load
 function init() {
@@ -61,18 +62,20 @@ function init() {
 // Use API_READINGS to retrieve requested sensor readings
 function get_readings() {
     var readings_url = API_READINGS + 'get_day/' + ACP_ID + '/' +
-                      '?date=' + plot_date +
-                      '&metadata=true';
+        '?date=' + plot_date +
+        '&metadata=true';
 
-    console.log("using readings URL: "+readings_url);
+    console.log("using readings URL: " + readings_url);
 
     var jsonData = $.ajax({
-      url: readings_url,
-      dataType: 'json',
-      async: true,
-      headers: {"Access-Control-Allow-Origin": "*"},
+        url: readings_url,
+        dataType: 'json',
+        async: true,
+        headers: {
+            "Access-Control-Allow-Origin": "*"
+        },
     }).done(handle_readings);
-  }
+}
 
 // Alternative to get_readings() using local file for sensors API response
 function get_local_readings() {
@@ -82,7 +85,7 @@ function get_local_readings() {
         handle_readings(data);
         console.log(data)
     });
-  }
+}
 
 
 // API http call has returned these results { readings: ..., sensor_metadata: ...}
@@ -167,7 +170,7 @@ function init_feature_select(readings, sensor_metadata) {
         console.log("No feature given in page request");
         if ("feature_default" in sensor_metadata["acp_type_info"]) {
             feature_id = sensor_metadata["acp_type_info"]["feature_default"];
-            console.log("Using 'feature_default'",feature_id);
+            console.log("Using 'feature_default'", feature_id);
         } else {
             for (const feature in features) {
                 console.log("Defaulting to random feature " + feature);
@@ -410,7 +413,7 @@ function draw_chart(readings, feature) {
     //chart_svg.select(".x.axis").call(chart_xAxis);
 
     //make a chart_graph variable that had elements within the svg
-    chart_graph= chart_svg.append("g").attr('id', "graph_elements").style('opacity',0);
+    chart_graph = chart_svg.append("g").attr('id', "graph_elements").style('opacity', 0);
 
     // x-axis
     chart_graph.append("g")
@@ -491,7 +494,7 @@ function draw_chart(readings, feature) {
     var scatter = chart_graph.append("g")
         .attr("id", "scatterplot")
         .attr("clip-path", "url(#clip)")
-        .on("dblclick", function (d) {//on doubleclick reset the visualisation
+        .on("dblclick", function (d) { //on doubleclick reset the visualisation
 
             //redraw chart
             scatter.selectAll("*").remove();
@@ -499,7 +502,7 @@ function draw_chart(readings, feature) {
             set_zoom_hint(true); // Update zoom hint to re-explain how to zoom.
         });
 
-        scatter.append("g")
+    scatter.append("g")
         .attr("class", "brush")
         .call(brush);
 
@@ -594,7 +597,7 @@ function draw_chart(readings, feature) {
     // add text for latest datapoint
     // *******************************
     var p = readings[readings.length - 1];
-    var tooltip_element =chart_graph.append("g").attr('id', 'tooltip_el').style('opacity',1);
+    var tooltip_element = chart_graph.append("g").attr('id', 'tooltip_el').style('opacity', 1);
 
     tooltip_element.append("rect")
         .attr('x', chart_xMap(p) + CHART_DOT_RADIUS + 4)
@@ -615,7 +618,7 @@ function draw_chart(readings, feature) {
         .style('fill', '#333')
         .text(jsonPath(p, feature['jsonpath']) + p_time_str);
 
-        chart_graph.transition().duration(200).style('opacity',1)
+    chart_graph.transition().duration(200).style('opacity', 1)
     //---------------------------------------------------------------------------//
     //---------------------------------------------------------------------------//
     //---------------------------------------------------------------------------//
@@ -635,12 +638,73 @@ function mouseover_interactions(d, feature) {
         .style("left", (d3.event.pageX + 5) + "px")
         .style("top", (d3.event.pageY - 28) + "px");
 
-        //heatmap is within try/catch since not all sensors have 8x8s
+
+    //try to draw colorbar
+    // try {
+    draw_cbar(d, feature);
+    // } catch (error) {
+    //     console.log('no cbar features: ', error)
+    // }
+
+    //heatmap is within try/catch since not all sensors have 8x8s
     try {
         draw_heatmap(d);
     } catch (error) {
         console.log('no elsys eye: ', error)
     }
+
+}
+
+function draw_cbar(d, feature) {
+
+    
+    //(width, height, top, right, bottom, left)
+    let c_conf=viz_tools.canvas_conf(250,50,15,30,15,5);
+    let cbar_svg=viz_tools.make_canvas(c_conf,'#chart_tooltip', "translate(" + c_conf.left + "," + c_conf.top + ")" );
+    
+    cbar_svg.append('rect').attr('x',0).attr('y',0).attr('width',c_conf.width).attr('height',c_conf.heigth).attr('fill','red')
+
+    //map the sensor values to the colorbar location
+    let raw_value = jsonPath(d, feature['jsonpath'])[0]
+    let mapped_value = parseInt(viz_tools.map_values(raw_value, feature.range[0], feature.range[1], 0, c_conf.width));
+
+    // append the svg object to the body of the page
+    let x_bar_offset = 15;
+    let x_range_offset = -8;
+    let y_range_offset = 0;
+
+    var colorScale = d3.scaleSequential(d3.interpolateWarm)
+        .domain([0, c_conf.width])
+
+    //create a series of bars comprised of small rects to create a gradient illusion
+    let bar = cbar_svg.selectAll(".bars")
+        .data(d3.range(c_conf.width-x_bar_offset), function (d) {
+            return d;
+        })
+        .enter().append("rect")
+        .attr("class", "bars")
+        .attr("x", function (i) {
+            return i + x_bar_offset;
+        })
+        .attr("y",0)
+        .attr("height",c_conf.height)
+        .attr("width", 1)
+        .style("fill", function (d, i) {
+            //if the i'th element is the same as the mapped reading value, draw a black line instead
+            if (i == mapped_value) {
+                return 'black'
+            } else return colorScale(d);
+        });
+
+
+        viz_tools.add_text(cbar_svg,feature.range[0],x_range_offset,0, "0.75em","translate(0,0) rotate(-90)") // 0 is the offset from the left
+        viz_tools.add_text(cbar_svg,feature.range[1],x_range_offset,3, "0.75em","translate(" + c_conf.width + ",0) rotate(-90)")// 3 is the offset from the right
+
+     
+    //drop one line
+    cbar_svg = d3.select('#chart_tooltip')
+        .append("g")
+        .html("<br>");
 }
 //draw an 8x8 matrix for elsys-eye sensors
 function draw_heatmap(d) {
@@ -731,15 +795,15 @@ function tooltip_html(p, feature) {
     let str = '';
     let p_time = make_date(p.acp_ts);
     let p_time_str = ('0' + p_time.getHours()).slice(-2) + ':' +
-                     ('0' + p_time.getMinutes()).slice(-2) + ':' +
-                     ('0' + p_time.getSeconds()).slice(-2);
+        ('0' + p_time.getMinutes()).slice(-2) + ':' +
+        ('0' + p_time.getSeconds()).slice(-2);
     let tz = p_time.toTimeString().match(/\((.+)\)/)[1];
 
     if (jsonPath(p, feature['jsonpath']) != false) {
-        str += '<br/>'+feature['name'] + ':' + jsonPath(p, feature['jsonpath']);
+        str += '<br/>' + feature['name'] + ':' + jsonPath(p, feature['jsonpath']);
     }
 
-    str += '<br/>'+p_time_str + ' ' + tz;
+    str += '<br/>' + p_time_str + ' ' + tz + '<br/>';
 
     return str;
 }
