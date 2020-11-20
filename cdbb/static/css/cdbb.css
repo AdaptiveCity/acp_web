@@ -3,8 +3,9 @@
 
 body {
     font-style: italic; /* This was initially just for style debug, but actually I quite like the retro vibe */
-    font-family: serif;
-    background-color: lightblue; /* Again just for debug but hey, this is Cambridge */
+    /* font-family: serif; */
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: rgb(163, 193, 173); /* Again just for debug but hey, this is Cambridge */
 }
 
 /* ***************************************************************** */
