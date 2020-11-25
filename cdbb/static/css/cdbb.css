@@ -104,18 +104,18 @@ body {
 }
 
 .card {
-    box-shadow: 3px 3px #808080;
+ 	box-shadow: 0 3px 3px rgba(0,0,0,0.3);
     display: inline-block;
     width:  250px;
     height: 350px;
     background-color: #f0f0f0;
     border-radius: 5px;
-    margin: 10px;
+    margin: 0.5em;
     vertical-align: top;
 }
 
 .card:hover {
-    box-shadow: 6px 6px #909090;
+ 	box-shadow: 0 6px 6px rgba(0,0,0,0.4);
 }
 
 .card_title {

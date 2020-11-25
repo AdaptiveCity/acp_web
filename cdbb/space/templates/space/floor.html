@@ -18,6 +18,7 @@
     <script type="text/javascript" src="{% static 'js/jsonpath.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/parse_readings.js' %}"></script>
     <script type="text/javascript" src="{% static 'space/js/viz_tools.js' %}"></script>
+    <script type="text/javascript" src="{% static '/js/VizTools2.js' %}"></script>
 
     <!-- building.js defines class SpaceBuilding -->
     <script type='text/javascript' src="{% static 'space/js/floor.js' %}"></script>
@@ -62,6 +63,8 @@ Spatial Building and Sensor Data: FLOOR VIEW
 
 <div id="drawing_coords">0,0</div>
 
+<div class="main_content" id="main_content_id">
+
 <div class="drawing_div" id="main_drawing_div">
     <svg class="drawing_svg" id="drawing_svg">
     </svg>
@@ -78,13 +81,8 @@ Spatial Building and Sensor Data: FLOOR VIEW
     <div id="button_wrapper">
         <button type="button" onclick="hard_reset()" id="reset" style="padding-left: 1em;">Reset</button>
     </div>
-    <br>
-    <br>
-    <div id="button_wrapper">
-        <button type="button" onclick="change_floor('SF')" id="change"
-            style="padding-left: 1em;">Sample button</button>
-    </div>
-
+    
+</div>
 
 </div>
 <div id="wrapper">

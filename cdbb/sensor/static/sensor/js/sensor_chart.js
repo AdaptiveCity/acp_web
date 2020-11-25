@@ -25,7 +25,7 @@ var chart_graph; // chart svg element
 var chart_offsetx; //centers chart withing the svg
 var chart_offsety;
 
-var viz_tools = new VizTools();
+var viz_tools = new VizTools2();
 
 // Called on page load
 function init() {
@@ -208,12 +208,12 @@ function onchange_feature_select(e, readings, features) {
     let feature_id = feature_select_el.value;
 
     //exrtact all features with ranges --needed for mouseover viz
-    features[feature_id]['all_features']=features;
-    
+    features[feature_id]['all_features'] = features;
+
     set_date_onclicks(feature_id);
     // Change the URL in the address bar
     update_url(feature_id, plot_date);
-    draw_chart(readings,  features[feature_id]);
+    draw_chart(readings, features[feature_id]);
 }
 
 function set_date_onclicks(feature_id) {
@@ -668,8 +668,8 @@ function mouseover_interactions(d, feature) {
     let tooltip_height = d3.select('#chart_tooltip')._groups[0][0].clientHeight;
     let tooltip_width = d3.select('#chart_tooltip')._groups[0][0].clientWidth;
 
-    let tooltip_offset_y = 28;
-    let tooltip_offset_x = 5;
+    let tooltip_offset_y = 6;
+    let tooltip_offset_x = 6;
 
     chart_tooltip_el.transition()
         .duration(500)
@@ -695,6 +695,7 @@ function mouseover_interactions(d, feature) {
             } else return d3.event.pageY - tooltip_offset_y + "px";
         });
 
+	//console.log('d',d, 'feature',feature)
 
     //get a list of all features from metadata
     let feature_list = Object.keys(feature.all_features)
@@ -702,160 +703,18 @@ function mouseover_interactions(d, feature) {
 
     //iterate over all features and draw colorbars for each
     for (let i = 0; i < feature_length; i++) {
-        draw_cbar(d, feature.all_features[feature_list[i]]);
+        viz_tools.draw_cbar(d, feature.all_features[feature_list[i]], '#chart_tooltip');
     }
 
 
     //heatmap is within try/catch since not all sensors have 8x8s
     try {
-        draw_heatmap(d);
+         viz_tools.draw_heatmap(d, '#chart_tooltip');
     } catch (error) {
         console.log('no elsys eye: ', error)
     }
 
 }
-
-function draw_cbar(d, feature) {
-
-    console.log('inside', d, feature.name)
-    //(width, height, top, right, bottom, left)
-    let c_conf = viz_tools.canvas_conf(250, 38, 5, 30, 15, 5);
-    let cbar_svg = viz_tools.make_canvas(c_conf, '#chart_tooltip', "translate(" + c_conf.left + "," + c_conf.top + ")");
-
-    //map the sensor values to the colorbar location
-    let raw_value = jsonPath(d, feature['jsonpath'])[0]
-    let mapped_value = parseInt(viz_tools.map_values(raw_value, feature.range[0], feature.range[1], 0, c_conf.width));
-
-    // append the svg object to the body of the page
-    let x_bar_offset = 15;
-    let x_range_offset = -8;
-
-    var colorScale = d3.scaleSequential(d3.interpolateWarm)
-        .domain([0, c_conf.width])
-
-    //create a series of bars comprised of small rects to create a gradient illusion
-    let bar = cbar_svg.selectAll(".bars")
-        .data(d3.range(c_conf.width - x_bar_offset), function (d) {
-            return d;
-        })
-        .enter().append("rect")
-        .attr("class", "bars")
-        .attr("x", function (i) {
-            return i + x_bar_offset;
-        })
-        .attr("y", 0)
-        .attr("height", c_conf.height)
-        .attr("width", 1)
-        .style("fill", function (d, i) {
-            //if the i'th element is the same as the mapped reading value, draw a black line instead
-            if (i == mapped_value) {
-                return 'black'
-            } else return colorScale(d);
-        });
-
-    //text showing range on left/right
-    //viz_tools.add_text(TARGET SVG, TXT VALUE, X LOC, Y LOC, FONT SIZE, TRANSLATE);
-    viz_tools.add_text(cbar_svg, feature.range[0], x_range_offset, 0, "0.75em", "translate(0,0) rotate(-90)") // 0 is the offset from the left
-    viz_tools.add_text(cbar_svg, feature.range[1], x_range_offset, 3, "0.75em", "translate(" + c_conf.width + ",0) rotate(-90)") // 3 is the offset from the right
-
-    let value_type = viz_tools.add_text(cbar_svg, feature.name, x_bar_offset + 3, 3, "0.75em", "translate(0,0)") // 6 is the offset from the right
-    value_type
-        .style("text-anchor", "start")
-        .style('fill', 'white')
-        .style('fill-opacity', '60%');
-
-
-    //actual value under the black bar
-    viz_tools.add_text(cbar_svg, raw_value, mapped_value + x_bar_offset, 22, "0.75em", "translate(" + 0 + ",0)") // 3 is the offset from the right
-
-    //drop one line
-    cbar_svg = d3.select('#chart_tooltip')
-        .append("g")
-        .html("<br>");
-}
-
-//draw an 8x8 matrix for elsys-eye sensors
-function draw_heatmap(d) {
-    //list for reformatted data
-    let grid_data = [];
-
-    //data cleanup
-    for (let i = 0; i < d.payload_cooked.grideye.length; i++) {
-        grid_data.push({
-            'value': d.payload_cooked.grideye[i],
-            'id': i,
-            'y_pos': Math.floor(i / 8),
-            'x_pos': Math.floor(i % 8)
-        });
-    }
-
-    // set the dimensions and margins of the graph
-    let tt_margin = {
-            top: 15,
-            right: 15,
-            bottom: 15,
-            left: 15
-        },
-        tt_width = 250 - tt_margin.left - tt_margin.right,
-        tt_height = 250 - tt_margin.top - tt_margin.bottom;
-
-    // append the svg object to the body of the page
-    let tt_svg = d3.select('#chart_tooltip')
-        .append("svg")
-        .attr("width", tt_width + tt_margin.left + tt_margin.right)
-        .attr("height", tt_height + tt_margin.top + tt_margin.bottom)
-        .append("g")
-        .attr("transform",
-            "translate(" + tt_margin.left + "," + tt_margin.top + ")");
-
-    // Labels of row and columns
-    let myGroups = [0, 1, 2, 3, 4, 5, 6, 7]
-    let myVars = [0, 1, 2, 3, 4, 5, 6, 7]
-
-    // Build X scales and axis:
-    let x = d3.scaleBand()
-        .range([0, tt_width])
-        .domain(myGroups)
-        .padding(0.01);
-
-    // tt_svg.append("g")
-    //     .attr("transform", "translate(0," + tt_height + ")")
-    //     .call(d3.axisBottom(x))
-
-    // Build X scales and axis:
-    let y = d3.scaleBand()
-        .range([0, tt_height])
-        .domain(myVars)
-        .padding(0.01);
-
-    // tt_svg.append("g")
-    //     .call(d3.axisLeft(y));
-
-    // Build color scale
-    let myColor = d3.scaleSequential(d3.interpolateTurbo)
-        .domain([-5, 35])
-
-    tt_svg.selectAll()
-        .data(grid_data, function (d, i) {
-            return d;
-        })
-        .enter()
-        .append("rect")
-        .attr("x", function (d) {
-            return x(d.x_pos)
-        })
-        .attr("y", function (d) {
-            return y(d.y_pos)
-        })
-        .attr("width", x.bandwidth())
-        .attr("height", y.bandwidth())
-        .style("fill", function (d) {
-            return myColor(d.value)
-        });
-
-    // console.log('showing 8x8', grid_data)
-}
-
 
 // Create a plot TOOLTIP our of the point data
 //debug write this tooltip_html() for acp_web

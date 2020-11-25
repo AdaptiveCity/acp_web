@@ -15,6 +15,8 @@ class VizTools {
         //this.tooltip_div = d3.select("body").append("div")
         //    .attr("class", "tooltip")
         //    .style("opacity", 0);
+
+        this.viz_tools2=new VizTools2();
     }
 
     init() {
@@ -140,15 +142,24 @@ class VizTools {
         var previous_circle_radius;
 
         d3.selectAll("circle") // For new circle, go through the update process
-            .on("mouseover", function () {
-                previous_circle_radius = this.r.baseVal.value;
+            .on("mouseover", function (d) {
+                previous_circle_radius = 0.5;
 
                 d3.select(this).transition().duration(250)
-                    .attr("r", previous_circle_radius * 1.5);
+                    .attr("r", 0.75);
 
                 // Specify where to put label of text
                 let x = d3.event.pageX - document.getElementById('drawing_svg').getBoundingClientRect().x +50;
                 let y = d3.event.pageY - document.getElementById('drawing_svg').getBoundingClientRect().y +50;
+
+                let eventX=d3.event.pageX;
+                let eventY=d3.event.pageY;
+
+                let tooltip_height = d3.select('#tooltip')._groups[0][0].clientHeight;
+    			let tooltip_width = d3.select('#tooltip')._groups[0][0].clientWidth;
+
+    			let tooltip_offset_y = 6;
+    			let tooltip_offset_x = 6;
 
                 console.log(x, y);
 
@@ -172,21 +183,58 @@ class VizTools {
                     console.log('tooltips() raw', received_data)
                     let reading = received_data["reading"];
                     let sensor_metadata = received_data["sensor_metadata"];
-                    let reading_obj = self.parse_readings.parse_reading(reading, sensor_metadata);
-                    let tooltip_info = self.parsed_reading_to_html(reading_obj);
-                    console.log('tooltips() parsed_reading:', reading_obj);
 
-                    self.tooltip_div.html(sensor_id + "<br/>" + tooltip_info) //+ "<br/>" + "acp_sensor"
-                        .style("left", (x) + "px")
-                        .style("top", (y) + "px")
-                        .style("display","block");
+                    let reading_obj = '';
+                   let parsed=self.parse_readings.parse_reading(reading,sensor_metadata);
+					console.log('parsed',parsed);
+					
+                    if(received_data['acp_error_msg']!=undefined || Object.keys(parsed).length<1 ){
+                         let error_id = received_data['acp_error_id'];
+                         console.log('handle_readings() error', received_data);
+                         reading_obj=  'NO READINGS available for this sensor.';
+                  	}
+                    else{                  		
+                       	 let readings = received_data["reading"];
+                       	 let sensor_metadata = received_data["sensor_metadata"];
+                            
+                         //exrtact all features with ranges --needed for mouseover viz
+                         let all_features = sensor_metadata['acp_type_info']['features'];
+   						 reading_obj= readings;
+                    }
+
+                    let msg=typeof(reading_obj)=='string'?reading_obj:'';
+
+                    console.log('tooltips() handled_reading:', reading_obj);
+                    
+                    self.tooltip_div.html('<b>'+sensor_id+'</b>' + "<br/>"+msg+"<br/>")
+                       .style("left", function () {
+                                        //push the tooltip to the left rather than to the right if out of screen
+                                        if (eventX + tooltip_width > document.body.clientWidth) {
+                                            return eventX - tooltip_width + tooltip_offset_x + "px";
+                                        } else return eventX - tooltip_offset_x + "px";
+                                    }
+                                )
+                                .style("top", function () {
+                                    //drop the tooltip upwards rather than downwards if out of screen
+                                    if (eventY + tooltip_height > document.body.clientHeight) {
+                                        return eventY - tooltip_height + tooltip_offset_y + "px";
+                                    } else return eventY - tooltip_offset_y + "px";
+                                });
+
+                        if(typeof(reading_obj)!='string'){
+        						self.viz_readings(reading_obj, sensor_metadata)
+        						reading_obj=undefined;
+        						sensor_metadata=undefined;
+                        }
+                    
+         
 
                 });
 
 
             })
             .on("mouseout", function (d) {
-
+				 
                 self.tooltip_div.transition()
                     .duration(500)
                     .style("opacity", 0);
@@ -205,6 +253,34 @@ class VizTools {
             });
 
     }
+
+	viz_readings(readings,meta){
+
+   //exrtact all features with ranges --needed for mouseover viz
+    let all_features = meta['acp_type_info']['features'];
+
+    //append the rest of the features with their ranges to the object
+    readings['all_features'] = all_features;
+    console.log('readings',readings)
+    //get a list of all features from metadata
+    let feature_list = Object.keys(meta['acp_type_info'].features)
+    let feature_length = feature_list.length;
+		console.log('viz',readings,meta);
+
+    //iterate over all features and draw colorbars for each
+    for (let i = 0; i < feature_length; i++) {
+        this.viz_tools2.draw_cbar(readings, readings.all_features[feature_list[i]],'#tooltip');
+    }
+
+
+    //heatmap is within try/catch since not all sensors have 8x8s
+    try {
+         this.viz_tools2.draw_heatmap(readings, '#tooltip');
+    } catch (error) {
+        console.log('no elsys eye: ', error)
+    }
+
+	}
 
     parsed_reading_to_html(reading_obj) {
         if (reading_obj == null) {
