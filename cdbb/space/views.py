@@ -12,6 +12,7 @@ class MapView(TemplateView):
             context = super().get_context_data(**kwargs)
             context['API_BIM'] = settings.API_BIM
             context['API_SENSORS'] = settings.API_SENSORS
+            context['CRATE_IDS'] = settings.CRATE_IDS
             return context
 
 class BuildingView(LoginRequiredMixin, TemplateView):
@@ -25,6 +26,7 @@ class BuildingView(LoginRequiredMixin, TemplateView):
             context['API_SENSORS'] = settings.API_SENSORS
             context['API_READINGS'] = settings.API_READINGS
             context['API_SPACE'] = settings.API_SPACE
+            context['CRATE_IDS'] = settings.CRATE_IDS
             context['CRATE_ID'] = self.kwargs['crate_id']
             return context
 
@@ -39,6 +41,7 @@ class FloorView(LoginRequiredMixin, TemplateView):
             context['API_SENSORS'] = settings.API_SENSORS
             context['API_READINGS'] = settings.API_READINGS
             context['API_SPACE'] = settings.API_SPACE
+            context['CRATE_IDS'] = settings.CRATE_IDS
             context['CRATE_ID'] = self.kwargs['crate_id']
             return context
 
@@ -53,5 +56,6 @@ class FloorspaceView(LoginRequiredMixin, TemplateView):
             context['API_SENSORS'] = settings.API_SENSORS
             context['API_READINGS'] = settings.API_READINGS
             context['API_SPACE'] = settings.API_SPACE
+            context['CRATE_IDS'] = settings.CRATE_IDS
             context['CRATE_ID'] = self.kwargs['crate_id']
             return context
