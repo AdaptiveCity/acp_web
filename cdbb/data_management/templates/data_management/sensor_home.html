@@ -1,0 +1,99 @@
+{% extends "cdbb.html" %}
+{% load static %}
+{% block title %}CDBB Sensor List{% endblock %}
+
+{% block head %}
+    <!-- Our style sheets -->
+    <link rel="stylesheet" type="text/css" href="{% static 'sensor/css/sensor_home.css' %}" />
+
+    <script type='text/javascript' src="{% static 'sensor/js/sensor_home.js' %}"></script>
+
+{% endblock %}
+
+{% block header_title %}
+Sensors
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <div class="breadcrumb">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/home_icon.png' %}" />
+        </a>
+    </div>
+    <div class="breadcrumb">
+         &gt; Sensors
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+        <div class="card_title">
+            Sensors Research
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'sensor_research' %}">
+                <img src="{% static 'home/images/sensor.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                Find out more about our custom sensor research.
+            </div>
+        </div>
+</div>
+
+<div class="card">
+        <div class="card_title">
+            Sensor types
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'sensor_types' %}">
+                <img src="{% static 'images/elsys_ems.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                View details on each type of sensor we have installed, from which you
+                can also view the list of sensors of that type.
+            </div>
+        </div>
+</div>
+
+<div class="card">
+        <div class="card_title">
+            Sensor List
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'sensor_list' %}">
+                <img src="{% static 'sensor/images/sensor_list.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                View a searchable list of the installed sensors, from which you
+                can view sensor details and see real-time and historical readings.
+            </div>
+        </div>
+</div>
+
+<div class="card">
+        <div class="card_title">
+            View sensors on a map
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'space_map' %}">
+                <img src="{% static 'space/images/space.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                Navigate a spatial view of the building and sensor
+                data.
+            </div>
+        </div>
+</div>
+
+{% endblock %}

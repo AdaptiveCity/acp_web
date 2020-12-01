@@ -1,0 +1,196 @@
+html {
+    height: 100%;
+}
+
+body {
+    height: 100%;
+    margin: 0;
+}
+
+.selection_wrapper {
+  text-align: center;
+  display: block;
+  vertical-align: top;
+  width: 100%;
+}
+
+.selection_form {
+    display: block;
+}
+
+.selection_input {
+    display: inline-block;
+}
+
+.nav_date {
+    display: inline-block;
+    color: white;
+    font-family: Arial;
+    font-style: normal;
+    font-size: 13px;
+    background-color: #4CAF50;
+    height: 100%;
+    padding: 5px;
+    cursor: pointer;
+}
+
+input[type=date], select {
+    /* width: 100%; */
+    padding: 12px 20px;
+    margin: 8px 0;
+    text-align: center;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+
+ button {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 16px 32px;
+    text-align: center;
+    text-decoration: none;
+    margin: 4px 2px;
+    cursor: pointer;
+ }
+
+ input[type=submit]:hover {
+    background-color: #45a049;
+ }
+
+.chart_wrapper {
+    text-align: center;
+    display: inline-block;
+    vertical-align: top;
+    border: 1px solid black;
+    width: 99%;
+    height: 60%;
+}
+
+.loading_show {
+    display: block;
+}
+
+.loading_hide {
+    display: none;
+}
+
+#page_date {
+  font-size: 22px;
+  margin: 5px 10px 10px 5px;
+  display: inline-block;
+}
+
+#content_title {
+  display: inline-block;
+  font-size: 24px;
+  font-weight: bold;
+  margin: 5px 5px 10px 20px;
+}
+
+#heading_date {
+  display: inline-block;
+  width: 8em;
+}
+
+.time_shift {
+  display: inline-block;
+}
+
+#zoom_hint {
+    display: inline-block;
+}
+
+/* #######################
+# SVG Chart css
+####################### */
+#chart {
+    width: 97vw;
+    height: calc(100vh - 200px);
+    margin: 5px 5px 5px 10px;
+}
+
+.plot_svg {
+  background-color: AliceBlue;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #707070;
+  shape-rendering: crispEdges;
+}
+
+.axis_label {
+    font-size: 18px;
+    stroke: grey;
+}
+
+.dot {
+  stroke: #000;
+}
+
+#chart_tooltip {
+  position: absolute;
+  width: 400px;
+  /* height: 28px; */
+  /* text-align: center;*/
+  padding: 2px;
+  font: 12px sans-serif;
+  background: lightsteelblue;
+  border: 0px;
+  border-radius: 8px;
+  pointer-events: none;
+  opacity: 0; /* start with div invisible */
+}
+
+.error {
+  color: red;
+  display: inline-block;
+}
+
+.tick {
+  stroke: #222;
+}
+
+.grid {
+  stroke: #555;
+  opacity: 0.7;
+}
+
+/* .grid path {
+  stroke-width: 0;
+} */
+
+.capacity_line {
+  fill: none;
+  stroke: red;
+  stroke-width: 1.5px;
+}
+
+#reading_popup {
+    position: absolute;
+    left: 30px;
+    top: 30px;
+    height: 85%;
+    width: 60%;
+    display: none;
+    background-color: white;
+    border-radius: 20px;
+    padding: 20px;
+}
+
+#reading_close {
+    float: right;
+    cursor: pointer;
+}
+
+#reading_content {
+    overflow-y: auto;
+    height: 100%;
+    font-family: monospace;
+    font-style: normal;
+    font-size: 0.7em;
+}
