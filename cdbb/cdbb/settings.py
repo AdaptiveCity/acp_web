@@ -1,1 +1,1 @@
-../../secrets/cdbb_settings.py
+../../secrets/settings.py

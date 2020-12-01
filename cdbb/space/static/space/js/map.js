@@ -70,12 +70,25 @@ class SpaceRenderMap {
     }
 
     get_buildings(parent) {
-        //DEBUG map_visualisation.js we want to get all the 'building' objects and iterate
+        //DEBUG map_visualisation.js we want to get all the 'building' objects and iterate	    
+	    var crate_array = CRATE_IDS.split(',');
+	    var crate; 
+	    for (crate of crate_array){
+		    parent.get_bim_crate(parent, crate);
+	    }
+
+	
+	/*	
         parent.get_bim_crate(parent, 'WGB');
 
         parent.get_bim_crate(parent, 'lockdown_lab');
 
-        parent.get_bim_crate(parent, 'IFM')
+        parent.get_bim_crate(parent, 'IFM');
+
+	    parent.get_bim_crate(parent, 'VLAB');
+	    console.log("crate ids"+CRATE_IDS);
+	*/
+	
     }
 
     // Use BIM api to get data for crate
