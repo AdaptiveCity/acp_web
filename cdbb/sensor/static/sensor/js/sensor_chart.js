@@ -89,25 +89,26 @@ function get_local_readings() {
 function handle_readings(results) {
     console.log('handle_readings()', results);
 
+    let readings = [];
+    let sensor_metadata = {}
+    let feature = null;
+
     if ('acp_error_id' in results) {
         let error_id = results['acp_error_id'];
         console.log('handle_readings() error', results);
         if (error_id == 'NO_READINGS') {
             report_error(error_id, 'NO READINGS available for this sensor.');
-            return;
+            //return;
         }
     }
-
-    let readings = results["readings"];
-
-    let sensor_metadata = results["sensor_metadata"];
-
+    else {
+        readings = results["readings"];
+        sensor_metadata = results["sensor_metadata"];
+        // Setup onchange callbacks to update chart on feature change
+        feature = init_feature_select(readings, sensor_metadata);
+    }
     loading_el.className = 'loading_hide'; // set style "display: none"
 
-    //let features = handle_sensor_metadata(sensor_metadata);
-
-    // Setup onchange callbacks to update chart on feature or date changes
-    let feature = init_feature_select(readings, sensor_metadata);
 
     if (feature != null) {
         set_date_onclicks(feature['feature_id']);
@@ -312,7 +313,7 @@ function draw_chart(readings, feature) {
     console.log('draw_chart', feature, 'size=' + readings.length, readings);
 
     // do nothing if no data is available
-    if (readings.length == 0) return;
+    //if (readings.length == 0) return;
 
     var chart_xScale; // d3 scale fn for x axis
     var chart_xAxis; // x axis
@@ -392,7 +393,10 @@ function draw_chart(readings, feature) {
     // **********************
     chart_xScale = d3.scaleTime().range([0, chart_width]); // value -> display
 
-    var min_date = d3.min(readings, chart_xValue);
+    let min_date = new Date(plot_date)
+    if (readings.length > 0) {
+        min_date = d3.min(readings, chart_xValue);
+    }
     min_date.setHours(CHART_START_TIME);
     min_date.setMinutes(0);
     min_date.setSeconds(0);
@@ -593,29 +597,31 @@ function draw_chart(readings, feature) {
     // *******************************
     // add text for latest datapoint
     // *******************************
-    var p = readings[readings.length - 1];
-    var tooltip_element =chart_graph.append("g").attr('id', 'tooltip_el').style('opacity',1);
+    if (readings.length > 0) {
+        var p = readings[readings.length - 1];
+        var tooltip_element =chart_graph.append("g").attr('id', 'tooltip_el').style('opacity',1);
 
-    tooltip_element.append("rect")
-        .attr('x', chart_xMap(p) + CHART_DOT_RADIUS + 4)
-        .attr('y', chart_yMap(p) - 27)
-        .attr('width', 140)
-        .attr('height', 36)
-        .attr('rx', 6)
-        .attr('ry', 6)
-        .style('fill', 'white')
+        tooltip_element.append("rect")
+            .attr('x', chart_xMap(p) + CHART_DOT_RADIUS + 4)
+            .attr('y', chart_yMap(p) - 27)
+            .attr('width', 140)
+            .attr('height', 36)
+            .attr('rx', 6)
+            .attr('ry', 6)
+            .style('fill', 'white')
 
-    var p_time = make_date(p.acp_ts);
-    var p_time_str = ' @ ' + ('0' + p_time.getHours()).slice(-2) + ':' + ('0' + p_time.getMinutes()).slice(-2);
-    tooltip_element.append("text")
-        .attr('x', chart_xMap(p))
-        .attr('y', chart_yMap(p))
-        .attr('dx', CHART_DOT_RADIUS + 10)
-        .style('font-size', '22px')
-        .style('fill', '#333')
-        .text(jsonPath(p, feature['jsonpath']) + p_time_str);
-
-        chart_graph.transition().duration(200).style('opacity',1)
+        var p_time = make_date(p.acp_ts);
+        var p_time_str = ' @ ' + ('0' + p_time.getHours()).slice(-2) + ':' + ('0' + p_time.getMinutes()).slice(-2);
+        tooltip_element.append("text")
+            .attr('x', chart_xMap(p))
+            .attr('y', chart_yMap(p))
+            .attr('dx', CHART_DOT_RADIUS + 10)
+            .style('font-size', '22px')
+            .style('fill', '#333')
+            .text(jsonPath(p, feature['jsonpath']) + p_time_str);
+    }
+    
+    chart_graph.transition().duration(200).style('opacity',1)
     //---------------------------------------------------------------------------//
     //---------------------------------------------------------------------------//
     //---------------------------------------------------------------------------//
@@ -833,5 +839,5 @@ function update_url(feature, date) {
 // Something has gone wrong, so give the user at least a clue
 function report_error(error_id, error_msg) {
     console.log("reporting error", error_id, error_msg);
-    document.getElementById('chart').textContent = error_msg;
+    document.getElementById('popup_message').textContent = error_msg;
 }
