@@ -176,6 +176,47 @@ body {
 }
 
 /* ***************************************************************** */
+/* Contextual links                                                  */
+/* ***************************************************************** */
+
+.contextual_links {
+    background-color: #ffaaaa;
+}
+
+.contextual_link_active {
+    background-color: #99ee99;
+    display: inline-block;
+    font-size: 24px; /* Increase font-size */
+    padding: 12px 12px 12px 12px; /* Add some padding */
+    border: 1px solid #ddd; /* Add a grey border */
+    margin: 4px;
+    display: inline-block;
+    border-radius: 8px;
+    cursor: default;
+}
+
+.contextual_link_active a {
+    text-decoration: none;
+}
+
+.contextual_link {
+    background-color: lightblue;
+    display: inline-block;
+    font-size: 24px; /* Increase font-size */
+    padding: 12px 12px 12px 12px; /* Add some padding */
+    border: 1px solid #ddd; /* Add a grey border */
+    margin: 4px;
+    display: inline-block;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.contextual_link a {
+    text-decoration: none;
+}
+
+
+/* ***************************************************************** */
 /* Generally useful CSS classes                                      */
 /* ***************************************************************** */
 
