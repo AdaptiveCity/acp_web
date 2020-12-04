@@ -120,6 +120,8 @@ body {
 .card_title {
     width: 100%;
     text-align: center;
+    font-size: 1.5em;
+    background-color: #aaf0ff;
 }
 
 .card_image {

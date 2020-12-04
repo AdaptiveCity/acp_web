@@ -4,10 +4,10 @@
 
 {% block head %}
     <!-- Our style sheets -->
-    <link rel="stylesheet" type="text/css" href="{% static 'sensor/css/sensor.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/sensor.css' %}" />
 
     <!-- chart.js defines class SensorChart-->
-    <script type='text/javascript' src="{% static 'sensor/js/sensor.js' %}"></script>
+    <script type='text/javascript' src="{% static 'data_management/js/sensor_edit.js' %}"></script>
 
     <!-- Page local script -->
     <script type="text/javascript">
@@ -45,7 +45,7 @@ Sensor {{ ACP_ID }}
 
 {% block content %}
 
-{% include "data_management/sensor_tabs.html" %}
+{% include "data_management/includes/sensor_tabs.html" %}
 
 <div id="sensor_info">
     <h2>Sensor Metadata</h2>

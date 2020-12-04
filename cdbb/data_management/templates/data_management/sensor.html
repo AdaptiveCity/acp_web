@@ -4,19 +4,19 @@
 
 {% block head %}
     <!-- Our style sheets -->
-    <link rel="stylesheet" type="text/css" href="{% static 'sensor/css/sensor.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/sensor.css' %}" />
 
     <!-- chart.js defines class SensorChart-->
-    <script type='text/javascript' src="{% static 'sensor/js/sensor.js' %}"></script>
+    <script type='text/javascript' src="{% static 'data_management/js/sensor.js' %}"></script>
 
     <!-- Page local script -->
     <script type="text/javascript">
-        var API_SENSORS = '{{ API_SENSORS }}';
         var ACP_ID = '{{ ACP_ID }}'; // e.g. 'temperature'
         // Note this embeds "acp_type_id" in the link, to be replaced in the JS
-        var SENSOR_TYPE_LINK = "{% url 'sensor_type' 'acp_type_id' %}";
+        var SENSOR_TYPE_LINK = "{% url 'dm_sensor_type' 'acp_type_id' %}";
         // This link will embed the correct acp_id value as was given for this page
         var SENSOR_CHART_LINK = "{% url 'sensor_chart' acp_id %}";
+        var SENSOR_METADATA = JSON.parse('{{ SENSOR_METADATA|escapejs }}');
     </script>
 {% endblock %}
 
@@ -45,7 +45,7 @@ Sensor {{ ACP_ID }}
 
 {% block content %}
 
-{% include "data_management/sensor_tabs.html" %}
+{% include "data_management/includes/sensor_tabs.html" %}
 
 <div id="sensor_info">
     <h2>Sensor Metadata</h2>

@@ -1,0 +1,18 @@
+<div class="contextual_links">
+    {% if '/sensor/' in request.path %}<div class="contextual_link_active">{% else %}<div class="contextual_link">{% endif %}
+        <a href="{% url 'dm_sensor' acp_id %}">View Sensor</a>
+    </div>
+    {% if '/sensor_history/' in request.path %}<div class="contextual_link_active">{% else %}<div class="contextual_link">{% endif %}
+        <a href="{% url 'dm_sensor_history' acp_id %}">History</a>
+    </div>
+    {% if '/sensor_edit/' in request.path %}<div class="contextual_link_active">{% else %}<div class="contextual_link">{% endif %}
+        <a href="{% url 'dm_sensor_edit' acp_id %}">Edit</a>
+    </div>
+    <div class="contextual_link">
+        <a href="{% url 'sensor_chart' acp_id %}">&#10132;Readings</a>
+    </div>
+    <div class="contextual_link">
+        <!-- note class "acp_type_id" will have the JS replace 'acp_type_id' with the correct value -->
+        <a class="acp_type_id" href="{% url 'dm_sensor_type' 'acp_type_id' %}">&#10132;Sensor Type</a>
+    </div>
+</div><!-- end contextual_links -->
