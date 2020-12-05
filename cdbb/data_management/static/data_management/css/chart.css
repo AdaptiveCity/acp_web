@@ -2,11 +2,6 @@ html {
     height: 100%;
 }
 
-body {
-    height: 100%;
-    margin: 0;
-}
-
 .selection_wrapper {
   text-align: center;
   display: block;
@@ -107,8 +102,8 @@ input[type=date], select {
 # SVG Chart css
 ####################### */
 #chart {
-    width: 97vw;
-    height: calc(100vh - 200px);
+    width: calc(100vw - 50px);
+    height: calc(100vh - 300px);
     margin: 5px 5px 5px 10px;
 }
 

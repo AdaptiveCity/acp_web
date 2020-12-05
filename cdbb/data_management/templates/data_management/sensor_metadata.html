@@ -7,25 +7,21 @@
     <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/sensor.css' %}" />
 
     <!-- chart.js defines class SensorChart-->
-    <script type='text/javascript' src="{% static 'data_management/js/sensor_history.js' %}"></script>
+    <script type='text/javascript' src="{% static 'data_management/js/sensor.js' %}"></script>
 
     <!-- Page local script -->
     <script type="text/javascript">
         var ACP_ID = '{{ ACP_ID }}'; // e.g. 'temperature'
         // Note this embeds "acp_type_id" in the link, to be replaced in the JS
-        var SENSOR_TYPE_LINK = "{% url 'sensor_type' 'acp_type_id' %}";
+        var SENSOR_TYPE_LINK = "{% url 'dm_sensor_type' 'acp_type_id' %}";
         // This link will embed the correct acp_id value as was given for this page
         var SENSOR_CHART_LINK = "{% url 'sensor_chart' acp_id %}";
-
-        var API_SENSOR_INFO = JSON.parse('{{ API_SENSOR_INFO|escapejs }}');
-        var API_SENSOR_HISTORY = JSON.parse('{{ API_SENSOR_HISTORY|escapejs }}');
-        var ACP_TYPE_INFO = JSON.parse('{{ ACP_TYPE_INFO|escapejs }}');
-
+        var SENSOR_METADATA = JSON.parse('{{ SENSOR_METADATA|escapejs }}');
     </script>
 {% endblock %}
 
 {% block header_title %}
-Sensor History {{ ACP_ID }}
+Sensor Metadata {{ ACP_ID }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -42,7 +38,7 @@ Sensor History {{ ACP_ID }}
         &gt; <a href="{% url 'dm_sensors' %}">Sensors</a>
     </div>
     <div class="breadcrumb">
-        &gt; Sensor History {{ ACP_ID }}
+        &gt; Sensor {{ ACP_ID }}
     </div>
 </div>
 {% endblock %}
@@ -51,9 +47,14 @@ Sensor History {{ ACP_ID }}
 
 {% include "data_management/includes/sensor_tabs.html" %}
 
-<div id="sensor_history">
-    <h2>Sensor History</h2>
-    <!-- javascript will add  sensor history data -->
+<div id="sensor_info">
+    <h2>Sensor Metadata</h2>
+    <!-- javascript will add  <pre id="sensor_metadata">...</pre> -->
+</div>
+
+<div id="type_info">
+    <h2>Sensor Type Metadata for type <div id="type_heading_type"></div></h2>
+    <!-- javascript will add  <pre id="sensor_type_metadata">...</pre> -->
 </div>
 
 {% endblock %} <!-- end content -->
@@ -62,7 +63,7 @@ Sensor History {{ ACP_ID }}
 {% block lazy_script %}
 <script>
     console.log('lazy_script');
-    var sensor_history = new SensorHistory();
-    sensor_history.init();
+    var sensor = new Sensor();
+    sensor.init();
 </script>
 {% endblock %} <!-- lazy_script -->

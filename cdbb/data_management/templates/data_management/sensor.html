@@ -4,19 +4,26 @@
 
 {% block head %}
     <!-- Our style sheets -->
-    <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/sensor.css' %}" />
+
+    <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/chart.css' %}" />
+
+    <script src="{% static 'js/d3.v5.min.js' %}" charset="utf-8"></script>
+    <script src="{% static 'js/sockjs.min.js' %}" charset="utf-8"></script>
+    <script src="{% static 'js/jquery.min.js' %}" charset="utf-8"></script>
+    <script src="{% static 'js/jsonpath.js' %}" charset="utf-8"></script>
 
     <!-- chart.js defines class SensorChart-->
-    <script type='text/javascript' src="{% static 'data_management/js/sensor.js' %}"></script>
+    <script type='text/javascript' src="{% static 'data_management/js/sensor_chart.js' %}"></script>
 
     <!-- Page local script -->
     <script type="text/javascript">
-        var ACP_ID = '{{ ACP_ID }}'; // e.g. 'temperature'
-        // Note this embeds "acp_type_id" in the link, to be replaced in the JS
-        var SENSOR_TYPE_LINK = "{% url 'dm_sensor_type' 'acp_type_id' %}";
-        // This link will embed the correct acp_id value as was given for this page
-        var SENSOR_CHART_LINK = "{% url 'sensor_chart' acp_id %}";
-        var SENSOR_METADATA = JSON.parse('{{ SENSOR_METADATA|escapejs }}');
+        var ACP_ID = '{{ ACP_ID }}';
+        var SENSOR_REALTIME = '{{ SENSOR_REALTIME }}'; // URL for rtmonitor websocket
+        var YYYY = '{{ YYYY }}';
+        var MM = '{{ MM }}';
+        var DD = '{{ DD }}';
+        var FEATURE = '{{ FEATURE }}'; // e.g. 'temperature'
+        var SENSOR_READINGS = JSON.parse('{{ SENSOR_READINGS | escapejs }}');
     </script>
 {% endblock %}
 
@@ -47,14 +54,49 @@ Sensor {{ ACP_ID }}
 
 {% include "data_management/includes/sensor_tabs.html" %}
 
-<div id="sensor_info">
-    <h2>Sensor Metadata</h2>
-    <!-- javascript will add  <pre id="sensor_metadata">...</pre> -->
-</div>
+<div id="zoom_hint"></div>
 
-<div id="type_info">
-    <h2>Sensor Type Metadata for type <div id="type_heading_type"></div></h2>
-    <!-- javascript will add  <pre id="sensor_type_metadata">...</pre> -->
+<div class="selection_wrapper">
+
+<form id="selection_form">
+    <div class="nav_date" id="back_1_week">&lt; Week</div>
+    <div class="nav_date" id="back_1_day">&lt; Day</div>
+    <div class="selection_input">
+        <div class="input_label">Date:</div>
+        <div class="input_box">
+            <input type="date" name="date" id="form_date" value="2020-03-15">
+        </div>
+    </div>
+    <div class="selection_input">
+        <div class="input_label">Feature:</div>
+        <div class="input_box">
+            <select id="form_feature" name="feature">
+                <option>Select feature</option>
+            </select>
+        </div>
+    </div>
+    <div class="nav_date" id="forward_1_day">Day &gt;</div>
+    <div class="nav_date" id="forward_1_week">Week &gt;</div>
+</form>
+
+</div> <!-- end selection_wrapper -->
+
+<div id="popup_message"></div>
+<div id="chart" class="chart">
+  <div id="loading">
+    <img src="{% static 'sensor/images/loader.gif' %}"></img>
+  </div>
+  <!-- <canvas id="chart_canvas"></canvas> -->
+</div><!-- end chart_wrapper -->
+<div id="chart_tooltip">
+</div>
+<!-- div to hold pop-up full reading -->
+<div id="reading_popup">
+    <div id="reading_close">
+        <img src="{% static 'sensor/images/reading_close.png' %}"/>
+    </div>
+    <pre id="reading_content">
+    </pre>
 </div>
 
 {% endblock %} <!-- end content -->
@@ -63,7 +105,6 @@ Sensor {{ ACP_ID }}
 {% block lazy_script %}
 <script>
     console.log('lazy_script');
-    var sensor = new Sensor();
-    sensor.init();
+    init();
 </script>
 {% endblock %} <!-- lazy_script -->

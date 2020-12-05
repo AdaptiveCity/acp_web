@@ -54,7 +54,7 @@ function init() {
 
     // Can use get_local_readings() to shim the API (copywrite jb2328)
     //get_local_readings();
-    get_readings();
+    handle_readings(SENSOR_READINGS);
 
 }
 
