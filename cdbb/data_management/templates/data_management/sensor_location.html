@@ -4,19 +4,31 @@
 
 {% block head %}
     <!-- Our style sheets -->
-    <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/sensor.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/floorspace.css' %}" />
 
-    <!-- chart.js defines class SensorChart-->
-    <script type='text/javascript' src="{% static 'data_management/js/sensor_location.js' %}"></script>
+    <!-- Local copy of d3 -->
+    <script type="text/javascript" src="{% static 'js/d3.v5.min.js' %}"></script>
+
+    <!-- viz_tools contains some common rendering functions, uses parse_readings, jsonpath -->
+    <script type="text/javascript" src="{% static 'js/jsonpath.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/parse_readings.js' %}"></script>
+    <script type='text/javascript' src="{% static 'data_management/js/viz_tools.js' %}"></script>
+
+    <script type='text/javascript' src="{% static 'data_management/js/floorspace.js' %}"></script>
 
     <!-- Page local script -->
     <script type="text/javascript">
-        var API_SENSORS = '{{ API_SENSORS }}';
         var ACP_ID = '{{ ACP_ID }}'; // e.g. 'temperature'
-        // Note this embeds "acp_type_id" in the link, to be replaced in the JS
-        var SENSOR_TYPE_LINK = "{% url 'sensor_type' 'acp_type_id' %}";
         // This link will embed the correct acp_id value as was given for this page
         var SENSOR_CHART_LINK = "{% url 'sensor_chart' acp_id %}";
+        var API_BIM = '{{ API_BIM }}';
+        var API_SENSORS = '{{ API_SENSORS }}';
+        var API_READINGS = '{{ API_READINGS }}';
+        var API_SPACE = '{{ API_SPACE }}';
+        var CRATE_ID = '{{ CRATE_ID }}';
+        var SENSOR_LINK = "{% url 'sensor' 'acp_id' %}"; // we will replace id as required
+        var FLOORSPACE_LINK = '{% url "space_floorspace" "crate_id" %}';
+
     </script>
 {% endblock %}
 
@@ -47,23 +59,23 @@ Sensor Location {{ ACP_ID }}
 
 {% include "data_management/includes/sensor_tabs.html" %}
 
-<div id="sensor_info">
-    <h2>Sensor Metadata</h2>
-    <!-- javascript will add  <pre id="sensor_metadata">...</pre> -->
+<div id="drawing_coords">0,0</div>
+
+<div class="drawing_div" id="main_drawing_div">
+    <svg class="drawing_svg" id="drawing_svg">
+    </svg>
 </div>
 
-<div id="type_info">
-    <h2>Sensor Type Metadata for type <div id="type_heading_type"></div></h2>
-    <!-- javascript will add  <pre id="sensor_type_metadata">...</pre> -->
+<!-- TOOLTIP - will be made visible/invisible as mouse moves over sensors -->
+<div id="tooltip" class="tooltip">
 </div>
-
 {% endblock %} <!-- end content -->
 
 <!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
 {% block lazy_script %}
 <script>
     console.log('lazy_script');
-    var sensor = new Sensor();
+    var sensor = new FloorSpace();
     sensor.init();
 </script>
 {% endblock %} <!-- lazy_script -->

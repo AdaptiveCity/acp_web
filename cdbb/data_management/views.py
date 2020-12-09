@@ -87,7 +87,10 @@ class DMSensorLocationView(LoginRequiredMixin, TemplateView):
             context = super().get_context_data(**kwargs)
             context['API_BIM'] = settings.API_BIM
             context['API_SENSORS'] = settings.API_SENSORS
+            context['API_READINGS'] = settings.API_READINGS
+            context['API_SPACE'] = settings.API_SPACE
             context['ACP_ID'] = self.kwargs['acp_id']
+            context['CRATE_ID'] = 'FE11' #DEBUG derive CRATE_ID from sensor
 
             return context
 
