@@ -18,13 +18,14 @@
 
     <!-- Page local script -->
     <script type="text/javascript">
-        var ACP_ID = '{{ ACP_ID }}'; // e.g. 'temperature'
-        // This link will embed the correct acp_id value as was given for this page
-        var SENSOR_CHART_LINK = "{% url 'sensor_chart' acp_id %}";
-        var API_BIM = '{{ API_BIM }}';
-        var API_SENSORS = '{{ API_SENSORS }}';
-        var API_READINGS = '{{ API_READINGS }}';
-        var API_SPACE = '{{ API_SPACE }}';
+        var ACP_ID = '{{ ACP_ID }}'; // e.g. 'elsys-eye-04504'
+
+        var API_READINGS = '{{ API_READINGS }}'; //DEBUG will remove this JS direct API call
+
+        // Information for all sensors in BIM object (crate_id)
+        var API_SENSORS_INFO = JSON.parse('{{ API_SENSORS_INFO | escapejs }}');
+        var API_BIM_INFO = JSON.parse('{{ API_BIM_INFO | escapejs }}');
+        var API_SPACE_INFO = JSON.parse('{{ API_SPACE_INFO | escapejs }}');
         var CRATE_ID = '{{ CRATE_ID }}';
         var SENSOR_LINK = "{% url 'sensor' 'acp_id' %}"; // we will replace id as required
         var FLOORSPACE_LINK = '{% url "space_floorspace" "crate_id" %}';

@@ -68,24 +68,11 @@ class FloorSpace {
         this.previous_circle_radius = 0; // set on mouse over, used to remember radius for reset on mouse out.
 
         // Do an http request to the SPACE api, and call handle_building_space_data() on arrival
-        this.get_floorspace_crate(parent);
+        this.handle_floorspace_crate(parent, API_BIM_INFO[CRATE_ID]);
 
-    }
+        this.handle_floor_svg(parent, API_SPACE_INFO);
 
-    // Use BIM api to get data for this floor
-    get_floorspace_crate(parent) {
-        var request = new XMLHttpRequest();
-        request.overrideMimeType('application/json');
-
-        request.addEventListener("load", function () {
-            var crate_obj = JSON.parse(request.responseText)
-            // Note the BIM api returns a list
-            parent.handle_floorspace_crate(parent, crate_obj[CRATE_ID]);
-        });
-        let api_url = API_BIM + "get_xyzf/" + CRATE_ID + "/0/";
-        console.log("floorspace.js get_floorspace_crate() requesting "+api_url);
-        request.open("GET", api_url);
-        request.send();
+        this.handle_sensors_metadata(parent, API_SENSORS_INFO);
     }
 
     // Will be called with a crate object when that is returned by BIM api
@@ -98,38 +85,18 @@ class FloorSpace {
         console.log("loaded BIM data for crate ", crate["crate_id"],
                     parent.floor_coordinate_system + "/" + parent.floor_number);
 
-        //let floorspace_bim_txt = JSON.stringify(crate, null, 2);
-        //var bim_div = document.getElementById('bim_content')
-        //bim_div.innerHTML = "<pre>" + floorspace_bim_txt + "</pre>";
-
-        parent.get_floor_svg(parent);
     }
 
-    // We get the SVG for the floor using *floor number* in the "acp_location_xyz" property
-    get_floor_svg(parent) {
-
-        var space_api_url = API_SPACE + 'get_floor_number/' +
-            parent.floor_coordinate_system + '/' + parent.floor_number + '/';
-
-        console.log('get_floor_svg() requesting', space_api_url);
-
-        var request = new XMLHttpRequest();
-        request.overrideMimeType('application/xml');
-
-        request.addEventListener("load", function () {
-            var xml = request.responseXML
-            parent.handle_floor_svg(parent, xml);
-        });
-
-        request.open("GET", space_api_url);
-        request.send();
-    }
-
-    handle_floor_svg(parent, xml) {
-        console.log("handle_floor_svg() loaded floor SVG", xml);
+    handle_floor_svg(parent, space_info) {
+        console.log("handle_floor_svg() loaded floor SVG", space_info);
         let scale = 8.3; //DEBUG
 
-        // Remove the "floor" crate from the SVG
+        let xmlStr = atob(space_info["svg_encoded"]);
+
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(xmlStr, "application/xml");
+         // Remove the "floor" crate from the SVG
+
         let floors = xml.querySelectorAll('polygon[data-crate_type=floor]');
         floors.forEach( function (el) {
             console.log("removing crate "+el.id);
@@ -196,9 +163,6 @@ class FloorSpace {
                 console.log('CLICKED ON FLOOR_PLAN', d3.select(this))
             });
 
-
-        // call SENSORS api to get the metadata for sensors on this floor
-        parent.get_sensors_metadata(parent);
     }
 
     // Add the svg objects to the DOM parent SVG (but invisible)
@@ -265,26 +229,6 @@ class FloorSpace {
         window.location = '/wgb/floor/' + floor
     }
 
-    // Get the metadata from the SENSORS api for the sensors on this floor
-    get_sensors_metadata(parent) {
-        var request = new XMLHttpRequest();
-        request.overrideMimeType('application/json');
-
-        request.addEventListener("load", function () {
-            var sensors_data = JSON.parse(request.responseText)
-            parent.handle_sensors_metadata(parent, sensors_data["sensors"]);
-        });
-        // Using globals from floor BIM crate object retrieved earlier:
-        //   floor_coordinate_system
-        //   floor_number
-        // call /api/sensors/get_floor_number/<coordinate_system>/<floor_number>/
-        var sensors_api_url = API_SENSORS + 'get_bim/' + parent.floor_coordinate_system +'/'+ CRATE_ID + '/';
-
-        console.log("get_sensors_metadata() ", sensors_api_url);
-        request.open("GET", sensors_api_url);
-        request.send();
-    }
-
     handle_sensors_metadata(parent, sensors) {
         console.log("handle_sensors_metadata() loaded", sensors);
 
@@ -303,8 +247,8 @@ class FloorSpace {
         let rad = 0.25; // radius of sensor icon in METERS (i.e. XYZF before transform)
 
         //iterate through results to extract data required to show sensors on the floorplan
-        for (let acp_id in sensors) {
-            let sensor = sensors[acp_id];
+        for (let acp_id in sensors["sensors"]) {
+            let sensor = sensors["sensors"][acp_id];
             // Skip sensors that don't have xyz coords
             //DEBUG we *could* put them in some default position relative to crate
             if ( !sensor.hasOwnProperty('acp_location_xyz')) {
@@ -318,15 +262,16 @@ class FloorSpace {
                 let y_value = -sensor['acp_location_xyz']['y']
                 let floor_id = sensor['acp_location_xyz']['f']
 
+                let fill = (acp_id != ACP_ID) ? "#ffaaaa" : "purple";
+
                 d3.select("#bim_request").append("circle")
                     .attr("cx", x_value)
                     .attr("cy", y_value)
                     .attr("r", rad)
                     .attr("id", acp_id)
                     .style("opacity", opac)
-                    .style("fill", "purple")
+                    .style("fill", fill)
                     .attr("transform", parent.svg_transform);
-
             } catch (error) {
                 console.log(acp_id, error)
             }

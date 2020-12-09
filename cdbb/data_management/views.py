@@ -85,12 +85,36 @@ class DMSensorLocationView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
+
+            # Get crate_id from the metadata for the selected sensor
+            response = requests.get(settings.API_SENSORS+'get/'+self.kwargs['acp_id']+'/')
+            sensor_info = response.json()
+            crate_id = sensor_info["crate_id"] if "crate_id" in sensor_info else None
+
+            # Get crate floor_number and system
+            response = requests.get(settings.API_BIM+f'get_xyzf/{crate_id}/0/')
+            bim_info = response.json()
+            floor_number = bim_info[crate_id]["acp_location_xyz"]["f"];
+            system = bim_info[crate_id]["acp_location"]["system"]
+
+            # Get metadata for all sensors in the same crate (including selected sensor)
+            response = requests.get(settings.API_SENSORS+f'get_bim/{system}/{crate_id}/')
+            sensors_info = response.json()
+
+            # Get floor SVG
+            response = requests.get(settings.API_SPACE+f'get_floor_number_json/{system}/{floor_number}/')
+            space_info = response.json()
+
             context['API_BIM'] = settings.API_BIM
             context['API_SENSORS'] = settings.API_SENSORS
             context['API_READINGS'] = settings.API_READINGS
             context['API_SPACE'] = settings.API_SPACE
+
             context['ACP_ID'] = self.kwargs['acp_id']
-            context['CRATE_ID'] = 'FE11' #DEBUG derive CRATE_ID from sensor
+            context['CRATE_ID'] = crate_id
+            context['API_BIM_INFO'] = json.dumps(bim_info)
+            context['API_SENSORS_INFO'] = json.dumps(sensors_info)
+            context['API_SPACE_INFO'] = json.dumps(space_info)
 
             return context
 
