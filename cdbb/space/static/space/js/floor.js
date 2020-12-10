@@ -80,6 +80,7 @@ class SpaceFloor {
         this.range_offset = 2;
 
         document.getElementById('show_heatmap').addEventListener('click', () => {
+
             parent.show_heatmap(parent);
         })
 
@@ -89,7 +90,7 @@ class SpaceFloor {
 
     }
 
-    get_min_max(parent){
+    get_min_max(parent) {
         console.log('minmax hello')
 
         let min = 999;
@@ -351,7 +352,8 @@ class SpaceFloor {
         for (let sensor in results) {
             try {
                 // Create API url for sensor reading AND metadata
-                let readings_url = API_READINGS + 'get/' + sensor + '/?metadata=false';
+                let readings_url = 'https://tfc-app9.cl.cam.ac.uk/api/readings/get_feature/' + sensor + '/temperature/' //elsys-eye-048163
+                //API_READINGS + 'get/' + sensor + '/?metadata=false';
                 console.log('sensor fetching', readings_url)
 
                 d3.json(readings_url, {
@@ -553,12 +555,14 @@ class SpaceFloor {
 
                             myColor = d3.scaleSequential(d3.interpolateInferno)
                                 .domain([min, max]);
-                            let color = myColor(parent.getHeatmap(parent, selected_crate, loc, crates_with_sensors));
+                           
+                                let cell_value=parent.getHeatmap(parent, selected_crate, loc, crates_with_sensors);
+                            let color = myColor(cell_value);
 
 
                             main_svg
                                 .append("rect")
-                                .style('pointer-events', 'none')
+                                //.style('pointer-events', 'none')
                                 .attr('class', class_name)
 
                                 .attr("x", function (d) {
@@ -571,18 +575,22 @@ class SpaceFloor {
                                 .attr("height", step - offset)
                                 .style('opacity', 0)
                                 //.style("fill", 'pink')
-                                
-                                .transition() // <------- TRANSITION STARTS HERE --------
-                                .delay(function (d, i) {
-                                    return rect_count * 2;
-                                })
-                                .duration(1000)
+
+                                // .transition() // <------- TRANSITION STARTS HERE --------
+                                // .delay(function (d, i) {
+                                //     return rect_count * 2;
+                                // })
+                                // .duration(1000)
 
                                 .style("fill", function (d) {
                                     return color
                                 })
+                                .attr('data-value', cell_value)
+                                .style('opacity', 0.75)
 
-                                .style('opacity', 0.75);
+                                .on("mouseover", function (d) {
+                                    console.log(this.dataset.value)
+                                });
                         }
                     }
                 }
@@ -598,8 +606,11 @@ class SpaceFloor {
     }
 
     hide_heatmap(parent) {
-        parent.get_floor_heatmap(parent)
+        parent.get_floor_heatmap(parent);
+
         d3.selectAll('#heatmap').remove();
+        d3.selectAll('circle').style('opacity', 0.5);
+        parent.set_legend(parent)
 
     }
     getHeatmap(parent, crate, coords, crate_list) {
@@ -660,32 +671,36 @@ class SpaceFloor {
         //  console.log('cd',combined_dist)
         console.log('calculating new data points', data_points)
 
+        let C = 0;
+        let D = 0;
         data_points.forEach(points => {
 
-            let percentile = points.dist / combined_dist;
-
             if (points.dist != combined_dist) {
-                
-                let pre_final=1 - percentile;
-                let additive_value=points.value * pre_final;
-                final_val += additive_value;
 
-                console.log(points.value, "*(1-(", points.dist, "/", combined_dist, "))", 'perc', Math.round(pre_final*100)+"%",'additive',additive_value)
-                console.log('final add prev',Math.round(final_val),Math.round(additive_value),Math.round(final_val-additive_value))
+                let B = 0;
+
+                data_points.forEach(points2 => {
+                    B += combined_dist / points2.dist;
+                });
+
+                let A = combined_dist / points.dist;
+
+                C = A * (1 / B) * points.value;
+
+                D += C;
 
             } else {
                 final_val = points.value;
                 console.log('single sensor')
             }
 
-
         })
 
-        console.log('sensor final val',final_val)
+        console.log('sensor final val', final_val, C, D)
 
         col = col / combined_dist;
 
-        return final_val; // myColor(Math.floor(Math.random()*100))
+        return D == 0 ? final_val : D; // myColor(Math.floor(Math.random()*100))
     }
 
     dist(loc_one, loc_two) {
@@ -736,13 +751,22 @@ class SpaceFloor {
 
     set_colorbar(parent, colorScale) {
         d3.select("#legend_svg").remove();
+        d3.selectAll('circle').style('opacity', 0);
+
 
         //configure canvas size and margins, returns and object
         //(width, height,top, right, bottom, left)
         let c_conf = parent.jb_tools.canvas_conf(110, 320, 10, 5, 10, 5);
-        //create a canvas with predefined settings
-        parent.legend_svg = parent.jb_tools.make_canvas(c_conf, '#legend_container', "translate(" + c_conf.left + "," + c_conf.top + ")");
 
+        parent.legend_svg = d3.select('#legend_container')
+            .append("svg")
+            .attr("width", c_conf.width + c_conf.left + c_conf.right)
+            .attr("height", c_conf.height + c_conf.top + c_conf.bottom)
+            .attr('id', "legend_svg");
+        //create a canvas with predefined settings
+        //    parent.legend_svg = parent.jb_tools.make_canvas(c_conf, '#legend_container', "translate(" + c_conf.left + "," + c_conf.top + ")");
+
+        // parent.legend_svg.attr('id',"legend_svg")
         // var colorScale = d3.scaleSequential(d3.interpolateWarm)
         //     .domain([parent.min_max_range.min, parent.min_max_range.max])
 
@@ -765,7 +789,7 @@ class SpaceFloor {
         //create a series of bars comprised of small rects to create a gradient illusion
         let bar = parent.legend_svg.selectAll(".bars")
             .data(d3.range(0, c_conf.height), function (d) { //c_conf.width c_conf. parent.min_max_range.min, parent.min_max_range.max
-          //      console.log(d)
+                //      console.log(d)
                 return d;
             })
             .enter().append("rect")
