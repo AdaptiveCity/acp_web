@@ -14,6 +14,43 @@ class VizTools2 {
 
     }
 
+
+    inside(point, vs) {
+        // ray-casting algorithm based on
+        // https://wrf.ecse.rpi.edu/Research/Short_Notes/pnpoly.html/pnpoly.html
+
+        // array of coordinates of each vertex of the polygon
+        // var polygon = [ [ 1, 1 ], [ 1, 2 ], [ 2, 2 ], [ 2, 1 ] ];
+        // inside([ 1.5, 1.5 ], polygon); // true
+
+        var x = point.x,
+            y = point.y;
+
+        // console.log(vs)
+        var inside = false;
+        for (var i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+            var xi = vs[i].x,
+                yi = vs[i].y;
+            var xj = vs[j].x,
+                yj = vs[j].y;
+
+            var intersect = ((yi > y) != (yj > y)) &&
+                (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+            if (intersect) inside = !inside;
+        }
+        // console.log(inside, point.x, point.y, vs)
+        return inside;
+    };
+
+    dist(loc_one, loc_two) {
+        let x1 = loc_one.x;
+        let y1 = loc_one.y;
+
+        let x2 = loc_two.x;
+        let y2 = loc_two.y;
+
+        return Math.hypot(x2 - x1, y2 - y1)
+    }
  
     array_avg(arr) {
         return (arr.reduce((a, b) => a + b, 0) / arr.length)

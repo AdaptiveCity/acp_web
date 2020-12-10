@@ -16,6 +16,10 @@ class SpaceFloor {
         this.viz_tools = new VizTools();
         this.jb_tools = new VizTools2();
 
+        // Instantiate a Heatmap class
+        this.heatmap = new HeatMap(this);
+
+
         // Transform parameters to scale SVG to screen
         parent.svg_transform = ""; // updated by set_svg_transform()
         this.next_color = 0;
@@ -76,43 +80,43 @@ class SpaceFloor {
         this.get_floor_crate(parent);
 
 
-        this.min_max_range = {}
-        this.range_offset = 2;
+        // this.min_max_range = {}
+        // this.range_offset = 2;
 
         document.getElementById('show_heatmap').addEventListener('click', () => {
 
-            parent.show_heatmap(parent);
+            parent.heatmap.show_heatmap(parent);
         })
 
         document.getElementById('reset').addEventListener('click', () => {
-            parent.hide_heatmap(parent);
+            parent.heatmap.hide_heatmap(parent);
         })
 
     }
 
-    get_min_max(parent) {
-        console.log('minmax hello')
+    // get_min_max(parent) {
+    //     console.log('minmax hello')
 
-        let min = 999;
-        let max = -999;
+    //     let min = 999;
+    //     let max = -999;
 
-        for (let reading in parent.sensor_readings) {
+    //     for (let reading in parent.sensor_readings) {
 
-            let val = parent.sensor_readings[reading].temp;
-            if (val > max) {
-                max = val;
-            }
-            if (val < min) {
-                min = val;
-            }
-        }
+    //         let val = parent.sensor_readings[reading].temp;
+    //         if (val > max) {
+    //             max = val;
+    //         }
+    //         if (val < min) {
+    //             min = val;
+    //         }
+    //     }
 
-        parent.min_max_range = {
-            max: max,
-            min: min
-        };
-        console.log('minmax', min, max)
-    }
+    //     parent.min_max_range = {
+    //         max: max,
+    //         min: min
+    //     };
+    //     console.log('minmax', min, max)
+    // }
     // Use BIM api to get data for this floor
     get_floor_crate(parent) {
         var request = new XMLHttpRequest();
@@ -391,7 +395,7 @@ class SpaceFloor {
 
                     console.log('gottem', msg)
 
-                    parent.get_min_max(parent);
+                 //   parent.get_min_max(parent);
 
                 });
 
@@ -445,299 +449,263 @@ class SpaceFloor {
 
     }
 
-    show_heatmap(parent) {
-        // d3.selectAll('polygon').style('fill', 'white')
-        d3.selectAll('polygon').attr('class', 'g0-9')
+    // show_heatmap(parent) {
+    //     // d3.selectAll('polygon').style('fill', 'white')
+    //     d3.selectAll('polygon').attr('class', 'g0-9')
 
 
-        let main_svg = d3.select('#drawing_svg').append('g').attr('id', 'heatmap'); //parent.page_floor_svg;
+    //     let main_svg = d3.select('#drawing_svg').append('g').attr('id', 'heatmap'); //parent.page_floor_svg;
+
+    //     let h = parent.page_floor_svg.clientHeight;
+    //     let w = parent.page_floor_svg.clientWidth;
+      
+    //     //https://stackoverflow.com/questions/19154631/how-to-get-coordinates-of-an-svg-element
+    //     let scale = floor.transform.baseVal.consolidate().matrix.a
+    //     let counter = 0;
+    //     console.log('scale', scale)
+
+    //     let sensor_list = Object.keys(parent.sensor_readings);
+    //     let crates_with_sensors = {};
+    //     let crates_with_sensors_list = [];
+
+    //     for (let j = 0; j < sensor_list.length; j++) {
+    //         if (crates_with_sensors[parent.sensor_readings[sensor_list[j]].crate_id] == undefined) {
+    //             crates_with_sensors[parent.sensor_readings[sensor_list[j]].crate_id] = [];
+    //             crates_with_sensors[parent.sensor_readings[sensor_list[j]].crate_id].push(parent.sensor_readings[sensor_list[j]]);
+    //         } else {
+    //             crates_with_sensors[parent.sensor_readings[sensor_list[j]].crate_id].push(parent.sensor_readings[sensor_list[j]]);
+    //         }
+    //     }
+    //     crates_with_sensors_list = Object.keys(crates_with_sensors);
+
+
+    //     console.log('crates with sensor', crates_with_sensors)
+
+    //     let rect_count = 0;
+
+    //     var sequentialScale = d3.scaleSequential()
+    //         .domain([0, .5])
+    //         .interpolator(d3.interpolateRainbow);
+
+    //     var linearScale = d3.scaleLinear()
+    //         .range(['yellow', 'red']);
+
+    //     var powerScale = d3.scalePow()
+    //         .exponent(5)
+    //         .domain([0, 1])
+    //         .range(['yellow', 'red']);
+
+    //     var myColor;
+
+    //     d3.selectAll('polygon').nodes().forEach(element => {
+    //         // let bbox = element.getBoundingClientRect();
+    //         let has_sensors = crates_with_sensors_list.includes(element.id);
+    //         if (element.dataset.crate_type != 'building' && element.dataset.crate_type != 'floor' && has_sensors) {
+    //             let class_name = element.id + '_rect';
+    //             let bbox = element.getBBox();
+
+    //             let polygon_points = element.points;
+
+    //             let pol_h = bbox.height * scale;
+    //             let pol_w = bbox.width * scale;
+    //             let pol_top = bbox.y * scale;
+    //             let pol_left = bbox.x * scale;
+
+    //             let step = 10;
+    //             let offset = 0;
+    //             //console.log(bbox, bbox.width, polygon_points, [pol_h, pol_w, pol_top, pol_left])
+    //             counter++;
+
+    //             console.log('crates with sensors')
 
-        let h = parent.page_floor_svg.clientHeight;
-        let w = parent.page_floor_svg.clientWidth;
-        let bbox = d3.select('#bim_request').node().getBoundingClientRect();
+    //             for (let i = pol_left; i < pol_w + pol_left; i += step) {
+    //                 for (let u = pol_top; u < pol_h + pol_top; u += step) {
+    //                     rect_count++;
+    //                     let coords = {
+    //                         'x': i / scale,
+    //                         'y': u / scale,
+    //                         'height': h,
+    //                         'width': w
+    //                     };
 
-        // Build color scale
-        // var myColor = d3.scaleLinear()
-        //     .range(["white", "#69b3a2"])
-        //     .domain([1, 100])
+    //                     if (parent.inside(coords, polygon_points)) {
 
-        var myColor2 = d3.scaleLinear()
-            .range(["red", "blue"])
-            .domain([0, 7])
+    //                         let selected_crate = element.id;
+    //                         let loc = {
+    //                             x: i - step / 2,
+    //                             y: u - step / 2,
+    //                             scale: scale
+    //                         }
 
-        let yoff = 0;
+    //                         let min = parent.min_max_range.min;
+    //                         let max = parent.min_max_range.max;
 
-        let floor = document.querySelector("[data-crate_type='floor']");
-        let border = d3.select(floor).node().getBoundingClientRect()
-        let points = floor.points;
-
-
-
-        //https://stackoverflow.com/questions/19154631/how-to-get-coordinates-of-an-svg-element
-        let scale = floor.transform.baseVal.consolidate().matrix.a
-        let counter = 0;
-        console.log('scale', scale)
-
-        let sensor_list = Object.keys(parent.sensor_readings);
-        let crates_with_sensors = {};
-        let crates_with_sensors_list = [];
-
-        for (let j = 0; j < sensor_list.length; j++) {
-            if (crates_with_sensors[parent.sensor_readings[sensor_list[j]].crate_id] == undefined) {
-                crates_with_sensors[parent.sensor_readings[sensor_list[j]].crate_id] = [];
-                crates_with_sensors[parent.sensor_readings[sensor_list[j]].crate_id].push(parent.sensor_readings[sensor_list[j]]);
-            } else {
-                crates_with_sensors[parent.sensor_readings[sensor_list[j]].crate_id].push(parent.sensor_readings[sensor_list[j]]);
-            }
-        }
-        crates_with_sensors_list = Object.keys(crates_with_sensors);
-
-
-        console.log('crates with sensor', crates_with_sensors)
-
-        let rect_count = 0;
-
-        var sequentialScale = d3.scaleSequential()
-            .domain([0, .5])
-            .interpolator(d3.interpolateRainbow);
-
-        var linearScale = d3.scaleLinear()
-            .range(['yellow', 'red']);
-
-        var powerScale = d3.scalePow()
-            .exponent(5)
-            .domain([0, 1])
-            .range(['yellow', 'red']);
+    //                         myColor = d3.scaleSequential(d3.interpolateInferno)
+    //                             .domain([min, max]);
 
-        var myColor;
-        d3.selectAll('polygon').nodes().forEach(element => {
-            // let bbox = element.getBoundingClientRect();
-            let has_sensors = crates_with_sensors_list.includes(element.id);
-            if (element.dataset.crate_type != 'building' && element.dataset.crate_type != 'floor' && has_sensors) {
-                let class_name = element.id + '_rect';
-                let bbox = element.getBBox();
+    //                         let cell_value = parent.get_heatmap(parent, selected_crate, loc, crates_with_sensors);
+    //                         let color = myColor(cell_value);
 
-                let polygon_points = element.points;
-
-                let pol_h = bbox.height * scale;
-                let pol_w = bbox.width * scale;
-                let pol_top = bbox.y * scale;
-                let pol_left = bbox.x * scale;
-
-                let step = 10;
-                let offset = 0;
-                //console.log(bbox, bbox.width, polygon_points, [pol_h, pol_w, pol_top, pol_left])
-                counter++;
 
-                console.log('crates with sensors')
+    //                         main_svg
+    //                             .append("rect")
+    //                             //.style('pointer-events', 'none')
+    //                             .attr('class', class_name)
 
-                for (let i = pol_left; i < pol_w + pol_left; i += step) {
-                    for (let u = pol_top; u < pol_h + pol_top; u += step) {
-                        rect_count++;
-                        let coords = {
-                            'x': i / scale,
-                            'y': u / scale,
-                            'height': h,
-                            'width': w
-                        };
+    //                             .attr("x", function (d) {
+    //                                 return loc.x
+    //                             })
+    //                             .attr("y", function (d) {
+    //                                 return loc.y
+    //                             })
+    //                             .attr("width", step - offset)
+    //                             .attr("height", step - offset)
+    //                             .style('opacity', 0)
+    //                             //.style("fill", 'pink')
+    //                             .attr('data-value', cell_value)
+    //                             .on("mouseover", function (d) {
+    //                                 let cell_temp = this.dataset.value;
+    //                                 console.log(cell_temp)
+    //                                 parent.set_cbar_value(parent, cell_temp)
+    //                             })
+    //                             .on("mouseout", function (d) {
+    //                                 d3.select('#hover_val').remove();
+    //                             })
 
-                        if (parent.inside(coords, polygon_points)) {
+    //                             .transition() // <------- TRANSITION STARTS HERE --------
+    //                             .delay(function (d, i) {
+    //                                 return rect_count * 2;
+    //                             })
+    //                             .duration(1000)
 
-                            let selected_crate = element.id;
-                            let loc = {
-                                x: i - step / 2,
-                                y: u - step / 2,
-                                scale: scale
-                            }
+    //                             .style("fill", function (d) {
+    //                                 return color
+    //                             })
+    //                             .style('opacity', 0.75)
 
-                            let min = parent.min_max_range.min;
-                            let max = parent.min_max_range.max;
 
-                            myColor = d3.scaleSequential(d3.interpolateInferno)
-                                .domain([min, max]);
-                           
-                                let cell_value=parent.getHeatmap(parent, selected_crate, loc, crates_with_sensors);
-                            let color = myColor(cell_value);
+    //                     }
+    //                 }
+    //             }
 
+    //             //  console.log(counter)
+    //         }
 
-                            main_svg
-                                .append("rect")
-                                //.style('pointer-events', 'none')
-                                .attr('class', class_name)
 
-                                .attr("x", function (d) {
-                                    return loc.x
-                                })
-                                .attr("y", function (d) {
-                                    return loc.y
-                                })
-                                .attr("width", step - offset)
-                                .attr("height", step - offset)
-                                .style('opacity', 0)
-                                //.style("fill", 'pink')
+    //     })
 
-                                // .transition() // <------- TRANSITION STARTS HERE --------
-                                // .delay(function (d, i) {
-                                //     return rect_count * 2;
-                                // })
-                                // .duration(1000)
+    //     parent.set_colorbar(parent, myColor)
 
-                                .style("fill", function (d) {
-                                    return color
-                                })
-                                .attr('data-value', cell_value)
-                                .style('opacity', 0.75)
+    // }
 
-                                .on("mouseover", function (d) {
-                                    console.log(this.dataset.value)
-                                });
-                        }
-                    }
-                }
+    // hide_heatmap(parent) {
+    //     parent.get_floor_heatmap(parent);
 
-                //  console.log(counter)
-            }
+    //     d3.selectAll('#heatmap').remove();
+    //     d3.selectAll('circle').style('opacity', 0.5);
+    //     parent.set_legend(parent)
 
+    // }
+    // get_heatmap(parent, crate, coords, crate_list) {
 
-        })
+    //     let rect_loc = coords;
+    //     let scale = coords.scale
 
-        parent.set_colorbar(parent, myColor)
+    //     let sensor_loc = {};
 
-    }
+    //     let combined_dist;
+    //     let data_points = [];
 
-    hide_heatmap(parent) {
-        parent.get_floor_heatmap(parent);
+    //     combined_dist = 0;
+    //     data_points = [];
 
-        d3.selectAll('#heatmap').remove();
-        d3.selectAll('circle').style('opacity', 0.5);
-        parent.set_legend(parent)
+    //     crate_list[crate].forEach(sensor => {
 
-    }
-    getHeatmap(parent, crate, coords, crate_list) {
-        //console.log("new call");
+    //         let x_value = parent.sensor_data[sensor.acp_id]['acp_location_xyz']['x'];
+    //         let y_value = -parent.sensor_data[sensor.acp_id]['acp_location_xyz']['y'];
 
-        let rect_loc = coords;
-        let scale = coords.scale
-        //console.log('heatmap says hi', parent.sensor_data,sens_readings,crate)
+    //         sensor_loc = {
+    //             x: x_value * scale,
+    //             y: y_value * scale
+    //         };
 
-        // console.log(crate, coords)
-        let sensor_loc = {};
-        let col = 0;
-        let sens_readings = parent.sensor_readings;
+    //         let dist = parent.dist(sensor_loc, rect_loc)
 
-        let sensor_list = Object.keys(sens_readings);
-        let sensor_list_len = sensor_list.length
+    //         let data_point = {
+    //             'sensor': sensor.acp_id,
+    //             'value': sensor.temp,
+    //             'dist': dist
+    //         };
+    //         data_points.push(data_point);
+    //         combined_dist += dist;
 
-        //console.log(crate_list, crate,sens_readings)
 
-        let sensor_crates = {};
-        let combined_dist;
-        let data_points = [];
+    //     })
 
-        combined_dist = 0;
-        data_points = [];
+    //     let final_val = 0;
 
-        console.log('CRATE passed', crate, crate_list[crate]);
-        let count = 0;
-        crate_list[crate].forEach(sensor => {
+    //     let C = 0;
+    //     let D = 0;
+    //     data_points.forEach(points => {
 
-            console.log(count++, sensor.acp_id, sensor.temp)
+    //         if (points.dist != combined_dist) {
 
+    //             let B = 0;
 
-            let x_value = parent.sensor_data[sensor.acp_id]['acp_location_xyz']['x'];
-            let y_value = -parent.sensor_data[sensor.acp_id]['acp_location_xyz']['y'];
+    //             data_points.forEach(points2 => {
+    //                 B += combined_dist / points2.dist;
+    //             });
 
-            sensor_loc = {
-                x: x_value * scale,
-                y: y_value * scale
-            };
+    //             let A = combined_dist / points.dist;
 
-            let dist = parent.dist(sensor_loc, rect_loc)
+    //             C = A * (1 / B) * points.value;
 
-            let data_point = {
-                'sensor': sensor.acp_id,
-                'value': sensor.temp,
-                'dist': dist
-            };
-            data_points.push(data_point);
+    //             D += C;
 
-            col += (dist * (sensor.temp))
+    //         } else {
+    //             final_val = points.value;
+    //         }
 
-            combined_dist += dist;
+    //     })
 
+    //     return D == 0 ? final_val : D; // myColor(Math.floor(Math.random()*100))
+    // }
 
-        })
-        let final_val = 0;
-        //  console.log('cd',combined_dist)
-        console.log('calculating new data points', data_points)
+    // dist(loc_one, loc_two) {
+    //     let x1 = loc_one.x;
+    //     let y1 = loc_one.y;
 
-        let C = 0;
-        let D = 0;
-        data_points.forEach(points => {
+    //     let x2 = loc_two.x;
+    //     let y2 = loc_two.y;
 
-            if (points.dist != combined_dist) {
+    //     return Math.hypot(x2 - x1, y2 - y1)
+    // }
+    // inside(point, vs) {
+    //     // ray-casting algorithm based on
+    //     // https://wrf.ecse.rpi.edu/Research/Short_Notes/pnpoly.html/pnpoly.html
 
-                let B = 0;
+    //     // array of coordinates of each vertex of the polygon
+    //     // var polygon = [ [ 1, 1 ], [ 1, 2 ], [ 2, 2 ], [ 2, 1 ] ];
+    //     // inside([ 1.5, 1.5 ], polygon); // true
 
-                data_points.forEach(points2 => {
-                    B += combined_dist / points2.dist;
-                });
+    //     var x = point.x,
+    //         y = point.y;
 
-                let A = combined_dist / points.dist;
+    //     // console.log(vs)
+    //     var inside = false;
+    //     for (var i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+    //         var xi = vs[i].x,
+    //             yi = vs[i].y;
+    //         var xj = vs[j].x,
+    //             yj = vs[j].y;
 
-                C = A * (1 / B) * points.value;
-
-                D += C;
-
-            } else {
-                final_val = points.value;
-                console.log('single sensor')
-            }
-
-        })
-
-        console.log('sensor final val', final_val, C, D)
-
-        col = col / combined_dist;
-
-        return D == 0 ? final_val : D; // myColor(Math.floor(Math.random()*100))
-    }
-
-    dist(loc_one, loc_two) {
-        let x1 = loc_one.x;
-        let y1 = loc_one.y;
-
-        let x2 = loc_two.x;
-        let y2 = loc_two.y;
-
-        return Math.hypot(x2 - x1, y2 - y1)
-    }
-    inside(point, vs) {
-        // ray-casting algorithm based on
-        // https://wrf.ecse.rpi.edu/Research/Short_Notes/pnpoly.html/pnpoly.html
-
-        // array of coordinates of each vertex of the polygon
-        // var polygon = [ [ 1, 1 ], [ 1, 2 ], [ 2, 2 ], [ 2, 1 ] ];
-        // inside([ 1.5, 1.5 ], polygon); // true
-
-        var x = point.x,
-            y = point.y;
-
-        // console.log(vs)
-        var inside = false;
-        for (var i = 0, j = vs.length - 1; i < vs.length; j = i++) {
-            var xi = vs[i].x,
-                yi = vs[i].y;
-            var xj = vs[j].x,
-                yj = vs[j].y;
-
-            var intersect = ((yi > y) != (yj > y)) &&
-                (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-            if (intersect) inside = !inside;
-        }
-        // console.log(inside, point.x, point.y, vs)
-        return inside;
-    };
+    //         var intersect = ((yi > y) != (yj > y)) &&
+    //             (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    //         if (intersect) inside = !inside;
+    //     }
+    //     // console.log(inside, point.x, point.y, vs)
+    //     return inside;
+    // };
 
     quantize_class(parent, polygon_id) {
 
@@ -749,80 +717,75 @@ class SpaceFloor {
         }
     }
 
-    set_colorbar(parent, colorScale) {
-        d3.select("#legend_svg").remove();
-        d3.selectAll('circle').style('opacity', 0);
+//     set_cbar_value(parent, value) {
+//         let c_conf = parent.jb_tools.canvas_conf(110, 320, 10, 5, 10, 5);
+
+//         var scale_inv = d3.scaleLinear().domain([parent.min_max_range.min, parent.min_max_range.max]).range([c_conf.height,0]);
+//         let target_svg = d3.select("#legend_svg");
+ 
+//         target_svg.append('g')
+//             .attr('id', 'hover_val')
+//             .append('rect')
+//             .attr("y", function (d) {
+//                 return scale_inv(value)
+//             })
+//             .attr("x", 10)
+//             .attr("width", c_conf.width / 4)
+//             .attr("height", 2.5)
+//             .style("fill", 'green');
+
+// let rounded_val=Math.round( value * 100 + Number.EPSILON ) / 100
+
+//         parent.jb_tools.add_text(d3.select("#hover_val"), rounded_val, 60, scale_inv(value), "0.65em", "translate(0,0)") // 0 is the offset from the left
+
+//     }
+
+//     set_colorbar(parent, colorScale) {
+//         d3.select("#legend_svg").remove();
+//         d3.selectAll('circle').style('opacity', 0);
 
 
-        //configure canvas size and margins, returns and object
-        //(width, height,top, right, bottom, left)
-        let c_conf = parent.jb_tools.canvas_conf(110, 320, 10, 5, 10, 5);
+//         //configure canvas size and margins, returns and object
+//         //(width, height,top, right, bottom, left)
+//         let c_conf = parent.jb_tools.canvas_conf(110, 320, 10, 5, 10, 5);
 
-        parent.legend_svg = d3.select('#legend_container')
-            .append("svg")
-            .attr("width", c_conf.width + c_conf.left + c_conf.right)
-            .attr("height", c_conf.height + c_conf.top + c_conf.bottom)
-            .attr('id', "legend_svg");
-        //create a canvas with predefined settings
-        //    parent.legend_svg = parent.jb_tools.make_canvas(c_conf, '#legend_container', "translate(" + c_conf.left + "," + c_conf.top + ")");
-
-        // parent.legend_svg.attr('id',"legend_svg")
-        // var colorScale = d3.scaleSequential(d3.interpolateWarm)
-        //     .domain([parent.min_max_range.min, parent.min_max_range.max])
-
-        // var colorScale = d3.scaleLinear()
-        //     .domain([parent.min_max_range.min, parent.min_max_range.max])
-        //     .range(['yellow', 'red']);
+//         parent.legend_svg = d3.select('#legend_container')
+//             .append("svg")
+//             .attr("width", c_conf.width + c_conf.left + c_conf.right)
+//             .attr("height", c_conf.height + c_conf.top + c_conf.bottom)
+//             .attr('id', "legend_svg");
 
 
-        var scale = d3.scaleLinear().domain([0, c_conf.height]).range([parent.min_max_range.min, parent.min_max_range.max]);
-        var scale_inv = d3.scaleLinear().domain([parent.min_max_range.min, parent.min_max_range.max]).range([0, c_conf.height]);
+//         var scale = d3.scaleLinear().domain([c_conf.height,0]).range([parent.min_max_range.min, parent.min_max_range.max]);
+//         var scale_inv = d3.scaleLinear().domain([parent.min_max_range.min, parent.min_max_range.max]).range([c_conf.height,0]);
+
+//         //create a series of bars comprised of small rects to create a gradient illusion
+//         let bar = parent.legend_svg.selectAll(".bars")
+//             .data(d3.range(0, c_conf.height), function (d) {
+//                 return d;
+//             })
+//             .enter().append("rect")
+//             .attr("class", "bars")
+//             .attr("y", function (i) {
+//                 return i;
+//             })
+//             .attr("x", 10)
+
+//             .attr("height", 1)
+//             .attr("width", c_conf.width / 4)
+
+//             .style("fill", function (d, i) {
+//                 console.log(colorScale(scale(d)), scale(d), d);
+//                 return colorScale(scale(d));
+//             });
 
 
+//         //text showing range on left/right
+//         //viz_tools.add_text(TARGET SVG, TXT VALUE, X LOC, Y LOC, FONT SIZE, TRANSLATE);
+//         parent.jb_tools.add_text(parent.legend_svg, parent.min_max_range.max, c_conf.width / 2, scale_inv(parent.min_max_range.max), "0.75em", "translate(0,0)") // 0 is the offset from the left
+//         parent.jb_tools.add_text(parent.legend_svg, parent.min_max_range.min, c_conf.width / 2, scale_inv(parent.min_max_range.min), "0.75em", "translate(0,0)") // 0 is the offset from the left
 
-        // append the svg object to the body of the page
-        let x_bar_offset = 15;
-        let x_range_offset = -8;
-
-        let mapped_value = 50 //parseInt(this.map_values(raw_value, feature.range[0], feature.range[1], 0, c_conf.width));
-
-        //create a series of bars comprised of small rects to create a gradient illusion
-        let bar = parent.legend_svg.selectAll(".bars")
-            .data(d3.range(0, c_conf.height), function (d) { //c_conf.width c_conf. parent.min_max_range.min, parent.min_max_range.max
-                //      console.log(d)
-                return d;
-            })
-            .enter().append("rect")
-            .attr("class", "bars")
-            .attr("y", function (i) {
-                return i;
-            })
-            .attr("x", 10)
-
-            .attr("height", 1)
-            .attr("width", c_conf.width / 4)
-
-            .style("fill", function (d, i) {
-                //if the i'th element is the same as the mapped reading value, draw a black line instead
-
-                if (i == mapped_value) {
-                    return 'black'
-                } else return colorScale(scale(d));
-            });
-
-        //text showing range on left/right
-        //viz_tools.add_text(TARGET SVG, TXT VALUE, X LOC, Y LOC, FONT SIZE, TRANSLATE);
-        parent.jb_tools.add_text(parent.legend_svg, parent.min_max_range.max, c_conf.width / 2, scale_inv(parent.min_max_range.max), "0.75em", "translate(0,0)") // 0 is the offset from the left
-        parent.jb_tools.add_text(parent.legend_svg, parent.min_max_range.min, c_conf.width / 2, scale_inv(parent.min_max_range.min), "0.75em", "translate(0,0)") // 0 is the offset from the left
-
-        let mapped_max = scale_inv(parent.min_max_range.max + parent.range_offset)
-        let mapped_min = scale_inv(parent.min_max_range.min - parent.range_offset)
-
-
-        parent.jb_tools.add_text(parent.legend_svg, parent.min_max_range.max + parent.range_offset, c_conf.width / 2, mapped_max, "0.75em", "translate(0,0)") // 0 is the offset from the left
-        parent.jb_tools.add_text(parent.legend_svg, parent.min_max_range.min - parent.range_offset, c_conf.width / 2, mapped_min, "0.75em", "translate(0,0)") // 0 is the offset from the left
-
-    }
+//     }
     //----------------------------------------------//
     //--------------LEGEND definition---------------//
     //----------------------------------------------//

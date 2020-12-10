@@ -174,32 +174,29 @@ class VizTools {
                     .style("opacity", .9);
 
                 // Create API url for sensor reading AND metadata
-                let readings_url = API_READINGS + 'get/' + sensor_id +'/?metadata=true';
+                //let readings_url = API_READINGS + 'get/' + sensor_id +'/?metadata=true';  OLD API
+                let readings_url='https://tfc-app9.cl.cam.ac.uk/api/readings/get_feature/'+sensor_id+'/temperature/?metadata=true'
                 console.log('circle mouseover fetching', readings_url)
 
                 d3.json(readings_url, {
                     crossOrigin: "anonymous"
                 }).then(function (received_data) {
+
                     console.log('tooltips() raw', received_data)
                     let reading = received_data["reading"];
-                    let sensor_metadata = received_data["sensor_metadata"];
+                    let sensor_metadata = received_data["sensor_info"];
 
-                    let reading_obj = '';
-                   let parsed=self.parse_readings.parse_reading(reading,sensor_metadata);
-					console.log('parsed',parsed);
+                let reading_obj = '';
+                  // let parsed=self.parse_readings.parse_reading(reading,sensor_metadata);     OLD API
+			//		console.log('parsed',parsed);
 					
-                    if(received_data['acp_error_msg']!=undefined || Object.keys(parsed).length<1 ){
+                    if(received_data['acp_error_msg']!=undefined ){ //|| Object.keys(parsed).length<1 
                          let error_id = received_data['acp_error_id'];
                          console.log('handle_readings() error', received_data);
                          reading_obj=  'NO READINGS available for this sensor.';
                   	}
                     else{                  		
-                       	 let readings = received_data["reading"];
-                       	 let sensor_metadata = received_data["sensor_metadata"];
-                            
-                         //exrtact all features with ranges --needed for mouseover viz
-                         let all_features = sensor_metadata['acp_type_info']['features'];
-   						 reading_obj= readings;
+   						 reading_obj= reading;
                     }
 
                     let msg=typeof(reading_obj)=='string'?reading_obj:'';
@@ -255,6 +252,8 @@ class VizTools {
     }
 
 	viz_readings(readings,meta){
+
+        console.log('see this', readings,meta)
 
    //exrtact all features with ranges --needed for mouseover viz
     let all_features = meta['acp_type_info']['features'];
