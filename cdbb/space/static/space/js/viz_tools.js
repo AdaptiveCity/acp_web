@@ -201,7 +201,7 @@ class VizTools {
 
                     let msg=typeof(reading_obj)=='string'?reading_obj:'';
 
-                    console.log('tooltips() handled_reading:', reading_obj);
+                    //console.log('tooltips() handled_reading:', reading_obj);
                     
                     self.tooltip_div.html('<b>'+sensor_id+'</b>' + "<br/>"+msg+"<br/>")
                        .style("left", function () {

@@ -3,40 +3,39 @@
 {% block title %}CDBB Floor {{ CRATE_ID }}{% endblock %}
 
 {% block head %}
-    <!-- Our style sheets -->
-    <link rel="stylesheet" href="{% static 'space/css/space.css' %}"/>
-    <link rel="stylesheet" type="text/css" href="{% static 'space/css/floor.css' %}" />
-    <link rel="stylesheet" type="text/css" href="{% static 'space/css/style.css' %}" />
+<!-- Our style sheets -->
+<link rel="stylesheet" href="{% static 'space/css/space.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'space/css/floor.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'space/css/style.css' %}" />
 
-    <!-- Local copy of d3 -->
-    <script type="text/javascript" src="{% static 'js/d3.v5.min.js' %}"></script>
+<!-- Local copy of d3 -->
+<script type="text/javascript" src="{% static 'js/d3.v5.min.js' %}"></script>
 
-    <!-- JS SCRIPT for space snd building -->
-    <script type="text/javascript" src="{% static 'space/js/space.js' %}"></script>
+<!-- JS SCRIPT for space snd building -->
+<script type="text/javascript" src="{% static 'space/js/space.js' %}"></script>
 
-    <!-- viz_tools contains some common rendering functions, uses parse_readings, jsonpath -->
-    <script type="text/javascript" src="{% static 'js/jsonpath.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/parse_readings.js' %}"></script>
-    <script type="text/javascript" src="{% static 'space/js/viz_tools.js' %}"></script>
-    <script type="text/javascript" src="{% static '/js/VizTools2.js' %}"></script>
+<!-- viz_tools contains some common rendering functions, uses parse_readings, jsonpath -->
+<script type="text/javascript" src="{% static 'js/jsonpath.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/parse_readings.js' %}"></script>
+<script type="text/javascript" src="{% static 'space/js/viz_tools.js' %}"></script>
+<script type="text/javascript" src="{% static '/js/VizTools2.js' %}"></script>
 
-    <!-- heatmap class  -->
-    <script type='text/javascript' src="{% static 'space/js/heatmap.js' %}"></script>
+<!-- heatmap class  -->
+<script type='text/javascript' src="{% static 'space/js/heatmap.js' %}"></script>
 
-    <!-- building.js defines class SpaceBuilding -->
-    <script type='text/javascript' src="{% static 'space/js/floor.js' %}"></script>
+<!-- building.js defines class SpaceBuilding -->
+<script type='text/javascript' src="{% static 'space/js/floor.js' %}"></script>
 
-    <!-- Page local script -->
-    <script type="text/javascript">
-        var API_BIM = '{{ API_BIM }}';
-        var API_SENSORS = '{{ API_SENSORS }}';
-        var API_READINGS = '{{ API_READINGS }}';
-        var API_SPACE = '{{ API_SPACE }}';
-        var CRATE_ID = '{{ CRATE_ID }}';
-        var FLOORSPACE_LINK = '{% url "space_floorspace" "crate_id" %}';
-        var SENSOR_LINK = "{% url 'sensor' 'acp_id' %}"; // we will replace id as required
-
-    </script>
+<!-- Page local script -->
+<script type="text/javascript">
+    var API_BIM = '{{ API_BIM }}';
+    var API_SENSORS = '{{ API_SENSORS }}';
+    var API_READINGS = '{{ API_READINGS }}';
+    var API_SPACE = '{{ API_SPACE }}';
+    var CRATE_ID = '{{ CRATE_ID }}';
+    var FLOORSPACE_LINK = '{% url "space_floorspace" "crate_id" %}';
+    var SENSOR_LINK = "{% url 'sensor' 'acp_id' %}"; // we will replace id as required
+</script>
 {% endblock %}
 
 {% block header_title %}
@@ -68,24 +67,39 @@ Spatial Building and Sensor Data: FLOOR VIEW
 
 <div class="main_content" id="main_content_id">
 
-<div class="drawing_div" id="main_drawing_div">
-    <svg class="drawing_svg" id="drawing_svg">
-    </svg>
-</div>
-
-<div id="legend_and_buttons">
-    <div id="legend_container"></div>
-
-    <div id="button_wrapper">
-        <button type="button"  id="show_heatmap" style="padding-left: 1em;">Heatmap</button>
+    <div class="drawing_div" id="main_drawing_div">
+        <svg class="drawing_svg" id="drawing_svg">
+        </svg>
     </div>
-    <br>
 
-    <div id="button_wrapper">
-        <button type="button" id="reset" style="padding-left: 1em;">Reset</button>
+    <div id="legend_and_buttons">
+        <div id="legend_container"></div>
+
+        <div id="button_wrapper">
+            <button type="button" id="reset" style="padding-left: 1em;">Reset</button>
+        </div>
+        <br>
+        <div id="button_wrapper">
+            <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button>
+        </div>
+        <br>
+        <div id="button_wrapper">
+
+            <!-- I know the following should not be hardcoded, this is just for debug -->
+            <form id="feature_form">
+                <label for="features">Feature:</label>
+                <br>
+                <select name="features" id="features_list">
+                    <option value="co2">CO2</option>
+                    <option value="temperature" selected="selected">Temperature</option>
+                    <option value="humidity">Humidity</option>
+                    <option value="vdd">Battery</option>
+                </select>
+                <br>
+            </form>
+        </div>
+
     </div>
-    
-</div>
 
 </div>
 <div id="wrapper">
@@ -97,13 +111,15 @@ Spatial Building and Sensor Data: FLOOR VIEW
 <!-- TOOLTIP - will be made visible/invisible as mouse moves over sensors -->
 <div id="tooltip" class="tooltip">
 </div>
-{% endblock %} <!-- content -->
+{% endblock %}
+<!-- content -->
 
 <!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
 {% block lazy_script %}
 <script>
-console.log('lazy_script');
-var space_floor = new SpaceFloor();
-space_floor.init();
+    console.log('lazy_script');
+    var space_floor = new SpaceFloor();
+    space_floor.init();
 </script>
-{% endblock %} <!-- lazy_script -->
+{% endblock %}
+<!-- lazy_script -->
