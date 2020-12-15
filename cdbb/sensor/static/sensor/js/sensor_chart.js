@@ -13,7 +13,10 @@ var feature_jsonpath_ts = '$.acp_ts'; // timestamp
 
 var loading_el; // loading element animated gif
 var reading_popup_el; // div to display full reading json
+
 var feature_select_el; // feature select element
+var feature_select_el2;
+
 var chart_tooltip_el;
 var zoom_hint_el; // div containing zoom/unzoom hint message
 
@@ -24,6 +27,9 @@ var chart_svg; // chart svg element
 var chart_graph; // chart svg element
 var chart_offsetx; //centers chart withing the svg
 var chart_offsety;
+
+var pantone284c = 'rgb(108, 172, 228)';
+var pantone583c = 'rgb(183, 191, 16)';
 
 var viz_tools = new VizTools2();
 
@@ -40,7 +46,11 @@ function init() {
     // Animated "loading" gif, shows until readings are loaded from api
     loading_el = document.getElementById('loading');
     zoom_hint_el = document.getElementById('zoom_hint');
+
     feature_select_el = document.getElementById("form_feature");
+    feature_select_el2 = document.getElementById("form_feature2");
+    console.log(feature_select_el, feature_select_el2)
+
     chart_tooltip_el = d3.select('#chart_tooltip'); //document.getElementById('chart_tooltip');
 
     // The cool date picker
@@ -114,6 +124,9 @@ function handle_readings(results) {
     // Setup onchange callbacks to update chart on feature or date changes
     let feature = init_feature_select(readings, sensor_metadata);
 
+    //make the secondary feature none
+    document.getElementById('form_feature2').value = 'none';
+
     //exrtact all features with ranges --needed for mouseover viz
     let all_features = sensor_metadata['acp_type_info']['features'];
 
@@ -151,12 +164,16 @@ function init_feature_select(readings, sensor_metadata) {
     while (feature_select_el.firstChild) {
         feature_select_el.removeChild(feature_select_el.firstChild)
     }
-
+    while (feature_select_el2.firstChild) {
+        feature_select_el2.removeChild(feature_select_el2.firstChild)
+    }
     let selected_feature = null; // Will return this value
 
     let feature_count = 0;
     let features = sensor_metadata["acp_type_info"]["features"]
     let feature_id = null;
+
+    console.log('features', features)
 
     // add a select option for each feature in the sensor metadata
     for (const feature in features) {
@@ -169,8 +186,27 @@ function init_feature_select(readings, sensor_metadata) {
         // and option value
         option.setAttribute('value', feature);
         // add the option to the select box
+        let copy = option.cloneNode(true);
+
         feature_select_el.appendChild(option);
+        console.log('append A', feature_select_el, option)
+
+
+        feature_select_el2.appendChild(copy);
+        console.log('append B', feature_select_el2, copy)
+
     }
+    let option_none = document.createElement('option');
+    let text_none = document.createTextNode('none');
+    // set option text
+    option_none.appendChild(text_none);
+    // and option value
+    option_none.setAttribute('value', 'none');
+    // add the option to the select box
+    //let copy = option.cloneNode(true);
+
+    feature_select_el2.appendChild(option_none);
+
 
     if (feature_count == 0) {
         console.log("No features listed in sensor_metadata");
@@ -195,11 +231,48 @@ function init_feature_select(readings, sensor_metadata) {
     }
 
     feature_select_el.value = selected_feature['feature_id'];
+    feature_select_el2.value = selected_feature['feature_id'];
+
     feature_select_el.onchange = function (e) {
         onchange_feature_select(e, readings, features)
     };
 
+    feature_select_el2.onchange = function (e) {
+        onchange_secondary_select(e, readings, features)
+    };
+
     return selected_feature;
+}
+
+function onchange_secondary_select(e, readings, features) {
+    console.log("onchange_feature_select", window.location.href);
+    //let features = sensor_metadata["acp_type_info"]["features"];
+    let feature_id1 = feature_select_el.value;
+    features[feature_id1]['all_features'] = features;
+    let feature_id2 = feature_select_el2.value;
+
+    // set_date_onclicks(feature_id);
+    // Change the URL in the address bar
+    // update_url(feature_id, plot_date);
+    // draw_charts(readings, features[feature_id1],features[feature_id2]);
+    console.log('two charts at the same time, man')
+    if (feature_id2 == 'none') {
+        chart_svg.select("#graph_elements").remove();
+
+        draw_chart(readings, features[feature_id1]);
+
+    } else {
+
+        console.log('featuers');
+        //exrtact all features with ranges --needed for mouseover viz
+        features[feature_id2]['all_features'] = features;
+
+        console.log(features, features[feature_id1]['all_features'], features[feature_id2]['all_features'])
+
+        draw_chart(readings, features[feature_id1], features[feature_id2]);
+
+    }
+    // draw_chart(readings, features[feature_id1], features[feature_id2]);
 }
 
 function onchange_feature_select(e, readings, features) {
@@ -336,12 +409,15 @@ function init_chart() {
         .attr("fill", "rgba(255,255,255,1)");
 }
 
+
 // ****************************************************************************
 // *********  Update the chart with sensor readings data **********************
 // ****************************************************************************
-function draw_chart(readings, feature) {
+function draw_chart(readings, feature, feature2) {
     console.log('draw_chart', feature, 'size=' + readings.length, readings);
-
+    if (feature2) {
+        console.log('draw_chart2', feature2, 'size=' + readings.length, readings);
+    }
     // do nothing if no data is available
     if (readings.length == 0) return;
 
@@ -349,12 +425,20 @@ function draw_chart(readings, feature) {
     var chart_xAxis; // x axis
     var chart_xValue; // value for x axis selected from current data object (i.e. timestamp)
     var chart_xMap; // fn for x display value
+
     var chart_yScale;
     var chart_yAxis;
     var chart_yValue;
     var chart_yMap;
+
+    var chart_yScale2;
+    var chart_yAxis2;
+    var chart_yValue2;
+    var chart_yMap2;
+
     //var chart_cValue; // value from current data point to determine color of circle (i.e. route_id)
     var chart_color; // color chosen for current circle on scatterplaot
+    var chart_color2; // color chosen for current circle on scatterplaot
 
     // time of day for scatterplot to start/end
     var CHART_START_TIME = 0; // start chart at midnight
@@ -403,6 +487,29 @@ function draw_chart(readings, feature) {
         return parseFloat(y_val);
     }; // data -> value
 
+    if (feature2) {
+        //DEBUG the location of the charted y value should be in metadata
+        chart_yValue2 = function (d) {
+
+            // Note jsonPath always returns a list of result, or false if path not found.
+            let path_val2 = jsonPath(d, feature2['jsonpath']); //d.payload_cooked.temperature;
+            //console.log("chart_yValue path_val",d,path_val);
+            if (path_val2 == false) {
+                //console.log("chart_yValue returning null")
+                return null;
+            }
+            let y_val2 = path_val2[0];
+            if (y_val2 == false) {
+                return 0;
+            }
+            if (y_val2 == true) {
+                return 1;
+            }
+            return parseFloat(y_val2);
+        }; // data -> value
+
+    }
+
     // setup fill color for chart dots
     //chart_cValue = function(d) { return d.route_id; },
     chart_color = function (d) {
@@ -415,8 +522,25 @@ function draw_chart(readings, feature) {
         if (chart_yValue(d) > feature['range'][1]) {
             return 'red';
         }
-        return 'rgb(183, 191, 16)'; //Pantone 583 C https://www.cam.ac.uk/brand-resources/guidelines/typography-and-colour/colour-palette
+        return pantone583c; //Pantone 583 C https://www.cam.ac.uk/brand-resources/guidelines/typography-and-colour/colour-palette
     };
+     if (feature2) {
+    // setup fill color for chart dots
+    //chart_cValue = function(d) { return d.route_id; },
+    chart_color2 = function (d) {
+        if ('acp_event' in d) {
+            return '#ffff88';
+        }
+        if (chart_yValue2(d) == null) {
+            return "#888888";
+        }
+        if (chart_yValue2(d) > feature2['range'][1]) {
+            return 'red';
+        }
+        return pantone284c; //Pantone 284 C https://www.cam.ac.uk/brand-resources/guidelines/typography-and-colour/colour-palette
+    };
+    }
+
 
     // **********************
     // setup x axis
@@ -502,9 +626,107 @@ function draw_chart(readings, feature) {
         .attr("x", -chart_height / 2)
         .attr("dy", ".71em")
         .style("text-anchor", "middle")
+        .style('fill', pantone583c)
         .text(feature['name']);
 
 
+    if (feature2) {
+
+        // **********************
+        // setup y axis
+        // **********************
+        chart_yScale2 = d3.scaleLinear()
+            .domain(feature2['range'])
+            .range([chart_height, 0]); // value -> display
+        // chart_yScale.domain([0, d3.max(readings, chart_yValue)+1]);
+
+        chart_yAxis2 = d3.axisRight().scale(chart_yScale2);
+
+        // setup chart functions d -> x,y where d = the current reading
+        chart_xMap = function (d) {
+            return chart_xScale(chart_xValue(d));
+        }; // data -> display
+
+        chart_yMap2 = function (d) {
+            return chart_yScale2(Math.min(chart_yValue2(d), feature2['range'][1]));
+        }; // data -> display
+
+        // y-axis
+        chart_graph.append("g")
+            .attr("class", "y axis")
+            .attr('id', "axis--y2")
+            .attr("transform", "translate(" + chart_width + "," + 0 + ")")
+
+            .call(chart_yAxis2
+                // .tickSize(-chart_width, 0, 0)
+                .tickPadding(10)
+                //.tickFormat("")
+            )
+            // /.style('color', 'LightGray')
+            .attr("class", "grid")
+            .append("text")
+            .attr("class", "axis_label")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 45)
+            .attr("x", -chart_height / 2)
+            .attr("dy", ".85em")
+            .style("text-anchor", "middle")
+            .style('fill', pantone284c)
+            .text(feature2['name']);
+
+
+    }
+    // *****************************************
+    // draw readings dots
+    // *****************************************
+    chart_graph.selectAll(".dot")
+        .data(readings)
+        .enter().append("circle")
+        .attr("class", "dot")
+        .attr("r", CHART_DOT_RADIUS)
+        .attr("cx", chart_xMap)
+        .attr("cy", chart_yMap)
+        .style("fill", function (d) {
+            return chart_color(d);
+        })
+        .on("click", function (d) {
+            show_reading_popup(d);
+        })
+        .on("mouseover", function (d) {
+            mouseover_interactions(d, feature);
+        })
+        .on("mouseout", function (d) {
+            chart_tooltip_el.transition()
+                .duration(500)
+                .style("opacity", 0);
+        });
+
+    if (feature2) {
+        console.log('READINGS', readings)
+        chart_graph.selectAll(".dot2")
+            .data(readings)
+            .enter().append("circle")
+            .attr("class", "dot2")
+            .attr("r", CHART_DOT_RADIUS)
+            .attr("cx", chart_xMap)
+            .attr("cy", chart_yMap2)
+            .style("fill", function (d) {
+                return chart_color2(d);
+            })
+            .style('stroke', 'black')
+            .on("click", function (d) {
+                show_reading_popup(d);
+            })
+            .on("mouseover", function (d) {
+                mouseover_interactions(d, feature2);
+            })
+            .on("mouseout", function (d) {
+                chart_tooltip_el.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+
+    }
     // *****************************************
     // set up zooming
     // *****************************************
@@ -534,7 +756,7 @@ function draw_chart(readings, feature) {
 
             //redraw chart
             scatter.selectAll("*").remove();
-            draw_chart(readings, feature);
+            draw_chart(readings, feature, feature2);
             set_zoom_hint(true); // Update zoom hint to re-explain how to zoom.
         });
 
@@ -578,11 +800,44 @@ function draw_chart(readings, feature) {
         var t = scatter.transition().duration(750);
         chart_graph.select("#axis--x").transition(t).call(chart_xAxis);
         chart_graph.select("#axis--y").transition(t).call(chart_yAxis);
+
+        if (feature2) {
+            chart_graph.select("#axis--y2").transition(t).call(chart_yAxis2);
+        }
+
         chart_graph.selectAll('.dot').transition(t)
             .attr("r", CHART_DOT_RADIUS)
             .attr("cx", chart_xMap)
             .attr("cy", chart_yMap);
 
+        if (feature2) {
+            chart_graph.selectAll('.dot2').transition(t)
+                .attr("r", CHART_DOT_RADIUS)
+                .attr("cx", chart_xMap)
+                .attr("cy", chart_yMap2);
+        }
+
+        if (feature2) {
+            //add interactivity for all data points (copied from below)
+            d3.selectAll('.dot2')
+                .style('opacity', function (d) {
+                    //if out of the boundaing box, make the circle invisible
+                    if ((chart_xMap(d) < 0 || chart_xMap(d) > chart_width) || (chart_yMap2(d) < 0 || chart_yMap2(d) > chart_height)) {
+                        return 0;
+                    } else return 1;
+                })
+                .on("click", function (d) {
+                    show_reading_popup(d);
+                })
+                .on("mouseover", function (d) {
+                    mouseover_interactions(d, feature);
+                })
+                .on("mouseout", function (d) {
+                    chart_tooltip_el.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                });
+        }
         //add interactivity for all data points (copied from below)
         d3.selectAll('.dot')
             .style('opacity', function (d) {
@@ -604,30 +859,7 @@ function draw_chart(readings, feature) {
             });
     }
 
-    // *****************************************
-    // draw readings dots
-    // *****************************************
-    chart_graph.selectAll(".dot")
-        .data(readings)
-        .enter().append("circle")
-        .attr("class", "dot")
-        .attr("r", CHART_DOT_RADIUS)
-        .attr("cx", chart_xMap)
-        .attr("cy", chart_yMap)
-        .style("fill", function (d) {
-            return chart_color(d);
-        })
-        .on("click", function (d) {
-            show_reading_popup(d);
-        })
-        .on("mouseover", function (d) {
-            mouseover_interactions(d, feature);
-        })
-        .on("mouseout", function (d) {
-            chart_tooltip_el.transition()
-                .duration(500)
-                .style("opacity", 0);
-        });
+
 
     // *******************************
     // add text for latest datapoint
@@ -695,7 +927,7 @@ function mouseover_interactions(d, feature) {
             } else return d3.event.pageY - tooltip_offset_y + "px";
         });
 
-	//console.log('d',d, 'feature',feature)
+    //console.log('d',d, 'feature',feature)
 
     //get a list of all features from metadata
     let feature_list = Object.keys(feature.all_features)
@@ -709,7 +941,7 @@ function mouseover_interactions(d, feature) {
 
     //heatmap is within try/catch since not all sensors have 8x8s
     try {
-         viz_tools.draw_heatmap(d, '#chart_tooltip');
+        viz_tools.draw_heatmap(d, '#chart_tooltip');
     } catch (error) {
         console.log('no elsys eye: ', error)
     }

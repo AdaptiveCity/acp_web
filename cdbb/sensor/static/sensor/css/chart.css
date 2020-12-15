@@ -133,6 +133,9 @@ input[type=date], select {
 .dot {
   stroke: #000;
 }
+.dot2 {
+  stroke: #000;
+}
 
 #chart_tooltip {
   position: absolute;
