@@ -343,6 +343,7 @@ class SpaceFloor {
                     .attr("cy", y_value)
                     .attr("r", rad)
                     .attr("id", sensor_id)
+                    .attr("class", 'non_heatmap_circle')
                     .style("opacity", opac)
                     .style("fill", "purple")
                     .attr("transform", parent.svg_transform);

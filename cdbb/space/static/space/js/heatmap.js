@@ -16,7 +16,7 @@ class HeatMap {
 
         this.animation_dur = 350;
 
-        this.rect_size = 10;
+        this.rect_size = 7;
 
         // this.sensor_readings = {}; //sensor reading data
         // this.sensors_in_crates = {};
@@ -33,7 +33,8 @@ class HeatMap {
         parent.color_scheme = d3.scaleSequential(d3.interpolateInferno)
         parent.animation_delay = d3.scaleLinear().range([3000, 1000]);
 
-        parent.get_floor_sensors(parent);
+        //parent.get_floor_sensors(parent);
+        parent.get_local_sensors(parent);
 
         document.getElementById('features_list').addEventListener('change', function () {
             console.log('You selected: ', this.value);
@@ -44,10 +45,10 @@ class HeatMap {
 
     }
 
-    update_sensor(parent,acp_id,payload){
+    // update_sensor(parent, acp_id, payload) {
 
-    }
-    
+    // }
+
     get_floor_sensors(parent) {
 
         let system = parent.master.floor_coordinate_system;
@@ -63,6 +64,20 @@ class HeatMap {
             parent.handle_sensors_metadata(parent, received_data)
         });
 
+    }
+
+    // Alternative to get_readings() using local file for sensors API response
+    get_local_sensors(parent) {
+        console.log('loading data')
+
+        d3.json("http://localhost:6969/VLAB_JSON.json",{
+            crossOrigin: "anonymous"
+            
+        }).then(function (received_data) {
+            console.log('heatmap received', received_data)
+            parent.handle_sensors_metadata(parent, received_data)
+
+        });
     }
 
     // Returns a "list object" (i.e. dictionary on acp_id) of sensors on
@@ -288,6 +303,11 @@ class HeatMap {
                                 .attr("height", parent.rect_size - offset)
                                 .style('opacity', 0)
 
+                                // .style('stroke',function (d) {
+                                //     return color
+                                // })
+                                // .style('stroke-width', 0.1)
+                                .style('stroke-opacity', 0)
                                 .attr('data-crate', selected_crate)
                                 .attr('data-loc', [loc.x, loc.y, loc.scale])
                                 .attr('data-type', selected_feature)
@@ -314,7 +334,7 @@ class HeatMap {
                                 .style("fill", function (d) {
                                     return color
                                 })
-                                .style('opacity', 0.75)
+                                .style('opacity',0.75)
 
 
                         }
@@ -328,6 +348,39 @@ class HeatMap {
 
         });
 
+         //declare circle properties - opacity and radius
+         let opac = 1;
+         let rad = 4; // radius of sensor icon in METERS (i.e. XYZF before transform)
+ 
+         //iterate through results to extract data required to show sensors on the floorplan
+         let results= parent.sensor_data;
+         console.log(results)
+         for (let sensor in results) {
+             try {
+                 console.log(sensor)
+                 console.log(results[sensor])
+                 console.log(results[sensor]['location'])
+                 let x_value = results[sensor]['location']['x']*scale
+                 // Note y is NEGATIVE for XYZF (anti-clockwise) -> SVG (clockwise)
+                 let y_value = -results[sensor]['location']['y']*scale
+                 let floor_id = results[sensor]['location']['f']*scale
+                 let sensor_id = results[sensor]['acp_id'];
+ 
+                 main_svg.append("circle")
+                     .attr("cx", x_value)
+                     .attr("cy", y_value)
+                     .attr("r", rad)
+                     .attr("id", sensor_id)
+                     .style("opacity", 0)
+                     .style("fill", "lime")
+                   //  .attr("transform", parent.master.svg_transform);
+ 
+             } catch (error) {
+                 console.log(error)
+             }
+ 
+         }
+
         //debug only, "parent" now working somehow
         this.set_colorbar(parent);
 
@@ -337,7 +390,7 @@ class HeatMap {
 
     hide_heatmap(parent) {
         d3.selectAll('#heatmap').remove();
-        d3.selectAll('circle').style('opacity', 0.5);
+        d3.selectAll('.non_heatmap_circle').style('opacity', 0.5);
 
         parent.master.get_floor_heatmap(parent);
         parent.master.set_legend(parent)
@@ -442,7 +495,7 @@ class HeatMap {
 
     set_colorbar(parent) {
         d3.select("#legend_svg").remove();
-        d3.selectAll('circle').style('opacity', 0);
+        d3.selectAll('.non_heatmap_circle').style('opacity', 0);
 
 
         //configure canvas size and margins, returns and object
