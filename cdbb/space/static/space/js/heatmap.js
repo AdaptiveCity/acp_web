@@ -45,9 +45,9 @@ class HeatMap {
 
     }
 
-    // update_sensor(parent, acp_id, payload) {
+    update_sensor(parent, acp_id, payload) {
 
-    // }
+    }
 
     get_floor_sensors(parent) {
 
@@ -371,7 +371,7 @@ class HeatMap {
                      .attr("cy", y_value)
                      .attr("r", rad)
                      .attr("id", sensor_id)
-                     .style("opacity", 0)
+                     .style("opacity", 1)
                      .style("fill", "lime")
                    //  .attr("transform", parent.master.svg_transform);
  
@@ -482,14 +482,14 @@ class HeatMap {
             .attr("y", function (d) {
                 return scale_inv(value)
             })
-            .attr("x", 10)
+            .attr("x",c_conf.width / 3)
             .attr("width", c_conf.width / 4)
             .attr("height", 2.5)
-            .style("fill", 'green');
+            .style("fill", 'lime');
 
         let rounded_val = Math.round(value * 100 + Number.EPSILON) / 100
 
-        parent.jb_tools.add_text(d3.select("#hover_val"), rounded_val, 60, scale_inv(value), "0.65em", "translate(0,0)") // 0 is the offset from the left
+        parent.jb_tools.add_text(d3.select("#hover_val"), rounded_val, (c_conf.width / 3)+50, scale_inv(value), "0.65em", "translate(0,0)") // 0 is the offset from the left
 
     }
 
@@ -500,7 +500,7 @@ class HeatMap {
 
         //configure canvas size and margins, returns and object
         //(width, height,top, right, bottom, left)
-        let c_conf = parent.jb_tools.canvas_conf(110, 320, 10, 5, 10, 5);
+        let c_conf = parent.jb_tools.canvas_conf(110, 320, 20, 5, 20, 5);
 
         parent.master.legend_svg = d3.select('#legend_container')
             .append("svg")
@@ -520,9 +520,9 @@ class HeatMap {
             .enter().append("rect")
             .attr("class", "bars")
             .attr("y", function (i) {
-                return i;
+                return 20+i;
             })
-            .attr("x", 10)
+            .attr("x", c_conf.width / 3)
 
             .attr("height", 1)
             .attr("width", c_conf.width / 4)
@@ -534,8 +534,10 @@ class HeatMap {
 
         //text showing range on left/right
         //viz_tools.add_text(TARGET SVG, TXT VALUE, X LOC, Y LOC, FONT SIZE, TRANSLATE);
-        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.max, c_conf.width / 2, scale_inv(parent.min_max_range.max), "0.75em", "translate(0,0)") // 0 is the offset from the left
-        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.min, c_conf.width / 2, scale_inv(parent.min_max_range.min), "0.75em", "translate(0,0)") // 0 is the offset from the left
+        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.max, (c_conf.width / 2)-3, scale_inv(parent.min_max_range.max), "0.75em", "translate(0,0)") // 0 is the offset from the left
+        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.min, (c_conf.width / 2)-3, scale_inv(parent.min_max_range.min)+25, "0.75em", "translate(0,0)") // 0 is the offset from the left
+
+        parent.jb_tools.add_text(parent.master.legend_svg, document.getElementById('features_list').value, (c_conf.width / 2)-220, scale_inv(parent.min_max_range.min)-265, "0.85em", "rotate(-90)") // 0 is the offset from the left
 
     }
 
