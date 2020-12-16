@@ -42,6 +42,12 @@ class VizTools2 {
         return inside;
     };
 
+    random_int(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
+      }
+
     dist(loc_one, loc_two) {
         let x1 = loc_one.x;
         let y1 = loc_one.y;

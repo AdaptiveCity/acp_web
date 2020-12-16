@@ -44,8 +44,180 @@ class HeatMap {
         });
 
     }
+    myCallback(parent, sensor) {
+        parent.update_sensor(parent, sensor);
 
-    update_sensor(parent, acp_id, payload) {
+    }
+
+    update_sensors(parent) {
+
+
+        console.log(parent.sensor_data)
+
+        for (let sensor in parent.sensor_data) {
+            // parent.update_sensor(parent, sensor);
+            console.log(sensor)
+            // parent.update_sensor(parent, sensor);
+            window.setInterval(parent.myCallback, parent.jb_tools.random_int(5000, 15000), parent, sensor);
+
+        }
+
+    }
+    update_sensor(parent, acp_id) {
+        let sensor_data = parent.sensor_data[acp_id];
+        //let sensor_loc=sensor_data.location;
+
+        let sensor_loc = {
+            x: document.getElementById("hm_"+acp_id).getAttribute("cx"),
+            y: document.getElementById("hm_"+acp_id).getAttribute("cy")
+        }
+        console.log('sensorloc:',sensor_loc,acp_id, sensor_data)
+
+        //parent.crates_with_sensors[sensor_data.crate_id]
+        let rect_class = sensor_data.crate_id + "_rect";
+        //        console.log('slocA', sensor_loc);
+
+        //      console.log(acp_id, rect_class)
+        let new_scale = parseFloat((d3.select("." + rect_class).node().dataset.loc.split(',')[2]));
+        // sensor_loc.y=sensor_loc.y*new_scale;
+        // sensor_loc.x=sensor_loc.x*new_scale;
+        // console.log('slocV',sensor_loc, new_scale);
+        // sensor_loc.x=sensor_loc.x*scale;
+
+
+        let min_dist = 999;
+        let max_dist = 0;
+
+        d3.selectAll("." + rect_class).nodes().forEach(node => {
+            //console.log('node', node)
+
+            let raw_loc = node.dataset.loc.split(',')
+            let selected_crate = node.dataset.crate;
+
+            // let loc = {
+            //     x: parseFloat(raw_loc[0]),
+            //     y: parseFloat(raw_loc[1]),
+            //     scale: parseFloat(raw_loc[2])
+            // }
+
+            let loc = {
+                x: node.x.animVal.value,
+                y: node.y.animVal.value,
+                scale: parseFloat(raw_loc[2])
+            }
+            let scale = loc.scale;
+
+           // console.log('rect',loc,'sensor',sensor_loc)
+
+            let cell_value = parent.get_heatmap(parent, selected_crate, loc);
+
+            let color = parent.color_scheme(cell_value);
+
+            let feature = 'co2';
+
+            // .attr('data-crate', selected_crate)
+            // .attr('data-loc', [loc.x, loc.y, loc.scale])
+            // .attr('data-type', feature)
+            // .attr('data-value', cell_value)
+
+            // .on("mouseover", function (d) {
+            //     parent.set_cbar_value(parent, cell_value)
+            // })
+            // .on("mouseout", function (d) {
+            //     d3.select('#hover_val').remove();
+            // })
+            // .style('opacity', 0)
+
+
+            d3.select(node)
+                .style("fill", function (d) {
+                    return color
+                })
+                .transition() // <------- TRANSITION STARTS HERE --------
+                //.ease('quad-in')
+
+                .delay(function (d, i) {
+                    // let delay = parent.animation_delay(cell_value);
+
+                    let dist_delay = parent.jb_tools.dist(loc, sensor_loc);
+
+                    if (dist_delay < min_dist) {
+                        min_dist = dist_delay;
+                    }
+                    if (dist_delay > max_dist) {
+                        max_dist = dist_delay;
+                    }
+                    //1000/Math.cos(dist_delay)
+                    //let delay = (((Math.cos(dist_delay / 5) + 1)) * 600) / (dist_delay / 10);
+
+                    let delay = (((Math.cos(dist_delay / 20) + 1)) * 10);
+
+                   // console.log('delay', delay, Math.cos(dist_delay), 'dist', dist_delay, loc, sensor_loc)
+                    // if (delay > 250) {
+                    //     delay = 250;
+                    // }
+
+                    return delay
+                })
+                .duration(750)//250
+                .ease(d3.easeLinear)
+
+                .style("fill", function (d) {
+                    return color //'white'//'white' //color
+                })
+
+                .style('opacity', function (d, i) {
+                    // let dist_delay = parent.jb_tools.dist(loc, sensor_loc);
+
+                    // let delay = (((Math.cos(dist_delay / 5) + 1)));
+                    // console.log('opacity delay', delay, 'dist', dist_delay)
+                    let dist_delay = parent.jb_tools.dist(loc, sensor_loc);
+                    let delay = dist_delay / 200;
+                    //  console.log('opacity', delay)
+
+                    if (delay > 250) {
+                        delay = 250;
+                    }
+                    return delay
+                })
+                // .transition()
+                // .delay(Math.pow(i, 2.5) * 50)
+                // .duration(2000)
+                // .ease('quad-in')
+
+                .on('end', function (d, i) {
+                    d3.select(node)
+                        .transition() // <------- TRANSITION STARTS HERE --------
+                        .delay(function (d, i) {
+                            // let delay = parent.animation_delay(cell_value);
+                            // return delay/2;
+
+                            let dist_delay = parent.jb_tools.dist(loc, sensor_loc);
+
+
+                            //1000/Math.cos(dist_delay)
+                            let delay = (((Math.cos(dist_delay / 5) + 1)) * 600) / (dist_delay / 10);
+                            if (delay > 250) {
+                                delay = 250;
+                            }
+                            return delay
+
+                        })
+                        .duration(200)
+                        .ease(d3.easeLinear)
+
+                        .style("fill", function (d) {
+                            return color //'red'
+                        })
+                        .style('opacity', 0.75)
+
+                })
+
+
+        });
+
+        //  console.log('min_dist', min_dist)
+        //  console.log('max_dist', max_dist)
 
     }
 
@@ -70,9 +242,9 @@ class HeatMap {
     get_local_sensors(parent) {
         console.log('loading data')
 
-        d3.json("http://localhost:6969/VLAB_JSON.json",{
+        d3.json("http://localhost:6969/VLAB_JSON.json", {
             crossOrigin: "anonymous"
-            
+
         }).then(function (received_data) {
             console.log('heatmap received', received_data)
             parent.handle_sensors_metadata(parent, received_data)
@@ -334,7 +506,7 @@ class HeatMap {
                                 .style("fill", function (d) {
                                     return color
                                 })
-                                .style('opacity',0.75)
+                                .style('opacity', 0.75)
 
 
                         }
@@ -348,38 +520,42 @@ class HeatMap {
 
         });
 
-         //declare circle properties - opacity and radius
-         let opac = 1;
-         let rad = 4; // radius of sensor icon in METERS (i.e. XYZF before transform)
- 
-         //iterate through results to extract data required to show sensors on the floorplan
-         let results= parent.sensor_data;
-         console.log(results)
-         for (let sensor in results) {
-             try {
-                 console.log(sensor)
-                 console.log(results[sensor])
-                 console.log(results[sensor]['location'])
-                 let x_value = results[sensor]['location']['x']*scale
-                 // Note y is NEGATIVE for XYZF (anti-clockwise) -> SVG (clockwise)
-                 let y_value = -results[sensor]['location']['y']*scale
-                 let floor_id = results[sensor]['location']['f']*scale
-                 let sensor_id = results[sensor]['acp_id'];
- 
-                 main_svg.append("circle")
-                     .attr("cx", x_value)
-                     .attr("cy", y_value)
-                     .attr("r", rad)
-                     .attr("id", sensor_id)
-                     .style("opacity", 1)
-                     .style("fill", "lime")
-                   //  .attr("transform", parent.master.svg_transform);
- 
-             } catch (error) {
-                 console.log(error)
-             }
- 
-         }
+        //declare circle properties - opacity and radius
+        let opac = 1;
+        let rad = 4; // radius of sensor icon in METERS (i.e. XYZF before transform)
+
+        //iterate through results to extract data required to show sensors on the floorplan
+        let results = parent.sensor_data;
+        console.log(results)
+        for (let sensor in results) {
+            try {
+                console.log(sensor)
+                console.log(results[sensor])
+                console.log(results[sensor]['location'])
+                let x_value = results[sensor]['location']['x'] * scale
+                // Note y is NEGATIVE for XYZF (anti-clockwise) -> SVG (clockwise)
+                let y_value = -results[sensor]['location']['y'] * scale
+                let floor_id = results[sensor]['location']['f'] * scale
+                let sensor_id = results[sensor]['acp_id'];
+
+                main_svg.append("circle")
+                    .attr("cx", x_value)
+                    .attr("cy", y_value)
+                    .attr("transform",null)
+                    .attr("r", rad)
+                    .attr("id", 'hm_'+sensor_id)
+                    .style("opacity", 1)
+                    .style("fill", "pink")
+                    .on('mouseover', function (d) {
+                        console.log(sensor_id, results[sensor]);
+                    })
+                //  .attr("transform", parent.master.svg_transform);
+
+            } catch (error) {
+                console.log(error)
+            }
+
+        }
 
         //debug only, "parent" now working somehow
         this.set_colorbar(parent);
@@ -482,14 +658,14 @@ class HeatMap {
             .attr("y", function (d) {
                 return scale_inv(value)
             })
-            .attr("x",c_conf.width / 3)
+            .attr("x", c_conf.width / 3)
             .attr("width", c_conf.width / 4)
             .attr("height", 2.5)
             .style("fill", 'lime');
 
         let rounded_val = Math.round(value * 100 + Number.EPSILON) / 100
 
-        parent.jb_tools.add_text(d3.select("#hover_val"), rounded_val, (c_conf.width / 3)+50, scale_inv(value), "0.65em", "translate(0,0)") // 0 is the offset from the left
+        parent.jb_tools.add_text(d3.select("#hover_val"), rounded_val, (c_conf.width / 3) + 50, scale_inv(value), "0.65em", "translate(0,0)") // 0 is the offset from the left
 
     }
 
@@ -520,7 +696,7 @@ class HeatMap {
             .enter().append("rect")
             .attr("class", "bars")
             .attr("y", function (i) {
-                return 20+i;
+                return 20 + i;
             })
             .attr("x", c_conf.width / 3)
 
@@ -534,10 +710,10 @@ class HeatMap {
 
         //text showing range on left/right
         //viz_tools.add_text(TARGET SVG, TXT VALUE, X LOC, Y LOC, FONT SIZE, TRANSLATE);
-        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.max, (c_conf.width / 2)-3, scale_inv(parent.min_max_range.max), "0.75em", "translate(0,0)") // 0 is the offset from the left
-        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.min, (c_conf.width / 2)-3, scale_inv(parent.min_max_range.min)+25, "0.75em", "translate(0,0)") // 0 is the offset from the left
+        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.max, (c_conf.width / 2) - 3, scale_inv(parent.min_max_range.max), "0.75em", "translate(0,0)") // 0 is the offset from the left
+        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.min, (c_conf.width / 2) - 3, scale_inv(parent.min_max_range.min) + 25, "0.75em", "translate(0,0)") // 0 is the offset from the left
 
-        parent.jb_tools.add_text(parent.master.legend_svg, document.getElementById('features_list').value, (c_conf.width / 2)-220, scale_inv(parent.min_max_range.min)-265, "0.85em", "rotate(-90)") // 0 is the offset from the left
+        parent.jb_tools.add_text(parent.master.legend_svg, document.getElementById('features_list').value, (c_conf.width / 2) - 220, scale_inv(parent.min_max_range.min) - 265, "0.85em", "rotate(-90)") // 0 is the offset from the left
 
     }
 
