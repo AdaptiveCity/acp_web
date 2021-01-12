@@ -5,21 +5,23 @@ class HeatMap {
     // Called to create instance in page : space_floorplan = SpaceFloorplan()
     constructor(floorspace) {
 
+        //throughout the class the master is the main visualisation, parent is HeatMap
         this.master = floorspace;
 
         // Instantiate a jb2328 utility class e.g. for getBoundingBox()
         this.viz_tools = new VizTools();
+
+        //a set of useful d3 functions
         this.jb_tools = new VizTools2();
 
-        this.sensor_data = {}; //sensor data+location required to draw the heatmap
-        this.crates_with_sensors = {}; //sensor data saved per crate
+        //sensor data+location required to draw the heatmap
+        this.sensor_data = {};
 
-        this.animation_dur = 350;
+        //sensor data saved per crate
+        this.crates_with_sensors = {};
 
-        this.rect_size = 10;
-
-        // this.sensor_readings = {}; //sensor reading data
-        // this.sensors_in_crates = {};
+        //resolution
+        this.rect_size = 8;
 
     }
 
@@ -29,85 +31,93 @@ class HeatMap {
         var parent = this;
         parent.viz_tools.init();
 
+        //declare the min max range of values for temp/co2/humidity - will change during runtime
         parent.min_max_range = {}
+
+        //declare the main colorscheme for the heatmap
         parent.color_scheme = d3.scaleSequential(d3.interpolateInferno)
+
+        //total time to draw transitions between activating the heatmap
+        parent.animation_dur = 350;
+        //the delay for drawing individual items during the animation
         parent.animation_delay = d3.scaleLinear().range([3000, 1000]);
 
+        //Use get_floor_sensors for the API calls, get_local_sensors for faked offline data
         //parent.get_floor_sensors(parent);
         parent.get_local_sensors(parent);
 
+        //attach and event listener to the list of properties
         document.getElementById('features_list').addEventListener('change', function () {
             console.log('You selected: ', this.value);
-
             parent.redraw_heatmap(parent, this.value)
-
         });
 
     }
-    myCallback(parent, sensor) {
+    //Generates the heatmap;
+    //It is attached to an event listener on the template *heatmap* button 
+    show_heatmap(parent) {
+        //parent.show_heatmap_original(parent)
+        parent.show_heatmap_alt(parent)
+    }
+
+
+    //callback to update sensors (for faked sensor data)
+    update_callback(parent, sensor) {
         parent.update_sensor(parent, sensor);
-
     }
 
+    //async update for faked sensor data - updates all;
+    //iterates through sensors and sets them to update on screen every *x* milliseconds
     update_sensors(parent) {
-
-
         console.log(parent.sensor_data)
-
         for (let sensor in parent.sensor_data) {
-            // parent.update_sensor(parent, sensor);
-            console.log(sensor)
-            // parent.update_sensor(parent, sensor);
-            window.setInterval(parent.myCallback, parent.jb_tools.random_int(5000, 15000), parent, sensor);
-
+            console.log('incoming update ', sensor)
+            window.setInterval(parent.update_callback, parent.jb_tools.random_int(5000, 15000), parent, sensor);
         }
-
     }
-    update_sensor(parent, acp_id) {
-        let sensor_data = parent.sensor_data[acp_id];
-        //let sensor_loc=sensor_data.location;
 
+    //Main raindrop function for incoming data:
+    //selects a sensor and sets it to update on by creating a raindrop
+    update_sensor(parent, acp_id) {
+
+        //get the data from the sensor data variable
+        let sensor_data = parent.sensor_data[acp_id];
+
+        //get drawn sensors' location on screen
         let sensor_loc = {
             x: document.getElementById("hm_" + acp_id).getAttribute("cx"),
             y: document.getElementById("hm_" + acp_id).getAttribute("cy")
         }
+
+        //debug location
         console.log('sensorloc:', sensor_loc, acp_id, sensor_data)
 
-        //parent.crates_with_sensors[sensor_data.crate_id]
+        //rects in polygons are classed by the crate they're in
         let rect_class = sensor_data.crate_id + "_rect";
-        //        console.log('slocA', sensor_loc);
 
-        //      console.log(acp_id, rect_class)
-        let new_scale = parseFloat((d3.select("." + rect_class).node().dataset.loc.split(',')[2]));
-        // sensor_loc.y=sensor_loc.y*new_scale;
-        // sensor_loc.x=sensor_loc.x*new_scale;
-        // console.log('slocV',sensor_loc, new_scale);
-        // sensor_loc.x=sensor_loc.x*scale;
-
-
+        //wipe min_max -- to be changed
         let min_dist = 999;
         let max_dist = 0;
 
+        //select all relevant rects
         d3.selectAll("." + rect_class).nodes().forEach(node => {
-            //console.log('node', node)
 
+            //acquire their position from the HTML data-loc property 
             let raw_loc = node.dataset.loc.split(',')
-            let selected_crate = node.dataset.crate;
+            let selected_crate = node.dataset.crate; //??? should this be sensor_data.crate_id ??? -- to be changed
 
-
-            let loc = {
+            //get rect's location on screen
+            let rect_loc = {
                 x: node.x.animVal.value,
                 y: node.y.animVal.value,
                 scale: parseFloat(raw_loc[2])
             }
-            let scale = loc.scale;
 
-            // console.log('rect',loc,'sensor',sensor_loc)
-
-            let cell_value = parent.get_heatmap(parent, selected_crate, loc);
+            //recoloring rects -- I don't think it's how it should be implemented, lots of unnecessary recalcultion -- to be changed
+            //e.g. this value should clearly be retrieved using node.dataset property that's already in HTML
+            let cell_value = parent.get_heatmap(parent, selected_crate, rect_loc);
 
             let color = parent.color_scheme(cell_value);
-
 
             d3.select(node)
                 .style("fill", function (d) {
@@ -147,13 +157,9 @@ class HeatMap {
                 })
 
                 .style('opacity', function (d, i) {
-                    // let dist_delay = parent.jb_tools.dist(loc, sensor_loc);
-
                     // let delay = (((Math.cos(dist_delay / 5) + 1)));
-                    // console.log('opacity delay', delay, 'dist', dist_delay)
                     let dist_delay = parent.jb_tools.dist(loc, sensor_loc);
                     let delay = dist_delay / 200;
-                    //  console.log('opacity', delay)
 
                     if (delay > 250) {
                         delay = 250;
@@ -173,7 +179,6 @@ class HeatMap {
                             // return delay/2;
 
                             let dist_delay = parent.jb_tools.dist(loc, sensor_loc);
-
 
                             //1000/Math.cos(dist_delay)
                             let delay = (((Math.cos(dist_delay / 5) + 1)) * 600) / (dist_delay / 10);
@@ -198,6 +203,7 @@ class HeatMap {
 
     }
 
+    //API requests to get sensors per crate
     get_floor_sensors(parent) {
 
         let system = parent.master.floor_coordinate_system;
@@ -217,9 +223,13 @@ class HeatMap {
 
     // Alternative to get_readings() using local file for sensors API response
     get_local_sensors(parent) {
-        console.log('loading data')
 
-        d3.json("http://localhost:8000/static_web/js/VLAB_JSON.json", {
+        console.log('loading local data')
+
+        let selection = CRATE_ID == 'FF' ? 'WGB' : 'VLAB'; //for now leaving the Lockdown Lab away from this
+
+        //local file loading from Django
+        d3.json("http://localhost:8000/static_web/js/" + selection + "_JSON.json", {
             crossOrigin: "anonymous"
 
         }).then(function (received_data) {
@@ -233,6 +243,7 @@ class HeatMap {
     // given floor#/coordinate system
     //   { "sensors": { "rad-ath-0099" : { <sensor metadata> }, ... }}
     handle_sensors_metadata(parent, results) {
+
         console.log("handle_sensors_metadata() loaded", results);
 
         //iterate through results to extract data required to show sensors on the floorplan
@@ -271,13 +282,14 @@ class HeatMap {
         console.log('crates w sensors', parent.crates_with_sensors)
     }
 
-
+    //calculates value ranges for temp/co2/humidity and other during runtime;
+    //recalculations are made whenever a new heatmap is selected
     get_min_max(parent, feature) {
-        console.log('minmax hello')
 
         let min = 999;
         let max = -999;
 
+        //iterate through the data based on requested feature and extract min/max values
         for (let reading in parent.sensor_data) {
 
             console.log('minmax', reading, parent.sensor_data[reading].payload)
@@ -291,52 +303,59 @@ class HeatMap {
             }
         }
 
+        //reset the main variable
         parent.min_max_range = {
             max: max,
             min: min
         };
 
-        //reset min_max values
+        //reset min_max values for scaling
         parent.color_scheme.domain([parent.min_max_range.min, parent.min_max_range.max]);
         parent.animation_delay.domain([parent.min_max_range.min, parent.min_max_range.max]);
 
         console.log('minmax', min, max)
 
     }
-    //redraw heatmap based on new feature
+
+    //redraw heatmap based on a selected feature
     redraw_heatmap(parent, feature) {
+
+        //get min/max for the selected feature
         parent.get_min_max(parent, feature)
+        //reset the colorbar
         parent.set_colorbar(parent);
 
-        let index = 0;
+        //iterate through all crates that have sensors in them
+        Object.keys(parent.crates_with_sensors).forEach(crate_id => {
 
+            //select the rectangles associated with a selected crate
+            let class_id = crate_id + "_rect";
 
-        Object.keys(parent.crates_with_sensors).forEach(sensor => {
-            let class_id = sensor + "_rect";
-            d3.selectAll("." + class_id).nodes().forEach(node => {
+            d3.selectAll("." + class_id).nodes().forEach(rect => {
 
+                //acquire their position from the HTML data-loc property 
+                let raw_loc = rect.dataset.loc.split(',')
+                let selected_crate = rect.dataset.crate; //??? should this be sensor_data.crate_id ??? -- to be changed
 
-                let raw_loc = node.dataset.loc.split(',')
-                let selected_crate = node.dataset.crate;
-
-                let loc = {
+                //get rect's location on screen
+                let rect_loc = {
                     x: parseFloat(raw_loc[0]),
                     y: parseFloat(raw_loc[1]),
                     scale: parseFloat(raw_loc[2])
                 }
 
-                let cell_value = parent.get_heatmap(parent, selected_crate, loc);
+                //recalculate the rect value based on the new feature
+                let cell_value = parent.get_heatmap(parent, selected_crate, rect_loc);
 
+                //transform the feature value into a color
                 let color = parent.color_scheme(cell_value);
 
-
-                d3.select(node)
-
+                //update the rect on screen
+                d3.select(rect)
                     .attr('data-crate', selected_crate)
-                    .attr('data-loc', [loc.x, loc.y, loc.scale])
+                    .attr('data-loc', [rect_loc.x, rect_loc.y, rect_loc.scale])
                     .attr('data-type', feature)
                     .attr('data-value', cell_value)
-
                     .on("mouseover", function (d) {
                         parent.set_cbar_value(parent, cell_value)
                     })
@@ -344,31 +363,22 @@ class HeatMap {
                         d3.select('#hover_val').remove();
                     })
                     .style('opacity', 0)
-
-
                     .transition() // <------- TRANSITION STARTS HERE --------
                     .delay(function (d, i) {
                         let delay = parent.animation_delay(cell_value);
                         return delay;
                     })
                     .duration(parent.animation_dur)
-
                     .style("fill", function (d) {
                         return color
                     })
                     .style('opacity', 0.75)
-
-
             })
-
         })
-
-
-
-
     }
-    //first time generating heatmap
-    show_heatmap(parent) {
+
+    //used when generating the heatmap for the first time (not redrawing)
+    show_heatmap_original(parent) {
         console.log('start', Date.now())
 
         let selected_feature = document.getElementById('features_list').value;
@@ -499,42 +509,6 @@ class HeatMap {
 
     }
 
-    attach_sensors(parent, results, scale) {
-        let main_svg = d3.select('#drawing_svg').append('g').attr('id', 'heatmap');
-        //declare circle properties - opacity and radius
-        let opac = 1;
-        let rad = 4; // radius of sensor icon in METERS (i.e. XYZF before transform)
-        for (let sensor in results) {
-            try {
-                console.log(sensor)
-                console.log(results[sensor])
-                console.log(results[sensor]['location'])
-                let x_value = results[sensor]['location']['x'] * scale
-                // Note y is NEGATIVE for XYZF (anti-clockwise) -> SVG (clockwise)
-                let y_value = -results[sensor]['location']['y'] * scale
-                let floor_id = results[sensor]['location']['f'] * scale
-                let sensor_id = results[sensor]['acp_id'];
-
-                main_svg.append("circle")
-                    .attr("cx", x_value)
-                    .attr("cy", y_value)
-                    .attr("transform", null)
-                    .attr("r", rad)
-                    .attr("id", 'hm_' + sensor_id)
-                    .style("opacity", 1)
-                    .style("fill", "pink")
-                    .on('mouseover', function (d) {
-                        console.log(sensor_id, results[sensor]);
-                    })
-                //  .attr("transform", parent.master.svg_transform);
-
-            } catch (error) {
-                console.log(error)
-            }
-
-        }
-    }
-
     //first get all rects on a floor, then reiterate for rooms
     show_heatmap_alt(parent) {
         console.log('start alt', Date.now())
@@ -639,33 +613,34 @@ class HeatMap {
                 d3.selectAll('.unassigned_rect').nodes().forEach(rect => {
 
                     let rect_coords = {
-                        'x': ((rect.x.baseVal.value-parent.rect_size)/ scale)-transf_x,
-                        'y': ((rect.y.baseVal.value-parent.rect_size) / scale)-transf_y
+                        'x': ((rect.x.baseVal.value - parent.rect_size) / scale) - transf_x,
+                        'y': ((rect.y.baseVal.value - parent.rect_size) / scale) - transf_y
+                    }
+                    let rect_coords2 = {
+                        'x': ((rect.x.animVal.value) / scale) - transf_x,
+                        'y': ((rect.y.animVal.value) / scale) - transf_y
                     }
 
-                    let loc_raw = d3.select('.unassigned_rect').node().dataset.loc.split(',');
+                    let loc_raw = rect.dataset.loc.split(',');
 
                     let loc = {
-                        x: parseInt(loc_raw[0])/ parseInt(loc_raw[2]),
-                        y: parseInt(loc_raw[1])/ parseInt(loc_raw[2]),
-                        scale: parseInt(loc_raw[2])
+                        x: rect.x.animVal.value,
+                        y: rect.y.animVal.value,
+                        scale: parseFloat(loc_raw[2])
                     }
-                   
+
                     if (parent.jb_tools.inside(rect_coords, polygon_points2)) {
 
-                        console.log('yes')
                         let selected_crate = element.id;
 
                         let cell_value = parent.get_heatmap(parent, selected_crate, loc);
                         let color = parent.color_scheme(cell_value);
 
-                            d3.select(rect)
+                        d3.select(rect)
                             .attr('class', class_name)
                             .style('opacity', 0)
                             .style('stroke-opacity', 0)
                             .attr('data-crate', selected_crate)
-                            .attr('data-loc', [loc.x, loc.y, loc.scale])
-                            .attr('data-type', selected_feature)
                             .attr('data-value', cell_value)
 
                             .on("mouseover", function (d) {
@@ -681,13 +656,13 @@ class HeatMap {
                             .transition() // <------- TRANSITION STARTS HERE --------
                             .delay(function (d, i) {
 
-                                //let delay=Math.random() * (4000 - 1500) + 1500;
-                                let delay = parent.animation_delay(cell_value);
+                                let delay = Math.random() * (2000 - 750) + 750;
+                                //let delay = parent.animation_delay(cell_value);
                                 return delay;
                             })
                             .duration(parent.animation_dur)
                             .style("fill", function (d) {
-                                return color//'red'
+                                return color //'red'
                             })
                             .style('opacity', 0.75);
                     }
@@ -800,7 +775,42 @@ class HeatMap {
         return D == 0 ? final_val : D; // myColor(Math.floor(Math.random()*100))
     }
 
+    attach_sensors(parent, results, scale) {
+        let main_svg = d3.select('#drawing_svg').append('g').attr('id', 'heatmap');
+        //declare circle properties - opacity and radius
+        let opac = 1;
+        let rad = 4; // radius of sensor icon in METERS (i.e. XYZF before transform)
+        for (let sensor in results) {
+            try {
+                console.log(sensor)
+                console.log(results[sensor])
+                console.log(results[sensor]['location'])
+                let x_value = results[sensor]['location']['x'] * scale
+                // Note y is NEGATIVE for XYZF (anti-clockwise) -> SVG (clockwise)
+                let y_value = -results[sensor]['location']['y'] * scale
+                let floor_id = results[sensor]['location']['f'] * scale
+                let sensor_id = results[sensor]['acp_id'];
 
+                main_svg.append("circle")
+                    .attr("cx", x_value)
+                    .attr("cy", y_value)
+                    .attr("transform", null)
+                    .attr("r", rad)
+                    .attr("id", 'hm_' + sensor_id)
+                    .style("opacity", 0.1)
+                    .style("fill", "pink")
+                    .on('mouseover', function (d) {
+                        console.log(sensor_id, results[sensor]);
+                    })
+                //  .attr("transform", parent.master.svg_transform);
+
+            } catch (error) {
+                console.log(error)
+            }
+
+        }
+    }
+    
     set_cbar_value(parent, value) {
         let c_conf = parent.jb_tools.canvas_conf(110, 320, 10, 5, 10, 5);
 

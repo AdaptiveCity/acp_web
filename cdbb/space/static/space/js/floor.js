@@ -80,9 +80,7 @@ class SpaceFloor {
         this.get_floor_crate(parent);
 
         document.getElementById('show_heatmap').addEventListener('click', () => {
-            // parent.heatmap.show_heatmap(parent.heatmap);
-            parent.heatmap.show_heatmap_alt(parent.heatmap);
-
+             parent.heatmap.show_heatmap(parent.heatmap);
         })
 
         document.getElementById('reset').addEventListener('click', () => {
