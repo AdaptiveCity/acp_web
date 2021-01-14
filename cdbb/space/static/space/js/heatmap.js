@@ -21,7 +21,7 @@ class HeatMap {
         this.crates_with_sensors = {};
 
         //resolution
-        this.rect_size = 8;
+        this.rect_size = 25;
 
     }
 
@@ -72,7 +72,7 @@ class HeatMap {
         console.log(parent.sensor_data)
         for (let sensor in parent.sensor_data) {
             console.log('incoming update ', sensor)
-            window.setInterval(parent.update_callback, parent.jb_tools.random_int(5000, 15000), parent, sensor);
+            window.setInterval(parent.update_callback, parent.jb_tools.random_int(20000, 20000 * 10), parent, sensor);
         }
     }
 
@@ -119,6 +119,8 @@ class HeatMap {
 
             let color = parent.color_scheme(cell_value);
 
+            let dist_delay = parent.jb_tools.dist(rect_loc, sensor_loc);
+
             d3.select(node)
                 .style("fill", function (d) {
                     return color
@@ -129,7 +131,7 @@ class HeatMap {
                 .delay(function (d, i) {
                     // let delay = parent.animation_delay(cell_value);
 
-                    let dist_delay = parent.jb_tools.dist(loc, sensor_loc);
+                    //let dist_delay = parent.jb_tools.dist(rect_loc, sensor_loc);
 
                     if (dist_delay < min_dist) {
                         min_dist = dist_delay;
@@ -158,7 +160,6 @@ class HeatMap {
 
                 .style('opacity', function (d, i) {
                     // let delay = (((Math.cos(dist_delay / 5) + 1)));
-                    let dist_delay = parent.jb_tools.dist(loc, sensor_loc);
                     let delay = dist_delay / 200;
 
                     if (delay > 250) {
@@ -178,7 +179,7 @@ class HeatMap {
                             // let delay = parent.animation_delay(cell_value);
                             // return delay/2;
 
-                            let dist_delay = parent.jb_tools.dist(loc, sensor_loc);
+                            //let dist_delay = parent.jb_tools.dist(loc, sensor_loc);
 
                             //1000/Math.cos(dist_delay)
                             let delay = (((Math.cos(dist_delay / 5) + 1)) * 600) / (dist_delay / 10);
@@ -528,7 +529,7 @@ class HeatMap {
 
         console.log('floor', floor)
         //https://stackoverflow.com/questions/19154631/how-to-get-coordinates-of-an-svg-element
-        let scale = floor.transform.baseVal.consolidate().matrix.a;
+        var scale = floor.transform.baseVal.consolidate().matrix.a;
         let transf_x = floor.transform.baseVal.consolidate().matrix.e;
         let transf_y = floor.transform.baseVal.consolidate().matrix.f;
 
@@ -599,85 +600,115 @@ class HeatMap {
 
         let rect_count = 0;
 
-        d3.selectAll('polygon').nodes().forEach(element => {
+        //d3.selectAll('polygon').nodes().forEach(element => {
 
-            let has_sensors = crates_with_sensors_list.includes(element.id);
-            if (element.dataset.crate_type != 'building' && element.dataset.crate_type != 'floor' && has_sensors) {
+        let polygon_alpha = d3.selectAll('polygon').nodes();
+        let polygons=[]
+        console.log('polygons_total', polygon_alpha.length);
+
+        // Prints "2, 4"
+        // review.forEach(function (item, index, object) {
+        //     if (item === 'a') {
+        //         object.splice(index, 1);
+        //     }
+        // });
+        polygon_alpha.forEach(function (d, i) {
+            //  console.log(index, 'space',object)
+            let has_sensors = crates_with_sensors_list.includes(d.id);
+
+            if (d.dataset.crate_type != 'building' && d.dataset.crate_type != 'floor' && has_sensors) {
+                polygons.push(d)
+            }
+             
+        });
+
+        console.log('polygons_total', polygons.length,polygons);
+
+        // d3.selectAll('.unassigned_rect').nodes().forEach(rect => {
+        let rects = d3.selectAll('.unassigned_rect').nodes();
+
+        console.log('items:', 'rects:', rects.length, 'polygons', polygons.length);
+
+        let last_pick = '';
+        //pick a rectangle on screen
+        for (let u = 0; u < rects.length; u++) {
+            let rect = rects[u];
+
+            let loc_raw = rect.dataset.loc.split(',');
+
+            let loc = {
+                x: rect.x.baseVal.value + parent.rect_size / 2,
+                y: rect.y.baseVal.value + parent.rect_size / 2,
+                scale: parseFloat(loc_raw[2])
+            }
+            //break;
+            //try to fit a polygon
+            for (let i = 0; i < polygons.length; i++) {
+                let element = polygons[i];
+
+                // if (element.dataset.crate_type != 'building' && element.dataset.crate_type != 'floor' && has_sensors) {
 
                 let class_name = element.id + '_rect';
 
                 let polygon_points2 = element.points;
 
+                let polygon_points_new = [];
 
-                console.log('checking ', element)
-                d3.selectAll('.unassigned_rect').nodes().forEach(rect => {
+                for (let j = 0; j < polygon_points2.length; j++) {
+                    polygon_points_new[j] = {
+                        'x': null,
+                        'y': null
+                    };
+                    polygon_points_new[j].x = polygon_points2[j].x * scale
+                    polygon_points_new[j].y = polygon_points2[j].y * scale
+                }
 
-                    let rect_coords = {
-                        'x': ((rect.x.baseVal.value - parent.rect_size) / scale) - transf_x,
-                        'y': ((rect.y.baseVal.value - parent.rect_size) / scale) - transf_y
-                    }
-                    let rect_coords2 = {
-                        'x': ((rect.x.animVal.value) / scale) - transf_x,
-                        'y': ((rect.y.animVal.value) / scale) - transf_y
-                    }
+                console.log('checking ', element.id)
 
-                    let loc_raw = rect.dataset.loc.split(',');
+                if (parent.jb_tools.inside(loc, polygon_points_new)) {
 
-                    let loc = {
-                        x: rect.x.animVal.value,
-                        y: rect.y.animVal.value,
-                        scale: parseFloat(loc_raw[2])
-                    }
+                    let selected_crate = element.id;
 
-                    if (parent.jb_tools.inside(rect_coords, polygon_points2)) {
+                    let cell_value = parent.get_heatmap(parent, selected_crate, loc);
+                    let color = parent.color_scheme(cell_value);
 
-                        let selected_crate = element.id;
+                    d3.select(rect)
+                        .attr('class', class_name)
+                        .style('opacity', 0)
+                        .style('stroke-opacity', 0)
+                        .attr('data-crate', selected_crate)
+                        .attr('data-value', cell_value)
 
-                        let cell_value = parent.get_heatmap(parent, selected_crate, loc);
-                        let color = parent.color_scheme(cell_value);
+                        .on("mouseover", function (d) {
+                            parent.set_cbar_value(parent, cell_value)
+                        })
+                        .on("mouseout", function (d) {
+                            d3.select('#hover_val').remove();
+                        })
+                        //.call(parent.transition_value, duration)
+                        // .call(parent.transition_random, duration)
+                        // .call(parent.transition_sideways, duration)
 
-                        d3.select(rect)
-                            .attr('class', class_name)
-                            .style('opacity', 0)
-                            .style('stroke-opacity', 0)
-                            .attr('data-crate', selected_crate)
-                            .attr('data-value', cell_value)
+                        .transition() // <------- TRANSITION STARTS HERE --------
+                        .delay(function (d, i) {
 
-                            .on("mouseover", function (d) {
-                                parent.set_cbar_value(parent, cell_value)
-                            })
-                            .on("mouseout", function (d) {
-                                d3.select('#hover_val').remove();
-                            })
-                            //.call(parent.transition_value, duration)
-                            // .call(parent.transition_random, duration)
-                            // .call(parent.transition_sideways, duration)
-
-                            .transition() // <------- TRANSITION STARTS HERE --------
-                            .delay(function (d, i) {
-
-                                let delay = Math.random() * (2000 - 750) + 750;
-                                //let delay = parent.animation_delay(cell_value);
-                                return delay;
-                            })
-                            .duration(parent.animation_dur)
-                            .style("fill", function (d) {
-                                return color //'red'
-                            })
-                            .style('opacity', 0.75);
-                    }
-                    console.log('no')
-
-                });
-
-
-
+                            let delay = Math.random() * (2000 - 750) + 750;
+                            //let delay = parent.animation_delay(cell_value);
+                            return delay;
+                        })
+                        .duration(parent.animation_dur)
+                        .style("fill", function (d) {
+                            return color //'red'
+                        })
+                        .style('opacity', 0.75);
+                } else {
+                    console.log('no', 'next polygon');
+                    //break;
+                }
             }
-        });
+        } 
+        console.log('done polygons')
 
-        //declare circle properties - opacity and radius
-        let opac = 1;
-        let rad = 4; // radius of sensor icon in METERS (i.e. XYZF before transform)
 
         //iterate through results to extract data required to show sensors on the floorplan
         //change name from results to else
@@ -717,6 +748,7 @@ class HeatMap {
         combined_dist = 0;
         data_points = [];
 
+        console.log(parent.crates_with_sensors[crate], crate)
         parent.crates_with_sensors[crate].forEach(sensor => {
 
             //if the sensor does not have the requested feature, skip it
@@ -750,6 +782,7 @@ class HeatMap {
 
         let C = 0;
         let D = 0;
+        //magic happens here
         data_points.forEach(points => {
 
             if (points.dist != combined_dist) {
@@ -782,9 +815,9 @@ class HeatMap {
         let rad = 4; // radius of sensor icon in METERS (i.e. XYZF before transform)
         for (let sensor in results) {
             try {
-                console.log(sensor)
-                console.log(results[sensor])
-                console.log(results[sensor]['location'])
+                //    console.log(sensor)
+                //    console.log(results[sensor])
+                //    console.log(results[sensor]['location'])
                 let x_value = results[sensor]['location']['x'] * scale
                 // Note y is NEGATIVE for XYZF (anti-clockwise) -> SVG (clockwise)
                 let y_value = -results[sensor]['location']['y'] * scale
@@ -797,7 +830,7 @@ class HeatMap {
                     .attr("transform", null)
                     .attr("r", rad)
                     .attr("id", 'hm_' + sensor_id)
-                    .style("opacity", 0.1)
+                    .style("opacity", 0.3)
                     .style("fill", "pink")
                     .on('mouseover', function (d) {
                         console.log(sensor_id, results[sensor]);
@@ -810,7 +843,7 @@ class HeatMap {
 
         }
     }
-    
+
     set_cbar_value(parent, value) {
         let c_conf = parent.jb_tools.canvas_conf(110, 320, 10, 5, 10, 5);
 
