@@ -21,7 +21,11 @@ class HeatMap {
         this.crates_with_sensors = {};
 
         //resolution
-        this.rect_size = 25;
+        this.rect_size = 6;
+
+        //heatmap opacity
+        this.default_opacity = 0.75;
+        this.sensor_opacity = 0.1;
 
     }
 
@@ -56,14 +60,14 @@ class HeatMap {
     //Generates the heatmap;
     //It is attached to an event listener on the template *heatmap* button 
     show_heatmap(parent) {
-        //parent.show_heatmap_original(parent)
-        parent.show_heatmap_alt(parent)
+        parent.show_heatmap_original(parent)
+        //parent.show_heatmap_alt(parent)
     }
 
 
     //callback to update sensors (for faked sensor data)
-    update_callback(parent, sensor) {
-        parent.update_sensor(parent, sensor);
+    update_callback(parent, sensor, walk) {
+        parent.update_sensor(parent, sensor, walk);
     }
 
     //async update for faked sensor data - updates all;
@@ -72,13 +76,42 @@ class HeatMap {
         console.log(parent.sensor_data)
         for (let sensor in parent.sensor_data) {
             console.log('incoming update ', sensor)
-            window.setInterval(parent.update_callback, parent.jb_tools.random_int(20000, 20000 * 10), parent, sensor);
+            let wildcard = Math.random() < 0.5;
+            window.setInterval(parent.update_callback, parent.jb_tools.random_int(20000, 20000 * 10), parent, sensor, wildcard);
+        }
+    }
+
+    //show fake path
+    fake_path(parent) {
+        let sens_list = [
+            "elsys-fake-738bf2",
+            "elsys-fake-d6a9de",
+            "elsys-fake-372c9d",
+            "elsys-fake-290265",
+            "elsys-fake-9354d3",
+            "elsys-fake-f3b577",
+            "elsys-fake-ffdfb4",
+            "elsys-fake-c3e668",
+            "elsys-fake-6bf9d0",
+            "elsys-fake-1fd377",
+            "elsys-fake-c7cf58",
+            "elsys-fake-56f2e8",
+            "elsys-fake-8bae37",
+            "elsys-fake-2c9683"
+        ];
+
+        let counter = 1;
+        for (let i = 0; i < sens_list.length; i++) {
+            let sensor = sens_list[i];
+            console.log('incoming update ', sensor)
+            window.setTimeout(parent.update_callback, counter * 1000, parent, sensor, true);
+            counter++;
         }
     }
 
     //Main raindrop function for incoming data:
     //selects a sensor and sets it to update on by creating a raindrop
-    update_sensor(parent, acp_id) {
+    update_sensor(parent, acp_id, walk) {
 
         //get the data from the sensor data variable
         let sensor_data = parent.sensor_data[acp_id];
@@ -90,14 +123,10 @@ class HeatMap {
         }
 
         //debug location
-        console.log('sensorloc:', sensor_loc, acp_id, sensor_data)
+        //  console.log('sensorloc:', sensor_loc, acp_id, sensor_data)
 
         //rects in polygons are classed by the crate they're in
         let rect_class = sensor_data.crate_id + "_rect";
-
-        //wipe min_max -- to be changed
-        let min_dist = 999;
-        let max_dist = 0;
 
         //select all relevant rects
         d3.selectAll("." + rect_class).nodes().forEach(node => {
@@ -126,81 +155,95 @@ class HeatMap {
                     return color
                 })
                 .transition() // <------- TRANSITION STARTS HERE --------
-                //.ease('quad-in')
+                .ease(d3.easeCubicIn)
 
                 .delay(function (d, i) {
-                    // let delay = parent.animation_delay(cell_value);
 
-                    //let dist_delay = parent.jb_tools.dist(rect_loc, sensor_loc);
+                    let delay = (((Math.cos(dist_delay / 20) + 1)) * 2);
 
-                    if (dist_delay < min_dist) {
-                        min_dist = dist_delay;
+                    if (delay < 50) {
+                        delay = 0;
                     }
-                    if (dist_delay > max_dist) {
-                        max_dist = dist_delay;
-                    }
-                    //1000/Math.cos(dist_delay)
-                    //let delay = (((Math.cos(dist_delay / 5) + 1)) * 600) / (dist_delay / 10);
-
-                    let delay = (((Math.cos(dist_delay / 20) + 1)) * 10);
-
                     // console.log('delay', delay, Math.cos(dist_delay), 'dist', dist_delay, loc, sensor_loc)
-                    if (delay > 250) {
-                        delay = 250;
-                    }
+                    // console.log('delay', delay,dist_delay);
 
                     return delay
                 })
-                .duration(750) //250
-                .ease(d3.easeLinear)
+                .duration(200) //250
+                .ease(d3.easeCubicIn)
 
                 .style("fill", function (d) {
                     return color //'white'//'white' //color
                 })
 
                 .style('opacity', function (d, i) {
-                    // let delay = (((Math.cos(dist_delay / 5) + 1)));
-                    let delay = dist_delay / 200;
+                    //let opacity = (((Math.sin(dist_delay / 5) + 1)));
 
-                    if (delay > 250) {
-                        delay = 250;
+                    let opacity = dist_delay / 100;
+
+                    if (walk) {
+                        opacity = dist_delay / 25
                     }
-                    return delay
+                    //console.log('opacity', opacity,dist_delay);
+
+                    if (opacity > parent.default_opacity) {
+                        opacity = parent.default_opacity;
+                    }
+                    return opacity
                 })
-                // .transition()
-                // .delay(Math.pow(i, 2.5) * 50)
-                // .duration(2000)
-                // .ease('quad-in')
 
                 .on('end', function (d, i) {
                     d3.select(node)
                         .transition() // <------- TRANSITION STARTS HERE --------
                         .delay(function (d, i) {
-                            // let delay = parent.animation_delay(cell_value);
-                            // return delay/2;
 
-                            //let dist_delay = parent.jb_tools.dist(loc, sensor_loc);
+                            let wave_len = 5;
+                            let amplitude = 4000;
 
-                            //1000/Math.cos(dist_delay)
-                            let delay = (((Math.cos(dist_delay / 5) + 1)) * 600) / (dist_delay / 10);
-                            if (delay > 250) {
-                                delay = 250;
+                            if (walk) {
+                                wave_len = 2.5;
+                                amplitude = 1000;
                             }
-                            return delay
+                            let warp_delay = (((Math.cos(dist_delay / wave_len) + 1)) * amplitude) / dist_delay; //dampening function
+
+                            // console.log('warp delay', warp_delay)
+                            //since the funciton follow 
+                            if (warp_delay > 200) {
+                                warp_delay = 200;
+                                if (walk) {
+                                    warp_delay = 75;
+                                }
+                            }
+                            if (warp_delay < 50) {
+                                warp_delay = 0;
+
+                            }
+                            return warp_delay
 
                         })
-                        .duration(200)
+                        .duration(function (d, i) {
+                            if (walk) {
+                                return 100
+                            } else {
+                                return 200
+                            }
+                        })
                         .ease(d3.easeLinear)
 
                         .style("fill", function (d) {
                             return color //'red'
                         })
-                        .style('opacity', 0.75)
+                        .style('opacity', parent.default_opacity)
 
                 })
 
 
         });
+        parent.update_crate_heatmap(parent, sensor_data.crate_id, acp_id)
+
+        // .on('end', function (d, i) {
+        //     parent.update_crate_heatmap(parent, sensor_data.crate_id,acp_id)
+        // });
 
     }
 
@@ -318,6 +361,74 @@ class HeatMap {
 
     }
 
+    update_crate_heatmap(parent, crate_id, sensor_id) {
+        //select the rectangles associated with a selected crate
+        let class_id = crate_id + "_rect";
+
+        d3.selectAll("." + class_id).nodes().forEach(rect => {
+
+            //acquire their position from the HTML data-loc property 
+            let raw_loc = rect.dataset.loc.split(',')
+            let selected_crate = rect.dataset.crate; //??? should this be sensor_data.crate_id ??? -- to be changed
+
+            //get rect's location on screen
+            let rect_loc = {
+                x: parseFloat(raw_loc[0]),
+                y: parseFloat(raw_loc[1]),
+                scale: parseFloat(raw_loc[2])
+            }
+
+
+            let temp_val = Math.random() * (3 + 3) - 3;
+            let current_val=parent.sensor_data[sensor_id].payload.temperature;
+            let new_val=temp_val+current_val;
+
+            if(new_val>40 || new_val<-10){
+                new_val=current_val;
+            }
+
+            //update the reading with a new rand value
+            parent.sensor_data[sensor_id].payload.temperature= new_val;
+
+            ///space_floor.heatmap.crates_with_sensors['FE11']
+
+           // console.log(crate_id, sensor_id)
+            //recalculate the rect value based on the new feature
+            let cell_value = parent.get_heatmap(parent, selected_crate, rect_loc);
+
+            //transform the feature value into a color
+            let color = parent.color_scheme(cell_value);
+
+         //   console.log(cell_value, color)
+
+            let feature = 'temperature';
+            //update the rect on screen
+            d3.select(rect)
+                .attr('data-crate', selected_crate)
+                .attr('data-loc', [rect_loc.x, rect_loc.y, rect_loc.scale])
+                .attr('data-type', feature)
+                .attr('data-value', cell_value)
+                .on("mouseover", function (d) {
+                    parent.set_cbar_value(parent, cell_value)
+                })
+                .on("mouseout", function (d) {
+                    d3.select('#hover_val').remove();
+                })
+                //    .style('opacity', 0)
+                //    .transition() // <------- TRANSITION STARTS HERE --------
+                //    .delay(function (d, i) {
+                //        let delay = parent.animation_delay(cell_value);
+                //        return delay;
+                //    })
+                //    .duration(parent.animation_dur)
+                .style("fill", function (d) {
+                    return color
+                })
+            //  .style('opacity', parent.default_opacity)
+        })
+    }
+
+
     //redraw heatmap based on a selected feature
     redraw_heatmap(parent, feature) {
 
@@ -373,7 +484,7 @@ class HeatMap {
                     .style("fill", function (d) {
                         return color
                     })
-                    .style('opacity', 0.75)
+                    .style('opacity', parent.default_opacity)
             })
         })
     }
@@ -488,7 +599,7 @@ class HeatMap {
                                 .style("fill", function (d) {
                                     return color
                                 })
-                                .style('opacity', 0.75);
+                                .style('opacity', parent.default_opacity);
                         }
                     }
                 }
@@ -595,23 +706,14 @@ class HeatMap {
             }
         }
 
-        let counter = 0;
         let crates_with_sensors_list = Object.keys(parent.crates_with_sensors);
-
-        let rect_count = 0;
 
         //d3.selectAll('polygon').nodes().forEach(element => {
 
         let polygon_alpha = d3.selectAll('polygon').nodes();
-        let polygons=[]
+        let polygons = []
         console.log('polygons_total', polygon_alpha.length);
 
-        // Prints "2, 4"
-        // review.forEach(function (item, index, object) {
-        //     if (item === 'a') {
-        //         object.splice(index, 1);
-        //     }
-        // });
         polygon_alpha.forEach(function (d, i) {
             //  console.log(index, 'space',object)
             let has_sensors = crates_with_sensors_list.includes(d.id);
@@ -619,10 +721,10 @@ class HeatMap {
             if (d.dataset.crate_type != 'building' && d.dataset.crate_type != 'floor' && has_sensors) {
                 polygons.push(d)
             }
-             
+
         });
 
-        console.log('polygons_total', polygons.length,polygons);
+        console.log('polygons_total', polygons.length, polygons);
 
         // d3.selectAll('.unassigned_rect').nodes().forEach(rect => {
         let rects = d3.selectAll('.unassigned_rect').nodes();
@@ -630,6 +732,7 @@ class HeatMap {
         console.log('items:', 'rects:', rects.length, 'polygons', polygons.length);
 
         let last_pick = '';
+
         //pick a rectangle on screen
         for (let u = 0; u < rects.length; u++) {
             let rect = rects[u];
@@ -700,13 +803,13 @@ class HeatMap {
                         .style("fill", function (d) {
                             return color //'red'
                         })
-                        .style('opacity', 0.75);
+                        .style('opacity', parent.default_opacity);
                 } else {
                     console.log('no', 'next polygon');
                     //break;
                 }
             }
-        } 
+        }
         console.log('done polygons')
 
 
@@ -748,7 +851,7 @@ class HeatMap {
         combined_dist = 0;
         data_points = [];
 
-        console.log(parent.crates_with_sensors[crate], crate)
+        // console.log(parent.crates_with_sensors[crate], crate)
         parent.crates_with_sensors[crate].forEach(sensor => {
 
             //if the sensor does not have the requested feature, skip it
@@ -830,7 +933,7 @@ class HeatMap {
                     .attr("transform", null)
                     .attr("r", rad)
                     .attr("id", 'hm_' + sensor_id)
-                    .style("opacity", 0.3)
+                    .style("opacity", parent.sensor_opacity)
                     .style("fill", "pink")
                     .on('mouseover', function (d) {
                         console.log(sensor_id, results[sensor]);
