@@ -255,7 +255,6 @@ function onchange_secondary_select(e, readings, features) {
     // Change the URL in the address bar
     // update_url(feature_id, plot_date);
     // draw_charts(readings, features[feature_id1],features[feature_id2]);
-    console.log('two charts at the same time, man')
     if (feature_id2 == 'none') {
         chart_svg.select("#graph_elements").remove();
 
@@ -392,21 +391,30 @@ function init_chart() {
         .attr("fill", "blue")
         .append("g")
         .attr("transform", "translate(" + chart_offsetx + "," + chart_offsety + ")");
+    // .attr('pointer-events', 'none');
 
+
+    //draw rect to blend bleed with the background
     chart_svg.append("rect")
         .attr("x", 0)
         .attr("y", 0)
         .attr("width", "100%")
         .attr("height", "100%")
         .attr("fill", "rgb(163,193,173)") //cambridge blue https://www.cam.ac.uk/brand-resources/guidelines/typography-and-colour/colour-palette
-        .attr("transform", "translate(" + -chart_offsetx + "," + -chart_offsety + ")");
+        .attr("transform", "translate(" + -chart_offsetx + "," + -chart_offsety + ")")
+        .attr('pointer-events', 'none');
 
+
+    //add overlay rect 
     chart_svg.append("rect")
         .attr("x", chart_offsetx)
         .attr("y", chart_offsety)
         .attr("width", chart_width)
         .attr("height", chart_height)
-        .attr("fill", "rgba(255,255,255,1)");
+        .attr("fill", "rgba(255,255,255,1)")
+        .attr('pointer-events', 'none');
+
+
 }
 
 
@@ -524,21 +532,21 @@ function draw_chart(readings, feature, feature2) {
         }
         return pantone583c; //Pantone 583 C https://www.cam.ac.uk/brand-resources/guidelines/typography-and-colour/colour-palette
     };
-     if (feature2) {
-    // setup fill color for chart dots
-    //chart_cValue = function(d) { return d.route_id; },
-    chart_color2 = function (d) {
-        if ('acp_event' in d) {
-            return '#ffff88';
-        }
-        if (chart_yValue2(d) == null) {
-            return "#888888";
-        }
-        if (chart_yValue2(d) > feature2['range'][1]) {
-            return 'red';
-        }
-        return pantone284c; //Pantone 284 C https://www.cam.ac.uk/brand-resources/guidelines/typography-and-colour/colour-palette
-    };
+    if (feature2) {
+        // setup fill color for chart dots
+        //chart_cValue = function(d) { return d.route_id; },
+        chart_color2 = function (d) {
+            if ('acp_event' in d) {
+                return '#ffff88';
+            }
+            if (chart_yValue2(d) == null) {
+                return "#888888";
+            }
+            if (chart_yValue2(d) > feature2['range'][1]) {
+                return 'red';
+            }
+            return pantone284c; //Pantone 284 C https://www.cam.ac.uk/brand-resources/guidelines/typography-and-colour/colour-palette
+        };
     }
 
 
@@ -676,57 +684,7 @@ function draw_chart(readings, feature, feature2) {
 
 
     }
-    // *****************************************
-    // draw readings dots
-    // *****************************************
-    chart_graph.selectAll(".dot")
-        .data(readings)
-        .enter().append("circle")
-        .attr("class", "dot")
-        .attr("r", CHART_DOT_RADIUS)
-        .attr("cx", chart_xMap)
-        .attr("cy", chart_yMap)
-        .style("fill", function (d) {
-            return chart_color(d);
-        })
-        .on("click", function (d) {
-            show_reading_popup(d);
-        })
-        .on("mouseover", function (d) {
-            mouseover_interactions(d, feature);
-        })
-        .on("mouseout", function (d) {
-            chart_tooltip_el.transition()
-                .duration(500)
-                .style("opacity", 0);
-        });
-
-    if (feature2) {
-        console.log('READINGS', readings)
-        chart_graph.selectAll(".dot2")
-            .data(readings)
-            .enter().append("circle")
-            .attr("class", "dot2")
-            .attr("r", CHART_DOT_RADIUS)
-            .attr("cx", chart_xMap)
-            .attr("cy", chart_yMap2)
-            .style("fill", function (d) {
-                return chart_color2(d);
-            })
-            .style('stroke', 'black')
-            .on("click", function (d) {
-                show_reading_popup(d);
-            })
-            .on("mouseover", function (d) {
-                mouseover_interactions(d, feature2);
-            })
-            .on("mouseout", function (d) {
-                chart_tooltip_el.transition()
-                    .duration(500)
-                    .style("opacity", 0);
-            });
-
-    }
+  
     // *****************************************
     // set up zooming
     // *****************************************
@@ -743,6 +701,7 @@ function draw_chart(readings, feature, feature2) {
     var clip = chart_graph.append("defs").append("svg:clipPath")
         .attr("id", "clip")
         .append("svg:rect")
+        .attr('pointer-events', 'none')
         .attr("width", chart_width)
         .attr("height", chart_height)
         .attr("x", 0)
@@ -752,6 +711,7 @@ function draw_chart(readings, feature, feature2) {
     var scatter = chart_graph.append("g")
         .attr("id", "scatterplot")
         .attr("clip-path", "url(#clip)")
+        .attr('pointer-events', 'none')
         .on("dblclick", function (d) { //on doubleclick reset the visualisation
 
             //redraw chart
@@ -762,6 +722,7 @@ function draw_chart(readings, feature, feature2) {
 
     scatter.append("g")
         .attr("class", "brush")
+        .attr('pointer-events', 'none')
         .call(brush);
 
     function brushended() {
@@ -860,6 +821,67 @@ function draw_chart(readings, feature, feature2) {
     }
 
 
+
+      // *****************************************
+    // draw readings dots
+    // *****************************************
+    chart_graph
+        .append("g")
+        .attr("id", "scatter_dots").selectAll(".dot")
+        .data(readings)
+        .enter().append("circle")
+        .attr("class", "dot")
+        .attr("r", CHART_DOT_RADIUS)
+        .attr("cx", chart_xMap)
+        .attr("cy", chart_yMap)
+        .style("fill", function (d) {
+            return chart_color(d);
+        })
+        .attr('pointer-events', 'all')
+
+        .on("click", function (d) {
+            show_reading_popup(d);
+        })
+        .on("mouseover", function (d) {
+            console.log('try mouseover', d)
+            mouseover_interactions(d, feature);
+        })
+        .on("mouseout", function (d) {
+            chart_tooltip_el.transition()
+                .duration(500)
+                .style("opacity", 0);
+        });
+
+    if (feature2) {
+        console.log('READINGS', readings)
+        chart_graph.append("g")
+            .attr("id", "scatter_dots2").selectAll(".dot2")
+            .data(readings)
+            .enter().append("circle")
+            .attr("class", "dot2")
+            .attr("r", CHART_DOT_RADIUS)
+            .attr("cx", chart_xMap)
+            .attr("cy", chart_yMap2)
+            .style("fill", function (d) {
+                return chart_color2(d);
+            })
+            .style('stroke', 'black')
+            .attr('pointer-events', 'all')
+
+            .on("click", function (d) {
+                show_reading_popup(d);
+            })
+            .on("mouseover", function (d) {
+                mouseover_interactions(d, feature2);
+            })
+            .on("mouseout", function (d) {
+                chart_tooltip_el.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+
+    }
+    
 
     // *******************************
     // add text for latest datapoint

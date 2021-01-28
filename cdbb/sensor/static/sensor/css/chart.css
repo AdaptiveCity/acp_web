@@ -77,6 +77,10 @@ input[type=date], select {
     display: none;
 }
 
+/* #scatterplot{
+  pointer-events: none;
+} */
+
 #page_date {
   font-size: 22px;
   margin: 5px 10px 10px 5px;
