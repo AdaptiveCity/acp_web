@@ -16,7 +16,7 @@ class VizTools {
         //    .attr("class", "tooltip")
         //    .style("opacity", 0);
 
-        this.viz_tools2=new VizTools2();
+        this.viz_tools2 = new VizTools2();
     }
 
     init() {
@@ -28,7 +28,7 @@ class VizTools {
     tabulate(data, columns) {
 
         //divide into five columns
-        let corridors=[0,30,60,90,120,150];
+        let corridors = [0, 30, 60, 90, 120, 150];
         let table_div = d3.select("#table_container");
 
         //Generates three columns, one per corridor (ish)
@@ -149,17 +149,17 @@ class VizTools {
                     .attr("r", 0.75);
 
                 // Specify where to put label of text
-                let x = d3.event.pageX - document.getElementById('drawing_svg').getBoundingClientRect().x +50;
-                let y = d3.event.pageY - document.getElementById('drawing_svg').getBoundingClientRect().y +50;
+                let x = d3.event.pageX - document.getElementById('drawing_svg').getBoundingClientRect().x + 50;
+                let y = d3.event.pageY - document.getElementById('drawing_svg').getBoundingClientRect().y + 50;
 
-                let eventX=d3.event.pageX;
-                let eventY=d3.event.pageY;
+                let eventX = d3.event.pageX;
+                let eventY = d3.event.pageY;
 
                 let tooltip_height = d3.select('#tooltip')._groups[0][0].clientHeight;
-    			let tooltip_width = d3.select('#tooltip')._groups[0][0].clientWidth;
+                let tooltip_width = d3.select('#tooltip')._groups[0][0].clientWidth;
 
-    			let tooltip_offset_y = 6;
-    			let tooltip_offset_x = 6;
+                let tooltip_offset_y = 6;
+                let tooltip_offset_x = 6;
 
                 console.log(x, y);
 
@@ -169,13 +169,14 @@ class VizTools {
                 //self.tooltip_div.attr("id", sensor_id + "-text");
 
                 //make tooltip appear smoothly
-                self.tooltip_div.transition()
+                self.tooltip_div.style('visibility','visible')
+                    .transition()
                     .duration(200)
                     .style("opacity", .9);
 
                 // Create API url for sensor reading AND metadata
                 //let readings_url = API_READINGS + 'get/' + sensor_id +'/?metadata=true';  OLD API
-                let readings_url='https://tfc-app9.cl.cam.ac.uk/api/readings/get_feature/'+sensor_id+'/temperature/?metadata=true'
+                let readings_url = 'https://tfc-app9.cl.cam.ac.uk/api/readings/get_feature/' + sensor_id + '/temperature/?metadata=true'
                 console.log('circle mouseover fetching', readings_url)
 
                 d3.json(readings_url, {
@@ -186,55 +187,65 @@ class VizTools {
                     let reading = received_data["reading"];
                     let sensor_metadata = received_data["sensor_info"];
 
-                let reading_obj = '';
-                  // let parsed=self.parse_readings.parse_reading(reading,sensor_metadata);     OLD API
-			//		console.log('parsed',parsed);
-					
-                    if(received_data['acp_error_msg']!=undefined ){ //|| Object.keys(parsed).length<1 
-                         let error_id = received_data['acp_error_id'];
-                         console.log('handle_readings() error', received_data);
-                         reading_obj=  'NO READINGS available for this sensor.';
-                  	}
-                    else{                  		
-   						 reading_obj= reading;
+                    let reading_obj = '';
+                    // let parsed=self.parse_readings.parse_reading(reading,sensor_metadata);     OLD API
+                    //		console.log('parsed',parsed);
+
+                    if (received_data['acp_error_msg'] != undefined) { //|| Object.keys(parsed).length<1 
+                        let error_id = received_data['acp_error_id'];
+                        console.log('handle_readings() error', received_data);
+                        reading_obj = 'NO READINGS available for this sensor.';
+                    } else {
+                        reading_obj = reading;
                     }
 
-                    let msg=typeof(reading_obj)=='string'?reading_obj:'';
+                    let msg = typeof (reading_obj) == 'string' ? reading_obj : '';
 
                     //console.log('tooltips() handled_reading:', reading_obj);
-                    
-                    self.tooltip_div.html('<b>'+sensor_id+'</b>' + "<br/>"+msg+"<br/>")
-                       .style("left", function () {
-                                        //push the tooltip to the left rather than to the right if out of screen
-                                        if (eventX + tooltip_width > document.body.clientWidth) {
-                                            return eventX - tooltip_width + tooltip_offset_x + "px";
-                                        } else return eventX - tooltip_offset_x + "px";
-                                    }
-                                )
-                                .style("top", function () {
-                                    //drop the tooltip upwards rather than downwards if out of screen
-                                    if (eventY + tooltip_height > document.body.clientHeight) {
-                                        return eventY - tooltip_height + tooltip_offset_y + "px";
-                                    } else return eventY - tooltip_offset_y + "px";
-                                });
 
-                        if(typeof(reading_obj)!='string'){
-        						self.viz_readings(reading_obj, sensor_metadata)
-        						reading_obj=undefined;
-        						sensor_metadata=undefined;
-                        }
-                    
-         
+                    self.tooltip_div.html('<b>' + sensor_id + '</b>' + "<br/>" + msg + "<br/>")
+                        .style("left", function () {
+                            //push the tooltip to the left rather than to the right if out of screen
+                            if (eventX + tooltip_width > document.body.clientWidth) {
+                                return eventX - tooltip_width + tooltip_offset_x + "px";
+                            } else return eventX - tooltip_offset_x + "px";
+                        })
+                        .style("top", function () {
+                            //drop the tooltip upwards rather than downwards if out of screen
+                            if (eventY + tooltip_height > document.body.clientHeight) {
+                                return eventY - tooltip_height + tooltip_offset_y + "px";
+                            } else return eventY - tooltip_offset_y + "px";
+                        });
+
+                    if (typeof (reading_obj) != 'string') {
+                        self.viz_readings(reading_obj, sensor_metadata)
+                        reading_obj = undefined;
+                        sensor_metadata = undefined;
+                    }
+
+
 
                 });
 
 
             })
             .on("mouseout", function (d) {
-				 
+
                 self.tooltip_div.transition()
                     .duration(500)
-                    .style("opacity", 0);
+                    //make invisible
+                    .style("opacity", 0.5)
+                    //make uninteractible with the mouse
+                    .on('end', function (d) {
+                        //remove old tooltip
+                        // d3.select(this).remove();
+                        d3.select(this).style('visibility','hidden')
+                        // //add id/class properties so the div is targetable
+                        // self.tooltip_div = document.createElement("div");
+                        // self.tooltip_div.setAttribute("id", "tooltip");
+                        // self.tooltip_div.setAttribute("class", "tooltip");
+
+                    })
 
                 d3.select(this).transition()
                     .duration(250)
@@ -251,35 +262,35 @@ class VizTools {
 
     }
 
-	viz_readings(readings,meta){
+    viz_readings(readings, meta) {
 
-        console.log('see this', readings,meta)
+        console.log('see this', readings, meta)
 
-   //exrtact all features with ranges --needed for mouseover viz
-    let all_features = meta['acp_type_info']['features'];
+        //exrtact all features with ranges --needed for mouseover viz
+        let all_features = meta['acp_type_info']['features'];
 
-    //append the rest of the features with their ranges to the object
-    readings['all_features'] = all_features;
-    console.log('readings',readings)
-    //get a list of all features from metadata
-    let feature_list = Object.keys(meta['acp_type_info'].features)
-    let feature_length = feature_list.length;
-		console.log('viz',readings,meta);
+        //append the rest of the features with their ranges to the object
+        readings['all_features'] = all_features;
+        console.log('readings', readings)
+        //get a list of all features from metadata
+        let feature_list = Object.keys(meta['acp_type_info'].features)
+        let feature_length = feature_list.length;
+        console.log('viz', readings, meta);
 
-    //iterate over all features and draw colorbars for each
-    for (let i = 0; i < feature_length; i++) {
-        this.viz_tools2.draw_cbar(readings, readings.all_features[feature_list[i]],'#tooltip');
+        //iterate over all features and draw colorbars for each
+        for (let i = 0; i < feature_length; i++) {
+            this.viz_tools2.draw_cbar(readings, readings.all_features[feature_list[i]], '#tooltip');
+        }
+
+
+        //heatmap is within try/catch since not all sensors have 8x8s
+        try {
+            this.viz_tools2.draw_heatmap(readings, '#tooltip');
+        } catch (error) {
+            console.log('no elsys eye: ', error)
+        }
+
     }
-
-
-    //heatmap is within try/catch since not all sensors have 8x8s
-    try {
-         this.viz_tools2.draw_heatmap(readings, '#tooltip');
-    } catch (error) {
-        console.log('no elsys eye: ', error)
-    }
-
-	}
 
     parsed_reading_to_html(reading_obj) {
         if (reading_obj == null) {
@@ -337,9 +348,9 @@ class VizTools {
             ")");
 
         //set surrounding polygons as inactive (fills in them white)
-        d3.selectAll('polygon').attr('class','inactive');
+        d3.selectAll('polygon').attr('class', 'inactive');
         //set zoomed() object to active (fills in orange)
-        d.attr('class','active');
+        d.attr('class', 'active');
 
         /* If the full width of container is not required, the room is horizontally centred */
         /* Likewise, if the full height of the container is not required, the room is	*/
@@ -361,15 +372,22 @@ class VizTools {
         var cx = bbox.x + bbox.width / 2;
         var cy = bbox.y + bbox.height / 2;
         //console.log('box bbox=', bbox);
-        return { x: bbox.x,  y: bbox.y, cx: cx, cy: cy, w: bbox.width, h: bbox.height };
+        return {
+            x: bbox.x,
+            y: bbox.y,
+            cx: cx,
+            cy: cy,
+            w: bbox.width,
+            h: bbox.height
+        };
     }
 
     //--------------------------------------------------//
     //----------------------ZOOM end--------------------//
     //--------------------------------------------------//
 
-    point_in_crate (crate_id, point) {
-        let polygon=d3.select('#'+crate_id)._groups[0][0].points;
+    point_in_crate(crate_id, point) {
+        let polygon = d3.select('#' + crate_id)._groups[0][0].points;
         //A point is in a polygon if a line from the point to infinity crosses the polygon an odd number of times
         let odd = false;
         //For each edge (In this case for each point of the polygon and the previous one)
@@ -377,7 +395,8 @@ class VizTools {
             //If a line from the point into infinity crosses this edge
             if (((polygon[i].y > point[1]) !== (polygon[j].y > point[1])) // One point needs to be above, one below our y coordinate
                 // ...and the edge doesn't cross our Y corrdinate before our x coordinate (but between our x coordinate and infinity)
-                && (point[0] < ((polygon[j].x - polygon[i].x) * (point[1] - polygon[i].y) / (polygon[j].y - polygon[i].y) + polygon[i].x))) {
+                &&
+                (point[0] < ((polygon[j].x - polygon[i].x) * (point[1] - polygon[i].y) / (polygon[j].y - polygon[i].y) + polygon[i].x))) {
                 // Invert odd
                 odd = !odd;
             }
@@ -392,40 +411,43 @@ class VizTools {
     //--------------------------------------------------//
 
     //temporary solution to create a heatmap
-    obtain_sensors_in_crates(){
+    obtain_sensors_in_crates() {
         //crates will house crate_id/sensors object pairs
-        let crates=[];
+        let crates = [];
         //fill the crates array with crate_ids and # of sensors
-        d3.selectAll('polygon')._groups[0].forEach( crate => crates.push( {'crate_id':crate.id, 'sensors':0} ));
+        d3.selectAll('polygon')._groups[0].forEach(crate => crates.push({
+            'crate_id': crate.id,
+            'sensors': 0
+        }));
         //get the list of sensors by looking at the attached circles
-        let sensors=d3.selectAll('circle')._groups[0];
+        let sensors = d3.selectAll('circle')._groups[0];
 
-        for(let i=0; i<crates.length;i++){
+        for (let i = 0; i < crates.length; i++) {
             //select crate
-            let crate=crates[i].crate_id;
+            let crate = crates[i].crate_id;
             //get sensor count for that crate
-            crates[i].sensors = this.get_count_for_crate(sensors,crate);
+            crates[i].sensors = this.get_count_for_crate(sensors, crate);
         }
         return crates;
     }
 
     //looks at a crate and returns the number of sensors in it
-    get_count_for_crate(sensors,crate_id){
+    get_count_for_crate(sensors, crate_id) {
 
-        let count=0;
+        let count = 0;
         //iterate over the sensor (circles) array
-        for(let i=0; i<sensors.length;i++){
+        for (let i = 0; i < sensors.length; i++) {
 
-            let sensor=sensors[i];
+            let sensor = sensors[i];
             //acquire x/y positions for a sensor
-            let point=[sensor.cx.baseVal.value, sensor.cy.baseVal.value];
+            let point = [sensor.cx.baseVal.value, sensor.cy.baseVal.value];
             //if sensor is within a crate
-            if(this.point_in_crate(crate_id, point)){
+            if (this.point_in_crate(crate_id, point)) {
                 count++;
             }
 
         }
-       return count;
+        return count;
     }
     //--------------------------------------------------//
     //----------------HEATMAP end-----------------------//

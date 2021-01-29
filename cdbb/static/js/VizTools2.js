@@ -153,6 +153,7 @@ class VizTools2 {
         })
         .enter().append("rect")
         .attr("class", "bars")
+        .style("pointer-events", "none")
         .attr("x", function (i) {
             return i + x_bar_offset;
         })
