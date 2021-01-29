@@ -75,33 +75,77 @@ Spatial Building and Sensor Data: FLOOR VIEW
     <div id="legend_and_buttons">
         <div id="legend_container"></div>
 
-        <div id="button_wrapper">
-            <button type="button" id="reset" style="padding-left: 1em;">Reset</button>
-        </div>
-        <br>
-        <div id="button_wrapper">
-            <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button>
-        </div>
-        <br>
-        <div id="button_wrapper">
+        <!-- MAIN HEATMAP ACTIVATION -->
+        <div class="button_wrapper">
+            <!-- <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button> -->
+            <a id="show_heatmap" class="button1">Show Heatmap</a>
 
-            <!-- I know the following should not be hardcoded, this is just for debug -->
-            <form id="feature_form">
-                <label for="features">Feature:</label>
-                <br>
-                <select name="features" id="features_list">
-                    <option value="co2">CO2</option>
-                    <option value="temperature" selected="selected">Temperature</option>
-                    <option value="humidity">Humidity</option>
-                    <option value="vdd">Battery</option>
-                </select>
-                <br>
-            </form>
         </div>
+        <!-- HEATMAP CONFIGURATION/HIDE SETTINGS -->
+        <div class='hidden_divs'>
+
+            <!-- FEATURE SELECT -->
+            <div class="button_wrapper" id='heatmap_activation'>
+
+                <!-- I know the following should not be hardcoded, this is just for debug -->
+                <form id="feature_form">
+                    <label for="features">Feature:</label>
+                    <br>
+                    <select name="features" id="features_list">
+                        <option value="co2">CO2</option>
+                        <option value="temperature" selected="selected">Temperature</option>
+                        <option value="humidity">Humidity</option>
+                        <option value="vdd">Battery</option>
+                    </select>
+                    <br>
+                </form>
+
+            </div>
+
+            <!-- CHANGE RESOLUTION -->
+            <div class="button_wrapper" id='heatmap_activation'>
+
+                <!-- I know the following should not be hardcoded, this is just for debug -->
+                <form id="resolution_form">
+                    <label for="resolution">Resolution:</label>
+                    <br>
+                    <select name="resolution" id="resolution_list">
+                        <option value="low">Low</option>
+                        <option value="regular" selected="selected">Regular</option>
+                        <option value="high">High</option>
+                    </select>
+                    <br>
+                </form>
+
+            </div>
+            <br>
+
+            <!-- HIDE HEATMAP -->
+            <div class="button_wrapper" id='heatmap_activation'>
+                <a id="reset" class="button1">Hide Heatmap</a>
+            </div>
+        </div>
+
+        <br>
+
+        <div class="button_wrapper">
+            <!-- <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button> -->
+            <a id="show_sensors" class="button1">Toggle Sensors</a>
+
+        </div>
+
+        <br>
+
+
+
 
     </div>
 
 </div>
+
+</div>
+
+
 <div id="wrapper">
     <div class="content" id="table_content">
         <div id="table_container" class="csvTable"></div>

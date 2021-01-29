@@ -1,5 +1,9 @@
 "use strict"
 
+const DEFAULT_REZ=6;
+const HIGH_REZ=4;
+const LOW_REZ=10;
+
 class HeatMap {
 
     // Called to create instance in page : space_floorplan = SpaceFloorplan()
@@ -21,7 +25,7 @@ class HeatMap {
         this.crates_with_sensors = {};
 
         //resolution
-        this.rect_size = 6;
+        this.rect_size = DEFAULT_REZ;
 
         //heatmap opacity
         this.default_opacity = 0.75;
@@ -50,18 +54,53 @@ class HeatMap {
         //parent.get_floor_sensors(parent);
         parent.get_local_sensors(parent);
 
-        //attach and event listener to the list of properties
+        //attach an event listener to the list of properties
         document.getElementById('features_list').addEventListener('change', function () {
             console.log('You selected: ', this.value);
             parent.redraw_heatmap(parent, this.value)
         });
 
+        //attach an event listener to change the heatmap resolution
+        document.getElementById('resolution_list').addEventListener('change', function () {
+            console.log('You selected: ', this.value);
+            parent.update_resolution(parent, this.value);
+        });
+
     }
+
     //Generates the heatmap;
     //It is attached to an event listener on the template *heatmap* button 
     show_heatmap(parent) {
+        //stop drawn floorplan polygons from interacting with the heatmap overlay
+        d3.selectAll('polygon').attr('pointer-events','none');
+
         parent.show_heatmap_original(parent)
         //parent.show_heatmap_alt(parent)
+    }
+
+    //Reloads the heatmap with a different resolution
+    update_resolution(parent, rez_value) {
+        //remove current heatmap
+        d3.selectAll('#heatmap').remove();
+
+        //change the resolution
+        switch (rez_value) {
+            case 'regular':
+                parent.rect_size = DEFAULT_REZ;
+                break;
+            case 'high':
+                parent.rect_size = HIGH_REZ;
+                break;
+            case 'low':
+                parent.rect_size = LOW_REZ;
+                break;
+            default:
+                parent.rect_size = DEFAULT_REZ;
+                break;
+        }
+
+        //load the new heatmap
+        parent.show_heatmap(parent);
     }
 
 
@@ -380,26 +419,26 @@ class HeatMap {
 
 
             let temp_val = Math.random() * (3 + 3) - 3;
-            let current_val=parent.sensor_data[sensor_id].payload.temperature;
-            let new_val=temp_val+current_val;
+            let current_val = parent.sensor_data[sensor_id].payload.temperature;
+            let new_val = temp_val + current_val;
 
-            if(new_val>40 || new_val<-10){
-                new_val=current_val;
+            if (new_val > 40 || new_val < -10) {
+                new_val = current_val;
             }
 
             //update the reading with a new rand value
-            parent.sensor_data[sensor_id].payload.temperature= new_val;
+            parent.sensor_data[sensor_id].payload.temperature = new_val;
 
             ///space_floor.heatmap.crates_with_sensors['FE11']
 
-           // console.log(crate_id, sensor_id)
+            // console.log(crate_id, sensor_id)
             //recalculate the rect value based on the new feature
             let cell_value = parent.get_heatmap(parent, selected_crate, rect_loc);
 
             //transform the feature value into a color
             let color = parent.color_scheme(cell_value);
 
-         //   console.log(cell_value, color)
+            //   console.log(cell_value, color)
 
             let feature = 'temperature';
             //update the rect on screen
@@ -831,8 +870,9 @@ class HeatMap {
         d3.selectAll('#heatmap').remove();
         d3.selectAll('.non_heatmap_circle').style('opacity', 0.5);
 
-        parent.master.get_floor_heatmap(parent);
-        parent.master.set_legend(parent)
+        //make sure to pass the master object rather than the "heatmap parent" itself
+        parent.master.get_floor_heatmap(parent.master);
+        parent.master.set_legend(parent.master)
     }
 
 
@@ -932,6 +972,7 @@ class HeatMap {
                     .attr("cy", y_value)
                     .attr("transform", null)
                     .attr("r", rad)
+                    .attr("class", 'sensor_node')
                     .attr("id", 'hm_' + sensor_id)
                     .style("opacity", parent.sensor_opacity)
                     .style("fill", "pink")

@@ -21,7 +21,7 @@ class SpaceFloor {
 
 
         // Transform parameters to scale SVG to screen
-        parent.svg_transform = ""; // updated by set_svg_transform()
+        this.svg_transform = ""; // updated by set_svg_transform()
         this.next_color = 0;
         this.sensor_data; //metadata
         this.sensor_readings = {}; //sensor reading data
@@ -32,6 +32,7 @@ class SpaceFloor {
     init() {
         var parent = this;
 
+        //start helper functions object
         this.viz_tools.init();
 
         // Page template DOM elements we'll update
@@ -67,7 +68,7 @@ class SpaceFloor {
 
         //Uses in conjunction with quantize above -> enter crate_id and get associated
         //values with it (e.g. # sensors)
-        this.rateById = d3.map();
+        parent.rateById = d3.map();
 
         //Other global variables
 
@@ -358,6 +359,9 @@ class SpaceFloor {
     }
 
     get_floor_heatmap(parent) {
+
+        //make drawn floorplan polygons interactive
+        d3.selectAll('polygon').attr('pointer-events','all');
 
         let sensors_in_crates = parent.viz_tools.obtain_sensors_in_crates();
         parent.sensors_in_crates = parent.viz_tools.obtain_sensors_in_crates();

@@ -684,7 +684,7 @@ function draw_chart(readings, feature, feature2) {
 
 
     }
-  
+
     // *****************************************
     // set up zooming
     // *****************************************
@@ -822,7 +822,7 @@ function draw_chart(readings, feature, feature2) {
 
 
 
-      // *****************************************
+    // *****************************************
     // draw readings dots
     // *****************************************
     chart_graph
@@ -881,7 +881,7 @@ function draw_chart(readings, feature, feature2) {
             });
 
     }
-    
+
 
     // *******************************
     // add text for latest datapoint
