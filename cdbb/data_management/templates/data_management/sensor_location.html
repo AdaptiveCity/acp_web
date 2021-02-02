@@ -20,10 +20,9 @@
     <script type="text/javascript">
         var ACP_ID = '{{ ACP_ID }}'; // e.g. 'elsys-eye-04504'
 
-        var API_READINGS = '{{ API_READINGS }}'; //DEBUG will remove this JS direct API call
-
         // Information for all sensors in BIM object (crate_id)
         var API_SENSORS_INFO = JSON.parse('{{ API_SENSORS_INFO | escapejs }}');
+        var API_READINGS_INFO = JSON.parse('{{ API_READINGS_INFO | escapejs }}');
         var API_BIM_INFO = JSON.parse('{{ API_BIM_INFO | escapejs }}');
         var API_SPACE_INFO = JSON.parse('{{ API_SPACE_INFO | escapejs }}');
         var CRATE_ID = '{{ CRATE_ID }}';

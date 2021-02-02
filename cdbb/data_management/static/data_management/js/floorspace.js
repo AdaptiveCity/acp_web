@@ -262,7 +262,7 @@ class FloorSpace {
                 let y_value = -sensor['acp_location_xyz']['y']
                 let floor_id = sensor['acp_location_xyz']['f']
 
-                let fill = (acp_id != ACP_ID) ? "#ffaaaa" : "purple";
+                let fill = (acp_id == ACP_ID) ? "#71BE78" : "#ffaaaa";
 
                 d3.select("#bim_request").append("circle")
                     .attr("cx", x_value)

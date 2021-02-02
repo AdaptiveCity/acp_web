@@ -5,131 +5,20 @@
 //   SENSOR_LINK
 //   js/parse_readings.js
 
+// Assumes the page has a <div id="tooltop" class="tooltip">
+
 class VizTools {
     //----------------------------------------------//
     //--------------TABLE definition----------------//
     //----------------------------------------------//
 
     constructor() {
-        // Define the div for the tooltip
-        //this.tooltip_div = d3.select("body").append("div")
-        //    .attr("class", "tooltip")
-        //    .style("opacity", 0);
     }
 
     init() {
         this.tooltip_div = d3.select('#tooltip');
         this.parse_readings = new ParseReadings();
     }
-
-    /* Thanks to http://bl.ocks.org/phil-pedruco/7557092 for the table code */
-    tabulate(data, columns) {
-
-        //divide into five columns
-        let corridors=[0,30,60,90,120,150];
-        let table_div = d3.select("#table_container");
-
-        //Generates three columns, one per corridor (ish)
-        for (let i = 0; i < corridors.length - 1; i++) {
-            let dta = data.slice(corridors[i], corridors[i + 1]);
-            let tbl = table_div.append("table").style("float", "left");
-            this.addTableColumns(columns, tbl, dta);
-        }
-
-        //Adds individual "id"s to <tr> divs so they can be activated when hovering svg
-        let tr_tags = document.getElementsByTagName("tr");
-        for (let i = 0; i < tr_tags.length; i++) {
-            let element = document.getElementsByTagName("tr")[i];
-            let element_value = element.firstElementChild.textContent;
-            element.id = element_value + "_tr";
-        }
-
-        d3.selectAll("tr")
-            .on("mouseover", function (d) {
-                d3.select(this).style("background-color", "#fec44f");
-                let room_selection = document.getElementById(d.crate_id);
-
-                if (d3.select(room_selection).classed("active"))
-                    return; /* no need to change class when room is already selected */
-                d3.select(room_selection).attr("class", "hover");
-
-            })
-            .on("mouseout", function (d) {
-                d3.select(this).style("background-color", "whitesmoke")
-                let room_id = d.crate_id;
-
-                let room_selection = document.getElementById(room_id);
-
-                if (d3.select(room_selection).classed("active")) return;
-                d3.select(room_selection).attr("class", function (d) {
-                    /* reset room color to quantize range */
-                    return quantize_class(quantize(rateById.get(this.id)));
-                });
-            });
-
-        return table_div;
-    }
-
-    //Function to append columns side by side so we
-    //do not end up with a a single 135 row-long list
-    //that stretches beyond screen limits
-    addTableColumns(columns, table, data_) {
-        var thead = table.append("thead"),
-            tbody = table.append("tbody");
-
-        table.style("width", "7em").style("font-size", "1.3em")
-        // append the header row
-        thead.append("tr")
-            .selectAll("th")
-            .data(columns) //columns
-            .enter()
-            .append("th")
-            .style("background-color", "green")
-            .style("color", "white")
-            .text(function (column) {
-                return column;
-            });
-        // create a row for each object in the data
-        let rows = tbody.selectAll("tr")
-            .data(data_)
-            .enter()
-            .append("tr")
-            .style("background-color", "whitesmoke")
-            .on("click", function (d) {
-                tableRowClicked(d)
-            });
-
-        // create a cell in each row for each column
-        let cells = rows.selectAll("td")
-            .data(function (row) {
-                return columns.map(function (column) {
-                    return {
-                        column: column,
-                        value: row[column]
-                    };
-                });
-            })
-            .enter()
-            .append("td")
-            .attr("style", "font-family: Courier") // sets the font style
-            .html(function (d) {
-                return d.value;
-            });
-        return table
-
-    }
-
-    tableRowClicked(x) {
-        /* resets colors and zooms into new room */
-        resetAll();
-        lastActive = x.room;
-        console.log(x.room)
-        zoomed(d3.select(floorplan).selectAll("#" + x.room));
-    }
-
-    //---------------------------------------//
-    //-----------TABLE end-------------------//
-    //---------------------------------------//
 
     //----------------------------------------------//
     //---------------TOOLTIP definition-------------//
@@ -162,16 +51,9 @@ class VizTools {
                     .duration(200)
                     .style("opacity", .9);
 
-                // Create API url for sensor reading AND metadata
-                let readings_url = API_READINGS + 'get/' + sensor_id +'/?metadata=true';
-                console.log('circle mouseover fetching', readings_url)
-
-                d3.json(readings_url, {
-                    crossOrigin: "anonymous"
-                }).then(function (received_data) {
-                    console.log('tooltips() raw', received_data)
-                    let reading = received_data["reading"];
-                    let sensor_metadata = received_data["sensor_metadata"];
+                    //console.log('tooltips() raw', received_data)
+                    let reading = API_READINGS_INFO["reading"];
+                    let sensor_metadata = API_SENSORS_INFO["sensors"][sensor_id];
                     let reading_obj = self.parse_readings.parse_reading(reading, sensor_metadata);
                     let tooltip_info = self.parsed_reading_to_html(reading_obj);
                     console.log('tooltips() parsed_reading:', reading_obj);
@@ -180,9 +62,6 @@ class VizTools {
                         .style("left", (x) + "px")
                         .style("top", (y) + "px")
                         .style("display","block");
-
-                });
-
 
             })
             .on("mouseout", function (d) {
@@ -293,7 +172,8 @@ class VizTools {
     //----------------------ZOOM end--------------------//
     //--------------------------------------------------//
 
-    point_in_crate (crate_id, point) {
+    // point_in_crate returns 'true' if point is inside the boundary of crate 'crate_id'
+    point_in_crate(crate_id, point) {
         let polygon=d3.select('#'+crate_id)._groups[0][0].points;
         //A point is in a polygon if a line from the point to infinity crosses the polygon an odd number of times
         let odd = false;
@@ -311,7 +191,8 @@ class VizTools {
         }
         //If the number of crossings was odd, the point is in the polygon
         return odd;
-    };
+    }
+
     //--------------------------------------------------//
     //----------------HEATMAP definition----------------//
     //--------------------------------------------------//

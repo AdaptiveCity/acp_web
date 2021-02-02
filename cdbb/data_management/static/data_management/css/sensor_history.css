@@ -1,0 +1,47 @@
+
+.sensor_history_ts {
+    display: inline-block;
+    min-width: 120px;
+}
+
+.sensor_history_user {
+    display: inline-block;
+    min-width: 140px;
+}
+
+.sensor_history_comment {
+    display: inline-block;
+}
+
+.sensor_history_record {
+    margin: 10px 10px 10px 10px;
+}
+
+.sensor_history_record:hover {
+    background-color: pink;
+}
+
+#popup {
+    position: absolute;
+    left: 150px;
+    top: 30px;
+    height: 85%;
+    width: 80%;
+    display: none;
+    background-color: white;
+    border-radius: 20px;
+    padding: 20px;
+}
+
+#popup_close {
+    float: right;
+    cursor: pointer;
+}
+
+#popup_content {
+    overflow-y: auto;
+    height: 100%;
+    font-family: monospace;
+    font-style: normal;
+    font-size: 0.7em;
+}

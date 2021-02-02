@@ -105,15 +105,17 @@ class DMSensorLocationView(LoginRequiredMixin, TemplateView):
             response = requests.get(settings.API_SPACE+f'get_floor_number_json/{system}/{floor_number}/')
             space_info = response.json()
 
-            context['API_BIM'] = settings.API_BIM
-            context['API_SENSORS'] = settings.API_SENSORS
+            # Get sensor READING
+            response = requests.get(settings.API_READINGS+'get/'+self.kwargs['acp_id']+'/')
+            readings_info = response.json()
+
             context['API_READINGS'] = settings.API_READINGS
-            context['API_SPACE'] = settings.API_SPACE
 
             context['ACP_ID'] = self.kwargs['acp_id']
             context['CRATE_ID'] = crate_id
             context['API_BIM_INFO'] = json.dumps(bim_info)
             context['API_SENSORS_INFO'] = json.dumps(sensors_info)
+            context['API_READINGS_INFO'] = json.dumps(readings_info)
             context['API_SPACE_INFO'] = json.dumps(space_info)
 
             return context

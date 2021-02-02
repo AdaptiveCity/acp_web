@@ -5,6 +5,7 @@
 {% block head %}
     <!-- Our style sheets -->
     <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/sensor.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/sensor_history.css' %}" />
 
     <!-- chart.js defines class SensorChart-->
     <script type='text/javascript' src="{% static 'data_management/js/sensor_history.js' %}"></script>
@@ -56,6 +57,14 @@ Sensor History {{ ACP_ID }}
     <!-- javascript will add  sensor history data -->
 </div>
 
+<div id="popup">
+    <div id="popup_close">
+        <img src="{% static 'images/popup_close.png' %}"/>
+    </div>
+    <pre id="popup_content">
+    </pre>
+</div>
+    
 {% endblock %} <!-- end content -->
 
 <!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
