@@ -142,18 +142,18 @@ class VizTools {
         var previous_circle_radius;
 
         d3.selectAll("circle") // For new circle, go through the update process
-            .on("mouseover", function (d) {
+            .on("mouseover", function (event, d) {
                 previous_circle_radius = 0.5;
 
                 d3.select(this).transition().duration(250)
                     .attr("r", 0.75);
 
                 // Specify where to put label of text
-                let x = d3.event.pageX - document.getElementById('drawing_svg').getBoundingClientRect().x + 50;
-                let y = d3.event.pageY - document.getElementById('drawing_svg').getBoundingClientRect().y + 50;
+                let x = event.pageX - document.getElementById('drawing_svg').getBoundingClientRect().x + 50;
+                let y = event.pageY - document.getElementById('drawing_svg').getBoundingClientRect().y + 50;
 
-                let eventX = d3.event.pageX;
-                let eventY = d3.event.pageY;
+                let eventX = event.pageX;
+                let eventY = event.pageY;
 
                 let tooltip_height = d3.select('#tooltip')._groups[0][0].clientHeight;
                 let tooltip_width = d3.select('#tooltip')._groups[0][0].clientWidth;
@@ -169,7 +169,7 @@ class VizTools {
                 //self.tooltip_div.attr("id", sensor_id + "-text");
 
                 //make tooltip appear smoothly
-                self.tooltip_div.style('visibility','visible')
+                self.tooltip_div.style('visibility', 'visible')
                     .transition()
                     .duration(200)
                     .style("opacity", .9);
@@ -191,6 +191,7 @@ class VizTools {
                     // let parsed=self.parse_readings.parse_reading(reading,sensor_metadata);     OLD API
                     //		console.log('parsed',parsed);
 
+                    //check that the packet contains any readings
                     if (received_data['acp_error_msg'] != undefined) { //|| Object.keys(parsed).length<1 
                         let error_id = received_data['acp_error_id'];
                         console.log('handle_readings() error', received_data);
@@ -199,11 +200,11 @@ class VizTools {
                         reading_obj = reading;
                     }
 
+                    //if returned msg object is string, then there was no message inside - show empty
                     let msg = typeof (reading_obj) == 'string' ? reading_obj : '';
-
-                    //console.log('tooltips() handled_reading:', reading_obj);
-
-                    self.tooltip_div.html('<b>' + sensor_id + '</b>' + "<br/>" + msg + "<br/>")
+                    
+                    //render the html tooltip element
+                    self.tooltip_div.html('<b>' + sensor_id + '</b>' + "<br/>" + msg)
                         .style("left", function () {
                             //push the tooltip to the left rather than to the right if out of screen
                             if (eventX + tooltip_width > document.body.clientWidth) {
@@ -217,34 +218,34 @@ class VizTools {
                             } else return eventY - tooltip_offset_y + "px";
                         });
 
+                    //if return msg is an object (or not a string), then we have full readings - generate d3 canvas and draw elements
                     if (typeof (reading_obj) != 'string') {
+                        
+                        //attach a timestamp
+                        //convert to string and slice off the unnecessary bits (GMT etc)
+                        let reading_ts=self.make_date(reading_obj['acp_ts']).toString().slice(0,25);
+
+                        //append under the sensor acp_id
+                        let tooltip_el = document.getElementById( 'tooltip' );
+                        tooltip_el.insertAdjacentHTML( 'beforeend', reading_ts+ "<br/>" );
+
+                        //generate colorbars
                         self.viz_readings(reading_obj, sensor_metadata)
                         reading_obj = undefined;
                         sensor_metadata = undefined;
                     }
-
-
-
                 });
-
-
             })
             .on("mouseout", function (d) {
 
                 self.tooltip_div.transition()
                     .duration(500)
                     //make invisible
-                    .style("opacity", 0.5)
+                    .style("opacity", 0)
                     //make uninteractible with the mouse
                     .on('end', function (d) {
                         //remove old tooltip
-                        // d3.select(this).remove();
-                        d3.select(this).style('visibility','hidden')
-                        // //add id/class properties so the div is targetable
-                        // self.tooltip_div = document.createElement("div");
-                        // self.tooltip_div.setAttribute("id", "tooltip");
-                        // self.tooltip_div.setAttribute("class", "tooltip");
-
+                        d3.select(this).style('visibility', 'hidden')
                     })
 
                 d3.select(this).transition()
@@ -262,26 +263,25 @@ class VizTools {
 
     }
 
+    //draws colorbar and heatmaps (if available)
     viz_readings(readings, meta) {
-
-        console.log('see this', readings, meta)
-
+      
         //exrtact all features with ranges --needed for mouseover viz
         let all_features = meta['acp_type_info']['features'];
 
         //append the rest of the features with their ranges to the object
         readings['all_features'] = all_features;
-        console.log('readings', readings)
+        //console.log('readings', readings)
+        
         //get a list of all features from metadata
         let feature_list = Object.keys(meta['acp_type_info'].features)
         let feature_length = feature_list.length;
-        console.log('viz', readings, meta);
+        //console.log('viz', readings, meta);
 
         //iterate over all features and draw colorbars for each
         for (let i = 0; i < feature_length; i++) {
             this.viz_tools2.draw_cbar(readings, readings.all_features[feature_list[i]], '#tooltip');
         }
-
 
         //heatmap is within try/catch since not all sensors have 8x8s
         try {
@@ -453,6 +453,30 @@ class VizTools {
     //----------------HEATMAP end-----------------------//
     //--------------------------------------------------//
 
+    // Return a javascript Date, given EITHER a UTC timestamp or a ISO 8601 datetime string
+    make_date(ts) {
+        let t;
+
+        let ts_float = parseFloat(ts);
+        if (!Number.isNaN(ts)) {
+            t = new Date(ts_float * 1000);
+        } else {
+            // replace anything but numbers by spaces
+            let dt = ts.replace(/\D/g, " ");
+
+            // trim any hanging white space
+            dt = dt.replace(/\s+$/, "");
+
+            // split on space
+            let dtcomps = dt.split(" ");
+
+            // modify month between 1 based ISO 8601 and zero based Date
+            dtcomps[1]--;
+
+            t = new Date(Date.UTC(dtcomps[0], dtcomps[1], dtcomps[2], dtcomps[3], dtcomps[4], dtcomps[5]));
+        }
+        return t;
+    }
     get_building_coordinates() {
         let drawing_svg = d3.select("#drawing_svg");
         drawing_svg.on("click", function () {

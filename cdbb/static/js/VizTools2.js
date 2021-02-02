@@ -136,7 +136,7 @@ class VizTools2 {
 
     //map the sensor values to the colorbar location
     let raw_value = jsonPath(d, feature['jsonpath'])[0]
-    console.log('d',d,'feature',feature,'rawval',raw_value)
+    //console.log('d',d,'feature',feature,'rawval',raw_value)
     let mapped_value = parseInt(this.map_values(raw_value, feature.range[0], feature.range[1], 0, c_conf.width));
 
     // append the svg object to the body of the page

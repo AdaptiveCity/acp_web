@@ -9,7 +9,7 @@
 <link rel="stylesheet" type="text/css" href="{% static 'space/css/style.css' %}" />
 
 <!-- Local copy of d3 -->
-<script type="text/javascript" src="{% static 'js/d3.v5.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/d3.v6_5.min.js' %}"></script>
 
 <!-- JS SCRIPT for space snd building -->
 <script type="text/javascript" src="{% static 'space/js/space.js' %}"></script>
@@ -129,9 +129,11 @@ Spatial Building and Sensor Data: FLOOR VIEW
         <br>
 
         <div class="button_wrapper">
-            <!-- <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button> -->
-            <a id="show_sensors" class="button1">Toggle Sensors</a>
-
+            <div class="slidecontainer">
+                <label for="opacity_slider">Sensor Opacity:</label>
+                    <br>
+                <input type="range" min="0" max="100" value="50" name='opacity_slider' class="slider" id="sensor_opacity">
+              </div>
         </div>
 
         <br>

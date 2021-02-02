@@ -68,7 +68,7 @@ class SpaceFloor {
 
         //Uses in conjunction with quantize above -> enter crate_id and get associated
         //values with it (e.g. # sensors)
-        parent.rateById = d3.map();
+        parent.rateById = new Map(); //d3 v6 standard
 
         //Other global variables
 
@@ -81,12 +81,23 @@ class SpaceFloor {
         this.get_floor_crate(parent);
 
         document.getElementById('show_heatmap').addEventListener('click', () => {
-             parent.heatmap.show_heatmap(parent.heatmap);
+            parent.heatmap.show_heatmap(parent.heatmap);
         })
 
         document.getElementById('reset').addEventListener('click', () => {
             parent.heatmap.hide_heatmap(parent.heatmap);
         })
+
+        let slider = document.getElementById("sensor_opacity");
+        this.sensor_opacity = slider.value; // Display the default slider value
+
+        // Update the current slider value (each time you drag the slider handle)
+        slider.oninput = function () {
+            let opacity_value = this.value / 100;
+            parent.change_sensor_opacity(parent, opacity_value);
+        }
+
+        parent.manage_zoom(parent)
 
     }
 
@@ -223,6 +234,38 @@ class SpaceFloor {
         parent.heatmap.init()
 
     }
+
+    //changes sensor opacity
+    change_sensor_opacity(parent, new_opacity) {
+        //set new opacity
+        // d3.selectAll('.non_heatmap_circle').style('opacity', new_opacity);
+
+        //if debug set the fake data sensor called sensor nodes
+        d3.selectAll('.sensor_node').style('opacity', new_opacity);
+
+    }
+
+    //allows to scroll into the floorplan/heatmap
+    manage_zoom(parent) {
+        d3.select('#drawing_svg').call(d3.zoom()
+            .extent([
+                [-1, -1],
+                [1, 1]
+            ])
+            .scaleExtent([-0.5,10])
+            .on("zoom", zoomed));
+
+        function zoomed({
+            transform
+        }) {
+            d3.select('#bim_request').attr("transform", transform);
+            d3.select('#heatmap').attr("transform", transform);   
+            d3.select('#heatmap_sensors').attr("transform", transform);
+         
+        }
+    }
+
+
 
     // Add the svg objects to the DOM parent SVG (but invisible)
     append_svg(parent, svg) {
@@ -361,7 +404,7 @@ class SpaceFloor {
     get_floor_heatmap(parent) {
 
         //make drawn floorplan polygons interactive
-        d3.selectAll('polygon').attr('pointer-events','all');
+        d3.selectAll('polygon').attr('pointer-events', 'all');
 
         let sensors_in_crates = parent.viz_tools.obtain_sensors_in_crates();
         parent.sensors_in_crates = parent.viz_tools.obtain_sensors_in_crates();

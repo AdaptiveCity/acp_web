@@ -868,6 +868,8 @@ class HeatMap {
 
     hide_heatmap(parent) {
         d3.selectAll('#heatmap').remove();
+        d3.selectAll('#heatmap_sensors').remove();
+
         d3.selectAll('.non_heatmap_circle').style('opacity', 0.5);
 
         //make sure to pass the master object rather than the "heatmap parent" itself
@@ -952,7 +954,7 @@ class HeatMap {
     }
 
     attach_sensors(parent, results, scale) {
-        let main_svg = d3.select('#drawing_svg').append('g').attr('id', 'heatmap');
+        let main_svg = d3.select('#drawing_svg').append('g').attr('id', 'heatmap_sensors');
         //declare circle properties - opacity and radius
         let opac = 1;
         let rad = 4; // radius of sensor icon in METERS (i.e. XYZF before transform)

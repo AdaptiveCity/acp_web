@@ -15,6 +15,9 @@ class SpaceFloorspace {
         // Instantiate a jb2328 utility class e.g. for getBoundingBox()
         this.viz_tools = new VizTools();
 
+         // Instantiate a Heatmap class
+         this.heatmap = new HeatMap(this);
+
         // Transform parameters to scale SVG to screen
         parent.svg_transform = ""; // updated by set_svg_transform()
         this.next_color = 0;
