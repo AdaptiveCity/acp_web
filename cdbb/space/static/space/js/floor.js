@@ -80,14 +80,27 @@ class SpaceFloor {
         // Do an http request to the SPACE api, and call handle_building_space_data() on arrival
         this.get_floor_crate(parent);
 
+        //Set up event listener for the HEATMAP BUTTON
         document.getElementById('show_heatmap').addEventListener('click', () => {
+            //first reset the drawn floorplan to it's original location
+            parent.manage_zoom.reset(parent);
+            //generate the heatmap
             parent.heatmap.show_heatmap(parent.heatmap);
+
         })
 
+        //Set up event listener to hide the HEATMAP
         document.getElementById('reset').addEventListener('click', () => {
             parent.heatmap.hide_heatmap(parent.heatmap);
         })
 
+        //Set up event listener to RESET FLOORPLAN/HEATMAP
+        document.getElementById('reset_zoom').addEventListener('click', () => {
+            parent.manage_zoom.reset(parent);
+        })
+
+
+        //Set up slider to change sensor opacity
         let slider = document.getElementById("sensor_opacity");
         this.sensor_opacity = slider.value; // Display the default slider value
 
@@ -97,6 +110,7 @@ class SpaceFloor {
             parent.change_sensor_opacity(parent, opacity_value);
         }
 
+        //declare zooming/panning function
         parent.manage_zoom(parent)
 
     }
@@ -247,23 +261,43 @@ class SpaceFloor {
 
     //allows to scroll into the floorplan/heatmap
     manage_zoom(parent) {
-        d3.select('#drawing_svg').call(d3.zoom()
+
+        //setup zooming parameters
+        const zoom = d3.zoom()
             .extent([
                 [-1, -1],
                 [1, 1]
             ])
-            .scaleExtent([-0.5,10])
-            .on("zoom", zoomed));
+            .scaleExtent([-0.5, 10])
+            .on("zoom", zoomed);
 
+        //bind the zoom variable to the svg canvas
+        d3.select('#drawing_svg').call(zoom);
+
+        //zooming/panning for the drawn polygons/rects/sensors
         function zoomed({
             transform
         }) {
             d3.select('#bim_request').attr("transform", transform);
-            d3.select('#heatmap').attr("transform", transform);   
+            d3.select('#heatmap').attr("transform", transform);
             d3.select('#heatmap_sensors').attr("transform", transform);
-         
+
         }
+
+        //resets the panned/zoomed svg to the initial transformation
+        function reset() {
+
+            d3.select('#drawing_svg').call(
+                zoom.transform,
+                d3.zoomIdentity,
+            );
+        }
+
+        //enable resetting from an outside scope
+        parent.manage_zoom.reset = reset;
     }
+
+
 
 
 

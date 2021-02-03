@@ -118,16 +118,25 @@ Spatial Building and Sensor Data: FLOOR VIEW
                 </form>
 
             </div>
+
             <br>
 
             <!-- HIDE HEATMAP -->
             <div class="button_wrapper" id='heatmap_activation'>
                 <a id="reset" class="button1">Hide Heatmap</a>
             </div>
+            <br>
+
+        </div>
+
+        <!-- reset zoom -->
+        <div class="button_wrapper" id='reset_zoom_wrapper'>
+            <a id="reset_zoom" class="button1">Reset Zoom</a>
         </div>
 
         <br>
 
+        <!-- change sensor opacity slider -->
         <div class="button_wrapper">
             <div class="slidecontainer">
                 <label for="opacity_slider">Sensor Opacity:</label>
@@ -135,11 +144,6 @@ Spatial Building and Sensor Data: FLOOR VIEW
                 <input type="range" min="0" max="100" value="50" name='opacity_slider' class="slider" id="sensor_opacity">
               </div>
         </div>
-
-        <br>
-
-
-
 
     </div>
 

@@ -64,7 +64,7 @@ class SpaceFloorspace {
 
         //Uses in conjunction with quantize above -> enter crate_id and get associated
         //values with it (e.g. # sensors)
-        this.rateById = d3.map();
+        this.rateById = new Map(); //d3 v6 standard
 
         //Other global variables
 

@@ -1,8 +1,8 @@
 "use strict"
 
-const DEFAULT_REZ=6;
-const HIGH_REZ=4;
-const LOW_REZ=10;
+const DEFAULT_REZ = 6;
+const HIGH_REZ = 4;
+const LOW_REZ = 10;
 
 class HeatMap {
 
@@ -72,7 +72,7 @@ class HeatMap {
     //It is attached to an event listener on the template *heatmap* button 
     show_heatmap(parent) {
         //stop drawn floorplan polygons from interacting with the heatmap overlay
-        d3.selectAll('polygon').attr('pointer-events','none');
+        d3.selectAll('polygon').attr('pointer-events', 'none');
 
         parent.show_heatmap_original(parent)
         //parent.show_heatmap_alt(parent)
@@ -82,6 +82,8 @@ class HeatMap {
     update_resolution(parent, rez_value) {
         //remove current heatmap
         d3.selectAll('#heatmap').remove();
+        //remove redrawn sensors
+        d3.selectAll('#heatmap_sensors').remove();
 
         //change the resolution
         switch (rez_value) {
@@ -99,6 +101,9 @@ class HeatMap {
                 break;
         }
 
+        //first reset the drawn floorplan to it's original location
+        parent.master.manage_zoom.reset(parent.master);
+   
         //load the new heatmap
         parent.show_heatmap(parent);
     }
