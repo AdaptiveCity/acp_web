@@ -15,7 +15,7 @@ class DMHomeView(TemplateView):
 ###############################################################
 
 class DMSensorView(LoginRequiredMixin, TemplateView):
-    template_name = 'data_management/sensor.html'
+    template_name = 'data_management/sensor_readings.html'
 
     # We override get_context_data to return the vars to embed in the template
     # Positional args are in self.args.
@@ -85,9 +85,9 @@ class DMSensorLocationView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-
+            acp_id = self.kwargs['acp_id']
             # Get crate_id from the metadata for the selected sensor
-            response = requests.get(settings.API_SENSORS+'get/'+self.kwargs['acp_id']+'/')
+            response = requests.get(settings.API_SENSORS+'get/'+acp_id+'/')
             sensor_info = response.json()
             crate_id = sensor_info["crate_id"] if "crate_id" in sensor_info else None
 
@@ -109,9 +109,7 @@ class DMSensorLocationView(LoginRequiredMixin, TemplateView):
             response = requests.get(settings.API_READINGS+'get/'+self.kwargs['acp_id']+'/')
             readings_info = response.json()
 
-            context['API_READINGS'] = settings.API_READINGS
-
-            context['ACP_ID'] = self.kwargs['acp_id']
+            context['ACP_ID'] = acp_id
             context['CRATE_ID'] = crate_id
             context['API_BIM_INFO'] = json.dumps(bim_info)
             context['API_SENSORS_INFO'] = json.dumps(sensors_info)

@@ -1,7 +1,8 @@
 "use strict"
 
 // uses:
-//   API_READINGS
+//   API_READINGS_INFO
+//   API_SENSORS_INFO
 //   SENSOR_LINK
 //   js/parse_readings.js
 

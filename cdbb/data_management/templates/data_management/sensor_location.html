@@ -26,8 +26,8 @@
         var API_BIM_INFO = JSON.parse('{{ API_BIM_INFO | escapejs }}');
         var API_SPACE_INFO = JSON.parse('{{ API_SPACE_INFO | escapejs }}');
         var CRATE_ID = '{{ CRATE_ID }}';
-        var SENSOR_LINK = "{% url 'sensor' 'acp_id' %}"; // we will replace id as required
-        var FLOORSPACE_LINK = '{% url "space_floorspace" "crate_id" %}';
+        var SENSOR_LINK = "{% url 'sensor' 'acp_id' %}"; // we will replace 'acp_id' as required
+        var FLOORSPACE_LINK = "{% url 'space_floorspace' 'crate_id' %}";
 
     </script>
 {% endblock %}
