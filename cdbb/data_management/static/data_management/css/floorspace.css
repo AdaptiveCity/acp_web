@@ -76,6 +76,21 @@ div.tooltip {
     pointer-events: none;
 }
 
+div.message {
+    position: absolute;
+    text-align: center;
+    left: 33vh;
+    top: 33vh;
+    /* width: 8em; */
+    /* height: 6em; */
+    padding: 2px;
+    font: 2em sans-serif;
+    background: lightsteelblue;
+    border: 0px;
+    border-radius: 8px;
+    pointer-events: none;
+}
+
 .axis path,
 .axis line {
     /* fill: none; */

@@ -1,6 +1,6 @@
-{% extends "cdbb.html" %}
+{% extends "data_management/sensor.html" %}
 {% load static %}
-{% block title %}CDBB Sensor{% endblock %}
+{% block title %}{{ ACP_ID }} Readings{% endblock %}
 
 {% block head %}
     <!-- Our style sheets -->
@@ -27,32 +27,13 @@
     </script>
 {% endblock %}
 
-{% block header_title %}
-Sensor {{ ACP_ID }}
-{% endblock %}
+{% block sensor_breadcrumbs %}
+    <div class="breadcrumb">
+        &gt; Readings
+    </div>
+{% endblock %} <!-- end sensor_breadcrumbs -->
 
-{% block breadcrumbs %}
-<div class="breadcrumbs">
-    <div class="breadcrumb">
-        <a href="{% url 'home' %}">
-            <img src="{% static 'images/home_icon.png' %}" />
-        </a>
-    </div>
-    <div class="breadcrumb">
-        &gt; <a href="{% url 'dm_home' %}">Data Management</a>
-    </div>
-    <div class="breadcrumb">
-        &gt; <a href="{% url 'dm_sensors' %}">Sensors</a>
-    </div>
-    <div class="breadcrumb">
-        &gt; Sensor {{ ACP_ID }}
-    </div>
-</div>
-{% endblock %}
-
-{% block content %}
-
-{% include "data_management/includes/sensor_tabs.html" %}
+{% block sensor_content %}
 
 <div id="zoom_hint"></div>
 
@@ -99,7 +80,7 @@ Sensor {{ ACP_ID }}
     </pre>
 </div>
 
-{% endblock %} <!-- end content -->
+{% endblock %} <!-- end sensor_content -->
 
 <!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
 {% block lazy_script %}

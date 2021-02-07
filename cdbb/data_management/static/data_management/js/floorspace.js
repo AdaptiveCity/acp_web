@@ -18,11 +18,17 @@ class FloorSpace {
         // Transform parameters to scale SVG to screen
         parent.svg_transform = ""; // updated by set_svg_transform()
         this.next_color = 0;
+        this.display_crate_ids = true; // optional
     }
 
     // init() called when page loaded
     init() {
 
+        if (typeof CRATE_ID == "undefined") {
+            let message_el = document.getElementById("message");
+            message.innerText = "No in-building location available for this sensor.";
+            return;
+        }
         console.log("Loading Floorspace for "+CRATE_ID);
         var parent = this;
 
@@ -91,13 +97,20 @@ class FloorSpace {
         console.log("handle_floor_svg() loaded floor SVG", space_info);
         let scale = 8.3; //DEBUG
 
-        let xmlStr = atob(space_info["svg_encoded"]);
+        let xmlStr = atob(space_info["svg_encoded"]); // decode the SVG string
 
         const parser = new DOMParser();
         const xml = parser.parseFromString(xmlStr, "application/xml");
-         // Remove the "floor" crate from the SVG
 
+        // Remove the "floor" crates from the SVG
         let floors = xml.querySelectorAll('polygon[data-crate_type=floor]');
+        floors.forEach( function (el) {
+            console.log("removing crate "+el.id);
+            el.remove();
+        });
+
+        // Remove the "building" crates from the SVG
+        let buildings = xml.querySelectorAll('polygon[data-crate_type=building]');
         floors.forEach( function (el) {
             console.log("removing crate "+el.id);
             el.remove();
@@ -113,13 +126,29 @@ class FloorSpace {
 
         console.log("handle_floor_svg",polygons.length,"polygons");
 
-        parent.set_svg_transform(parent, floorspace_polygons, 0.25);
+        parent.set_svg_transform(parent, floorspace_polygons, 0.25); //DEBUG hardcoded zoom number
 
         // embed the SVG map
         //let svgMap = xml.getElementsByTagName("g")[0]; // set svgMap to root g
 
         //assign all svg objects to a single global variable
         //parent.floorplan = parent.page_floor_svg.appendChild(svgMap);
+
+        if (this.display_crate_ids) {
+            let rooms = document.querySelectorAll('polygon[data-crate_type=room]');
+            let svg_el = document.querySelector("#bim_request");
+            rooms.forEach( function (room) {
+                let svgNS = "http://www.w3.org/2000/svg"; // sigh... thank you 1999
+                let box = parent.viz_tools.box(room);
+                let x = box.cx * parent.svg_scale + parent.svg_x;
+                let y = box.cy * parent.svg_scale + parent.svg_y;
+                let text = document.createElementNS(svgNS,"text");
+                text.setAttribute('x', x);
+                text.setAttribute('y', y);
+                text.textContent = room.id;
+                svg_el.appendChild(text);
+            });
+        }
 
         //attach polygon styling
         d3.selectAll("polygon")
@@ -178,6 +207,9 @@ class FloorSpace {
 
     // Append each floor to page SVG but keep invisible for now
     // After appending the floor SVG's, we will calculate the scale & xy transform
+    // Writes:
+    //     parent.svg_transform
+    //     parent.svg_x, parent.svg_y, parent.svg_scale
     set_svg_transform(parent, polygons, zoom) {
         let min_x = 99999;
         let max_x = -99999;
@@ -206,27 +238,13 @@ class FloorSpace {
         let y_scale = h / max_h;
 
         // Set the svg scale to fit either x or y,reduced to show space around floorspace
-        let svg_scale = (x_scale < y_scale ? x_scale : y_scale) * zoom;
+        parent.svg_scale = (x_scale < y_scale ? x_scale : y_scale) * zoom;
         // x offset
-        let svg_x = -min_x * svg_scale + zoom * w;
-        let svg_y = -min_y * svg_scale + zoom * h;
-        parent.svg_transform = "translate("+svg_x+","+svg_y+") "+
-                               "scale("+svg_scale+")";
+        parent.svg_x = -min_x * parent.svg_scale + zoom * w;
+        parent.svg_y = -min_y * parent.svg_scale + zoom * h;
+        parent.svg_transform = "translate("+parent.svg_x+","+parent.svg_y+") "+
+                               "scale("+parent.svg_scale+")";
         console.log("svg_transform",parent.svg_transform);
-    }
-
-    //toggles the sidebar with crate_id/sensor pairs on the right
-    show_rooms() {
-        if (document.getElementById("table_content").style.display === "none") {
-            document.getElementById("table_content").style.display = "block"
-        } else {
-            document.getElementById("table_content").style.display = "none";
-        }
-
-    }
-
-    change_floor(floor) {
-        window.location = '/wgb/floor/' + floor
     }
 
     handle_sensors_metadata(parent, sensors) {

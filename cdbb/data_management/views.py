@@ -81,6 +81,7 @@ class DMSensorHistoryView(LoginRequiredMixin, TemplateView):
             return context
 
 class DMSensorLocationView(LoginRequiredMixin, TemplateView):
+
     template_name = 'data_management/sensor_location.html'
 
     def get_context_data(self, **kwargs):
@@ -89,32 +90,41 @@ class DMSensorLocationView(LoginRequiredMixin, TemplateView):
             # Get crate_id from the metadata for the selected sensor
             response = requests.get(settings.API_SENSORS+'get/'+acp_id+'/')
             sensor_info = response.json()
-            crate_id = sensor_info["crate_id"] if "crate_id" in sensor_info else None
 
-            # Get crate floor_number and system
-            response = requests.get(settings.API_BIM+f'get_xyzf/{crate_id}/0/')
-            bim_info = response.json()
-            floor_number = bim_info[crate_id]["acp_location_xyz"]["f"];
-            system = bim_info[crate_id]["acp_location"]["system"]
+            if "crate_id" in sensor_info:
+                crate_id = sensor_info["crate_id"]
 
-            # Get metadata for all sensors in the same crate (including selected sensor)
-            response = requests.get(settings.API_SENSORS+f'get_bim/{system}/{crate_id}/')
-            sensors_info = response.json()
+                # Get crate floor_number and system
+                response = requests.get(settings.API_BIM+f'get_xyzf/{crate_id}/0/')
+                bim_info = response.json()
 
-            # Get floor SVG
-            response = requests.get(settings.API_SPACE+f'get_floor_number_json/{system}/{floor_number}/')
-            space_info = response.json()
+                floor_number = bim_info[crate_id]["acp_location_xyz"]["f"];
+                system = bim_info[crate_id]["acp_location"]["system"]
 
-            # Get sensor READING
-            response = requests.get(settings.API_READINGS+'get/'+self.kwargs['acp_id']+'/')
-            readings_info = response.json()
+                # Get metadata for all sensors in the same crate (including selected sensor)
+                response = requests.get(settings.API_SENSORS+f'get_bim/{system}/{crate_id}/')
+                sensors_info = response.json()
+
+                # Get floor SVG
+                response = requests.get(settings.API_SPACE+f'get_floor_number_json/{system}/{floor_number}/')
+                space_info = response.json()
+
+                # Get sensor READING
+                response = requests.get(settings.API_READINGS+'get/'+self.kwargs['acp_id']+'/')
+                readings_info = response.json()
+
+                context['CRATE_ID'] = crate_id
+                context['API_BIM_INFO'] = json.dumps(bim_info)
+                context['API_SENSORS_INFO'] = json.dumps(sensors_info)
+                context['API_READINGS_INFO'] = json.dumps(readings_info)
+                context['API_SPACE_INFO'] = json.dumps(space_info)
+            else:
+                # No crate_id, so pass limited info to template
+                sensors_info = {}
+                sensors_info[acp_id] = sensor_info
+                context['API_SENSORS_INFO'] = json.dumps(sensors_info)
 
             context['ACP_ID'] = acp_id
-            context['CRATE_ID'] = crate_id
-            context['API_BIM_INFO'] = json.dumps(bim_info)
-            context['API_SENSORS_INFO'] = json.dumps(sensors_info)
-            context['API_READINGS_INFO'] = json.dumps(readings_info)
-            context['API_SPACE_INFO'] = json.dumps(space_info)
 
             return context
 

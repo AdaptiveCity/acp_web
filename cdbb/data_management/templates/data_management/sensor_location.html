@@ -1,6 +1,6 @@
-{% extends "cdbb.html" %}
+{% extends "data_management/sensor.html" %}
 {% load static %}
-{% block title %}CDBB Sensor{% endblock %}
+{% block title %}{{ ACP_ID }} Location{% endblock %}
 
 {% block head %}
     <!-- Our style sheets -->
@@ -32,32 +32,13 @@
     </script>
 {% endblock %}
 
-{% block header_title %}
-Sensor Location {{ ACP_ID }}
-{% endblock %}
+{% block sensor_breadcrumbs %}
+    <div class="breadcrumb">
+        &gt; Location
+    </div>
+{% endblock %} <!-- end sensor_breadcrumbs -->
 
-{% block breadcrumbs %}
-<div class="breadcrumbs">
-    <div class="breadcrumb">
-        <a href="{% url 'home' %}">
-            <img src="{% static 'images/home_icon.png' %}" />
-        </a>
-    </div>
-    <div class="breadcrumb">
-        &gt; <a href="{% url 'dm_home' %}">Data Management</a>
-    </div>
-    <div class="breadcrumb">
-        &gt; <a href="{% url 'dm_sensors' %}">Sensors</a>
-    </div>
-    <div class="breadcrumb">
-        &gt; Sensor Location {{ ACP_ID }}
-    </div>
-</div>
-{% endblock %}
-
-{% block content %}
-
-{% include "data_management/includes/sensor_tabs.html" %}
+{% block sensor_content %}
 
 <div id="drawing_coords">0,0</div>
 
@@ -69,7 +50,11 @@ Sensor Location {{ ACP_ID }}
 <!-- TOOLTIP - will be made visible/invisible as mouse moves over sensors -->
 <div id="tooltip" class="tooltip">
 </div>
-{% endblock %} <!-- end content -->
+
+<!-- TOOLTIP - will be made visible/invisible as mouse moves over sensors -->
+<div id="message" class="message">
+</div>
+{% endblock %} <!-- end sensor_content -->
 
 <!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
 {% block lazy_script %}
