@@ -182,18 +182,22 @@ body {
 /* ***************************************************************** */
 
 .contextual_links {
-    background-color: #ffaaaa;
+    background-color: #eeeeee;
+    border-radius: 12px;
 }
 
 .contextual_link_active {
-    background-color: #99ee99;
+    background-color: lightblue;
     display: inline-block;
     font-size: 24px; /* Increase font-size */
     padding: 12px 12px 12px 12px; /* Add some padding */
-    border: 1px solid #ddd; /* Add a grey border */
-    margin: 4px;
-    display: inline-block;
-    border-radius: 8px;
+    border-top: 1px solid #aaa; /* Add a grey border */
+    border-right: 1px solid #aaa; /* Add a grey border */
+    border-left: 1px solid #aaa; /* Add a grey border */
+    margin: 4px 4px 0px 4px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    vertical-align: bottom;
     cursor: default;
 }
 
@@ -202,14 +206,17 @@ body {
 }
 
 .contextual_link {
-    background-color: lightblue;
+    background-color: #eeeeee;
     display: inline-block;
     font-size: 24px; /* Increase font-size */
     padding: 12px 12px 12px 12px; /* Add some padding */
     border: 1px solid #ddd; /* Add a grey border */
     margin: 4px;
-    display: inline-block;
     border-radius: 8px;
+    margin: 4px 4px 0px 4px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    vertical-align: bottom;
     cursor: pointer;
 }
 
