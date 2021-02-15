@@ -75,9 +75,12 @@ class DMSensorHistoryView(LoginRequiredMixin, TemplateView):
 
             context = super().get_context_data(**kwargs)
             context['ACP_ID'] = self.kwargs['acp_id']
-            context['API_SENSOR_INFO'] = json.dumps(sensor_history_obj['sensor_info'])
-            context['API_SENSOR_HISTORY'] = json.dumps(sensor_history_obj['sensor_history'])
-            context['ACP_TYPE_INFO'] = json.dumps(sensor_history_obj['acp_type_info'])
+            if 'sensor_info' in sensor_history_obj:
+                context['API_SENSOR_INFO'] = json.dumps(sensor_history_obj['sensor_info'])
+            if 'sensor_history' in sensor_history_obj:
+                context['API_SENSOR_HISTORY'] = json.dumps(sensor_history_obj['sensor_history'])
+            if 'acp_type_info' in sensor_history_obj:
+                context['ACP_TYPE_INFO'] = json.dumps(sensor_history_obj['acp_type_info'])
             return context
 
 class DMSensorLocationView(LoginRequiredMixin, TemplateView):
