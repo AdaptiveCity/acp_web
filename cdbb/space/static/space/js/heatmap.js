@@ -103,11 +103,10 @@ class HeatMap {
 
         //first reset the drawn floorplan to it's original location
         parent.master.manage_zoom.reset(parent.master);
-   
+
         //load the new heatmap
         parent.show_heatmap(parent);
     }
-
 
     //callback to update sensors (for faked sensor data)
     update_callback(parent, sensor, walk) {
@@ -188,7 +187,7 @@ class HeatMap {
 
             //recoloring rects -- I don't think it's how it should be implemented, lots of unnecessary recalcultion -- to be changed
             //e.g. this value should clearly be retrieved using node.dataset property that's already in HTML
-            let cell_value = parent.get_heatmap(parent, selected_crate, rect_loc);
+            let cell_value = parent.get_cell_value(parent, selected_crate, rect_loc);
 
             let color = parent.color_scheme(cell_value);
 
@@ -248,7 +247,8 @@ class HeatMap {
                                 wave_len = 2.5;
                                 amplitude = 1000;
                             }
-                            let warp_delay = (((Math.cos(dist_delay / wave_len) + 1)) * amplitude) / dist_delay; //dampening function
+                            //dampening function
+                            let warp_delay = (((Math.cos(dist_delay / wave_len) + 1)) * amplitude) / dist_delay;
 
                             // console.log('warp delay', warp_delay)
                             //since the funciton follow 
@@ -278,17 +278,9 @@ class HeatMap {
                             return color //'red'
                         })
                         .style('opacity', parent.default_opacity)
-
                 })
-
-
         });
-        parent.update_crate_heatmap(parent, sensor_data.crate_id, acp_id)
-
-        // .on('end', function (d, i) {
-        //     parent.update_crate_heatmap(parent, sensor_data.crate_id,acp_id)
-        // });
-
+        parent.update_crate_heatmap(parent, sensor_data.crate_id, acp_id);
     }
 
     //API requests to get sensors per crate
@@ -438,7 +430,7 @@ class HeatMap {
 
             // console.log(crate_id, sensor_id)
             //recalculate the rect value based on the new feature
-            let cell_value = parent.get_heatmap(parent, selected_crate, rect_loc);
+            let cell_value = parent.get_cell_value(parent, selected_crate, rect_loc);
 
             //transform the feature value into a color
             let color = parent.color_scheme(cell_value);
@@ -501,7 +493,7 @@ class HeatMap {
                 }
 
                 //recalculate the rect value based on the new feature
-                let cell_value = parent.get_heatmap(parent, selected_crate, rect_loc);
+                let cell_value = parent.get_cell_value(parent, selected_crate, rect_loc);
 
                 //transform the feature value into a color
                 let color = parent.color_scheme(cell_value);
@@ -532,6 +524,109 @@ class HeatMap {
             })
         })
     }
+    //----------------------------------------------------------------//
+    //----------------------HEATMAP CALCULATIONS----------------------//
+    //----------------------------------------------------------------//
+
+
+    //calculate the color value of a heatmap cell
+    //takes in the crate and coordinates of a cell as arguments
+    get_cell_value(parent, crate, coords) {
+
+        //select on of the features (co2, temperature, humidity etc)
+        let feature = document.getElementById('features_list').value;
+
+        //get cell's coordinates and scale
+        let rect_loc = coords;
+        let scale = coords.scale
+
+        //variable used to calculate cumulative distance from a cell to all sensors around it
+        let combined_dist = 0;
+
+        //a list that will contain all crates' sensors and their values
+        let sensor_data_points = [];
+        //an object with sensor's location embedded in it
+        let sensor_loc = {};
+
+        //iterate through all sensors in crates that have sensors
+        parent.crates_with_sensors[crate].forEach(sensor => {
+
+            //if the sensor does not have the requested feature (e.g. co2), skip it
+            if (sensor.payload[feature] == undefined) {
+                return 0
+            }
+
+            //get sensor's location
+            let x_value = parent.sensor_data[sensor.acp_id]['location']['x'];
+            let y_value = -parent.sensor_data[sensor.acp_id]['location']['y'];
+
+            //pass the location to the sensor_loc object and adjust the scale for rendering
+            sensor_loc = {
+                x: x_value * scale,
+                y: y_value * scale
+            };
+
+            //get the distance from the sensor_loc to the cell (rect) location
+            let dist = parent.jb_tools.dist(sensor_loc, rect_loc)
+
+            //push the sensor to the list of sensors used for the calculation of the cell (rect) color value
+            sensor_data_points.push({
+                'sensor': sensor.acp_id,
+                'value': sensor.payload[feature],
+                'dist': dist
+            });
+
+            //add the distance from the cell to the sensor to the cumulative distance  variable
+            //(keeps track of the total distance from the cell to all sensors)
+            combined_dist += dist;
+        })
+
+        //declare the variable for the color; i.e. final value calculated by the coefficients
+        let final_val = 0;
+
+        //declare the coefficients used in the function to calculate the color value
+        let C = 0;
+        let D = 0;
+
+        //magic happens here;
+        //We iterate through all the sensors in the crate and try to calculate how to weigh
+        //their reading values in a spatial context.
+        sensor_data_points.forEach(sensor_point => {
+
+            //check that the sensor is not the only sensor in the room
+            if (sensor_point.dist != combined_dist) {
+
+                let B = 0;
+
+                //second loop because we're calculating the inverse spread of sensor readings;
+                //e.g. sensor A is 95% of the total distance (TD) away from cell (far), whereas sensor B is 5% of the total distance away (close);
+                //TD is dist(sensorA, cell_location)+dist(sensorB, cell_location);
+                //following from this, we can't calculate that cell_value = 0.95*valueA(from sensorA)+0.05*valueB, because the the coefficient for
+                //sensorB readings has to be higher because it is closer! For this reason, we have to run  a second loop to calculate the reverse.
+                sensor_data_points.forEach(sensor_point_alt => {
+                    B += combined_dist / sensor_point_alt.dist;
+                });
+
+                //calculate the inverse coefficient from the distance
+                let A = combined_dist / sensor_point.dist;
+
+                //multiply the coefficient with the sensor reading value, multiplying the sensor's reading by its relative distance coefficient
+                C = A * (1 / B) * sensor_point.value;
+
+                //add that sensor's calculated input to the total sum value for the cell
+                D += C;
+
+            } else {
+                //if a crate has a single sensor, then only use that sensor's reading a the only value
+                final_val = sensor_point.value;
+            }
+
+        })
+        //return the final result after making sure the calculation were right (hence 0 if crate had no sensors)
+        return D == 0 ? final_val : D;
+        //DEBUG (randomised color) myColor(Math.floor(Math.random()*100))
+    }
+
 
     //used when generating the heatmap for the first time (not redrawing)
     show_heatmap_original(parent) {
@@ -598,7 +693,7 @@ class HeatMap {
                                 scale: scale
                             }
 
-                            let cell_value = parent.get_heatmap(parent, selected_crate, loc);
+                            let cell_value = parent.get_cell_value(parent, selected_crate, loc);
                             let color = parent.color_scheme(cell_value);
 
 
@@ -650,13 +745,10 @@ class HeatMap {
             }
         });
 
-
-
         //iterate through results to extract data required to show sensors on the floorplan
         let results = parent.sensor_data;
         this.attach_sensors(parent, results, scale)
         console.log('results', results)
-
 
         //debug only, "parent" now working somehow
         this.set_colorbar(parent);
@@ -673,7 +765,6 @@ class HeatMap {
         parent.get_min_max(parent, selected_feature);
 
         d3.selectAll('polygon').attr('class', 'g0-9')
-
 
         let main_svg = d3.select('#drawing_svg').append('g').attr('id', 'heatmap'); //parent.page_floor_svg;
 
@@ -722,9 +813,8 @@ class HeatMap {
                         scale: scale
                     }
 
-                    let cell_value = 1; //parent.get_heatmap(parent, selected_crate, loc);
+                    let cell_value = 1; //parent.get_cell_value(parent, selected_crate, loc);
                     let color = 'black'; //parent.color_scheme(cell_value);
-
 
                     main_svg
                         .append("rect")
@@ -816,7 +906,7 @@ class HeatMap {
 
                     let selected_crate = element.id;
 
-                    let cell_value = parent.get_heatmap(parent, selected_crate, loc);
+                    let cell_value = parent.get_cell_value(parent, selected_crate, loc);
                     let color = parent.color_scheme(cell_value);
 
                     d3.select(rect)
@@ -856,13 +946,11 @@ class HeatMap {
         }
         console.log('done polygons')
 
-
         //iterate through results to extract data required to show sensors on the floorplan
         //change name from results to else
         let results = parent.sensor_data;
         this.attach_sensors(parent, results, scale)
         console.log(results)
-
 
         //debug only, "parent" now working somehow
         this.set_colorbar(parent);
@@ -882,82 +970,7 @@ class HeatMap {
         parent.master.set_legend(parent.master)
     }
 
-
-    get_heatmap(parent, crate, coords) {
-
-        let feature = document.getElementById('features_list').value;
-
-        let rect_loc = coords;
-        let scale = coords.scale
-
-        let sensor_loc = {};
-
-        let combined_dist;
-        let data_points = [];
-
-        combined_dist = 0;
-        data_points = [];
-
-        // console.log(parent.crates_with_sensors[crate], crate)
-        parent.crates_with_sensors[crate].forEach(sensor => {
-
-            //if the sensor does not have the requested feature, skip it
-            if (sensor.payload[feature] == undefined) {
-                return 0
-            }
-
-            let x_value = parent.sensor_data[sensor.acp_id]['location']['x'];
-            let y_value = -parent.sensor_data[sensor.acp_id]['location']['y'];
-
-            sensor_loc = {
-                x: x_value * scale,
-                y: y_value * scale
-            };
-
-            let dist = parent.jb_tools.dist(sensor_loc, rect_loc)
-
-            let data_point = {
-                'sensor': sensor.acp_id,
-                'value': sensor.payload[feature],
-                'dist': dist
-            };
-
-            data_points.push(data_point);
-            combined_dist += dist;
-
-
-        })
-
-        let final_val = 0;
-
-        let C = 0;
-        let D = 0;
-        //magic happens here
-        data_points.forEach(points => {
-
-            if (points.dist != combined_dist) {
-
-                let B = 0;
-
-                data_points.forEach(points2 => {
-                    B += combined_dist / points2.dist;
-                });
-
-                let A = combined_dist / points.dist;
-
-                C = A * (1 / B) * points.value;
-
-                D += C;
-
-            } else {
-                final_val = points.value;
-            }
-
-        })
-
-        return D == 0 ? final_val : D; // myColor(Math.floor(Math.random()*100))
-    }
-
+    //display sensor on top of the heatmap
     attach_sensors(parent, results, scale) {
         let main_svg = d3.select('#drawing_svg').append('g').attr('id', 'heatmap_sensors');
         //declare circle properties - opacity and radius
@@ -994,7 +1007,9 @@ class HeatMap {
 
         }
     }
-
+    //-----------------------------------------------------------------//
+    //----------------------------COLOR BAR----------------------------//
+    //-----------------------------------------------------------------//
     set_cbar_value(parent, value) {
         let c_conf = parent.jb_tools.canvas_conf(110, 320, 10, 5, 10, 5);
 

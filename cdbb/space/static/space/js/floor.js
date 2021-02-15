@@ -19,7 +19,7 @@ class SpaceFloor {
         // Instantiate a Heatmap class
         this.heatmap = new HeatMap(this);
         // Instatiante an RTmonitor class
-        this.rt_mon = new RTmonitor();
+        this.rt_mon = new RTmonitor(this);
 
         // Transform parameters to scale SVG to screen
         this.svg_transform = ""; // updated by set_svg_transform()
@@ -81,13 +81,16 @@ class SpaceFloor {
         // Do an http request to the SPACE api, and call handle_building_space_data() on arrival
         this.get_floor_crate(parent);
 
-
+        //--------------------------------------//
+        //--------SET UP EVENT LISTENERS--------//
+        //--------------------------------------//
 
         //Set up event listener to connect to RTmonitor
         document.getElementById('rt_monitor').addEventListener('click', () => {
-            let sensor_list=Object.keys(space_floor.sensor_data);
-            //do rtmonitor connect
-            parent.rt_mon.init2(sensor_list);
+            //get a list of all sensors rendered on screen
+            let sensor_list = Object.keys(space_floor.sensor_data);
+            //do rtmonitor connect, telling which sensors to subscribe to
+            parent.rt_mon.connect(sensor_list);
         })
 
         //Set up event listener for the HEATMAP BUTTON
@@ -123,7 +126,11 @@ class SpaceFloor {
         //declare zooming/panning function
         parent.manage_zoom(parent)
 
+        //--------------------------------------//
+        //----------END EVENT LISTENERS---------//
+        //--------------------------------------//
     }
+
 
 
     // Use BIM api to get data for this floor
@@ -193,19 +200,14 @@ class SpaceFloor {
             bim_request.prepend(el);
         });
 
-        parent.append_svg(parent, xml.querySelector('#bim_request'));
+        parent.page_floor_svg.appendChild(xml.querySelector('#bim_request'));
 
         let polygons = parent.page_floor_svg.querySelectorAll("polygon");
 
         console.log("handle_floor_svg", polygons.length, "polygons");
 
+        //TODO CHECK how and why this does it 
         parent.set_svg_transform(parent, polygons);
-
-        // embed the SVG map
-        //let svgMap = xml.getElementsByTagName("g")[0]; // set svgMap to root g
-
-        //assign all svg objects to a single global variable
-        //parent.floorplan = parent.page_floor_svg.appendChild(svgMap);
 
         //attach polygon styling
         d3.selectAll("polygon")
@@ -259,6 +261,7 @@ class SpaceFloor {
 
     }
 
+    //TODO-modify for real vs fake sensors
     //changes sensor opacity
     change_sensor_opacity(parent, new_opacity) {
         //set new opacity
@@ -266,7 +269,6 @@ class SpaceFloor {
 
         //if debug set the fake data sensor called sensor nodes
         d3.selectAll('.sensor_node').style('opacity', new_opacity);
-
     }
 
     //allows to scroll into the floorplan/heatmap
@@ -291,7 +293,6 @@ class SpaceFloor {
             d3.select('#bim_request').attr("transform", transform);
             d3.select('#heatmap').attr("transform", transform);
             d3.select('#heatmap_sensors').attr("transform", transform);
-
         }
 
         //resets the panned/zoomed svg to the initial transformation
@@ -307,21 +308,6 @@ class SpaceFloor {
         parent.manage_zoom.reset = reset;
     }
 
-
-
-
-
-    // Add the svg objects to the DOM parent SVG (but invisible)
-    append_svg(parent, svg) {
-        // note viz_tools.box returns ZEROs if used before the appendChild()
-        //console.log("box before render", parent.viz_tools.box(floor_svg));
-        var page_svg = parent.page_floor_svg.appendChild(svg);
-
-        // Now we've done the appendChild we can work out the bounding box and the scale
-        //make invisible prior loading
-        //d3.select(page_svg).style("opacity", 0);
-    }
-
     // Append each floor to page SVG but keep invisible for now
     // After appending the floor SVG's, we will calculate the scale & xy transform
     set_svg_transform(parent, polygons) {
@@ -330,9 +316,26 @@ class SpaceFloor {
         let min_y = 99999;
         let max_y = -99999;
 
+        // Return { x,y,cx,cy,w,h } for an html DOM element (for us often SVG)
+        function get_box(element) {
+            //console.log('box called with element', element);
+            var bbox = element.getBBox();
+            var cx = bbox.x + bbox.width / 2;
+            var cy = bbox.y + bbox.height / 2;
+            //console.log('box bbox=', bbox);
+            return {
+                x: bbox.x,
+                y: bbox.y,
+                cx: cx,
+                cy: cy,
+                w: bbox.width,
+                h: bbox.height
+            };
+        }
+
         polygons.forEach(function (polygon) {
             // Get bounding box of floor polygon
-            let box = parent.viz_tools.box(polygon);
+            let box = get_box(polygon);
             // Update max width, height found so far
             if (box.x < min_x) min_x = box.x;
             if (box.x + box.w > max_x) max_x = box.x + box.w;
@@ -340,7 +343,9 @@ class SpaceFloor {
             if (box.y + box.h > max_y) max_y = box.y + box.h;
             //console.log("box", box);
         });
-        console.log("box min_x:", min_x, "min_y:", min_y, "max_x", max_x, "max_y", max_y);
+
+        //console.log("box min_x:", min_x, "min_y:", min_y, "max_x", max_x, "max_y", max_y);
+
         // calculate appropriate scale for svg
         let w = parent.page_floor_svg.clientWidth;
         let h = parent.page_floor_svg.clientHeight;
@@ -355,35 +360,9 @@ class SpaceFloor {
         let svg_y = -min_y * svg_scale;
         parent.svg_transform = "translate(" + svg_x + "," + svg_y + ") " +
             "scale(" + svg_scale + ")";
-        console.log("svg_transform", parent.svg_transform);
+
+        //console.log("svg_transform", parent.svg_transform);
     }
-
-    //toggles the sidebar with crate_id/sensor pairs on the right
-    show_rooms() {
-        if (document.getElementById("table_content").style.display === "none") {
-            document.getElementById("table_content").style.display = "block"
-        } else {
-            document.getElementById("table_content").style.display = "none";
-        }
-
-    }
-
-    change_floor(floor) {
-        window.location = '/wgb/floor/' + floor
-    }
-
-    /*
-    //DEBUG this API is not yet properly implemented
-    async function fetch_sensors_counts(crate_id) {
-        //Fetches csv data async, soon to be replaced by d3.json()
-        var sensor_count_url = API_SENSORS + "get_count/" + crate_id+'/1'
-        console.log(sensor_count_url)
-
-        var incoming = await d3.json(sensor_count_url)
-        var data = incoming['data']
-        //data = await d3.csv("/static/data/" + dataset + "_BIM_data.csv");
-    }
-    */
 
     // Get the metadata from the SENSORS api for the sensors on this floor
     get_sensors_metadata(parent) {
@@ -426,6 +405,7 @@ class SpaceFloor {
                 let floor_id = results[sensor]['acp_location_xyz']['f']
                 let sensor_id = results[sensor]['acp_id'];
 
+                //draw sensors on screen
                 d3.select("#bim_request").append("circle")
                     .attr("cx", x_value)
                     .attr("cy", y_value)
@@ -441,41 +421,107 @@ class SpaceFloor {
             }
 
         }
+        //activate tooltips on hover
         parent.viz_tools.tooltips();
-        parent.get_floor_heatmap(parent);
+        //fill polygons based on # of sensors 
+        parent.get_choropleth(parent);
     }
 
-    get_floor_heatmap(parent) {
+
+    //--------------------------------------------------//
+    //----------------choropleth definition----------------//
+    //--------------------------------------------------//
+
+    //temporary solution to create a heatmap
+    obtain_sensors_in_crates(parent) {
+        //crates will house crate_id/sensors object pairs
+        let crates = [];
+        //fill the crates array with crate_ids and # of sensors
+        d3.selectAll('polygon')._groups[0].forEach(crate => crates.push({
+            'crate_id': crate.id,
+            'sensors': 0
+        }));
+        //get the list of sensors by looking at the attached circles
+        let sensors = d3.selectAll('circle')._groups[0];
+
+        for (let i = 0; i < crates.length; i++) {
+            //select crate
+            let crate = crates[i].crate_id;
+            //get sensor count for that crate
+            crates[i].sensors = parent.get_count_for_crate(parent, sensors, crate);
+        }
+        return crates;
+    }
+
+    //looks at a crate and returns the number of sensors in it
+    get_count_for_crate(parent, sensors, crate_id) {
+
+        let count = 0;
+        //iterate over the sensor (circles) array
+        for (let i = 0; i < sensors.length; i++) {
+
+            let sensor = sensors[i];
+            //acquire x/y positions for a sensor
+            let point = [sensor.cx.baseVal.value, sensor.cy.baseVal.value];
+            //if sensor is within a crate
+            if (parent.point_in_crate(crate_id, point)) {
+                count++;
+            }
+
+        }
+        return count;
+    }
+
+    point_in_crate(crate_id, point) {
+        let polygon = d3.select('#' + crate_id)._groups[0][0].points;
+        //A point is in a polygon if a line from the point to infinity crosses the polygon an odd number of times
+        let odd = false;
+        //For each edge (In this case for each point of the polygon and the previous one)
+        for (let i = 0, j = polygon.length - 1; i < polygon.length; i++) {
+            //If a line from the point into infinity crosses this edge
+            if (((polygon[i].y > point[1]) !== (polygon[j].y > point[1])) // One point needs to be above, one below our y coordinate
+                // ...and the edge doesn't cross our Y corrdinate before our x coordinate (but between our x coordinate and infinity)
+                &&
+                (point[0] < ((polygon[j].x - polygon[i].x) * (point[1] - polygon[i].y) / (polygon[j].y - polygon[i].y) + polygon[i].x))) {
+                // Invert odd
+                odd = !odd;
+            }
+            j = i;
+
+        }
+        //If the number of crossings was odd, the point is in the polygon
+        return odd;
+    };
+
+    //color polygons based on the number of sensors in them
+    get_choropleth(parent) {
 
         //make drawn floorplan polygons interactive
         d3.selectAll('polygon').attr('pointer-events', 'all');
 
-        let sensors_in_crates = parent.viz_tools.obtain_sensors_in_crates();
-        parent.sensors_in_crates = parent.viz_tools.obtain_sensors_in_crates();
+        parent.sensors_in_crates = parent.obtain_sensors_in_crates(parent);
+
         //map crates with sensors so that rateById.get(CRATE) returns #sensors
-        d3.map(sensors_in_crates, function (d, i) {
+        d3.map(parent.sensors_in_crates, function (d, i) {
             parent.rateById.set(d.crate_id, d.sensors)
         });
 
-        console.log(sensors_in_crates)
         //quantize polygons again according to sensors in them
         d3.selectAll("polygon")
             .attr("class", function (d) {
                 return parent.quantize_class(parent, parent.quantize(parent.rateById.get(this.id)));
             })
 
-        //since we have the data preloaded might as well add
-        //tabs with to make life easier (temporary solution ofc)
-        parent.viz_tools.tabulate(sensors_in_crates, ["crate_id", "sensors"]); //render the data table
-
-        //make invisible as default, so that users can access upon clicking on the 'sidebar'
-        document.getElementById("table_content").style.display = "none";
-
     }
+    //--------------------------------------------------//
+    //----------------choropleth end-----------------------//
+    //--------------------------------------------------//
 
 
+
+    //quantizes colors so we have discrete rather continouos values
+    //use for the legend+coloring polygons based on the sensors in them
     quantize_class(parent, polygon_id) {
-
         var quantized_class = polygon_id
         if (quantized_class == undefined) {
             return parent.quantize(0)

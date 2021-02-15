@@ -82,16 +82,17 @@ Spatial Building and Sensor Data: FLOOR VIEW
         <!-- MAIN HEATMAP ACTIVATION -->
         <div class="button_wrapper">
             <!-- <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button> -->
-            <a id="rt_monitor" class="button1">Connect RT</a>
+            <a id="rt_monitor" class="button1">Splash</a>
         </div>
+        <div id='splash_rt' class='rt_status'><span id='splash_rt_state' class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbspRtM not connected</div>
         <br>
 
         <!-- MAIN HEATMAP ACTIVATION -->
         <div class="button_wrapper">
             <!-- <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button> -->
-            <a id="show_heatmap" class="button1">Show Heatmap</a>
-
+            <a id="show_heatmap" class="button1">Rain</a>
         </div>
+        <div id='rain_rt' class='rt_status'><span id='rain_rt_state' class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbspRtM not connected</div>
 
         <!-- HEATMAP CONFIGURATION/HIDE SETTINGS -->
         <div class='hidden_divs'>
@@ -101,7 +102,7 @@ Spatial Building and Sensor Data: FLOOR VIEW
 
                 <!-- I know the following should not be hardcoded, this is just for debug -->
                 <form id="feature_form">
-                    <label for="features">Feature:</label>
+                    <label class='form_label' for="features">Feature:</label>
                     <br>
                     <select name="features" id="features_list">
                         <option value="co2">CO2</option>
@@ -119,7 +120,7 @@ Spatial Building and Sensor Data: FLOOR VIEW
 
                 <!-- I know the following should not be hardcoded, this is just for debug -->
                 <form id="resolution_form">
-                    <label for="resolution">Resolution:</label>
+                    <label class='form_label' for="resolution">Resolution:</label>
                     <br>
                     <select name="resolution" id="resolution_list">
                         <option value="low">Low</option>

@@ -29,7 +29,7 @@ a.button1 {
 a.button1:hover {
     color: black;
     /* #000000; */
-    background-color:rgb(241, 190, 72);
+    background-color: rgb(241, 190, 72);
 }
 
 @media all and (max-width:30em) {
@@ -42,9 +42,9 @@ a.button1:hover {
 
 .slidecontainer {
     width: 100%;
-  }
-  
-  .slider {
+}
+
+.slider {
     -webkit-appearance: none;
     width: 100%;
     height: 7.5px;
@@ -53,33 +53,34 @@ a.button1:hover {
     opacity: 0.5;
     -webkit-transition: .2s;
     transition: opacity .2s;
-  }
-  
-  .slider:hover {
+}
+
+.slider:hover {
     opacity: 1;
-  }
-  
-  .slider::-webkit-slider-thumb {
+}
+
+.slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     width: 15px;
     height: 15px;
     background: rgb(241, 190, 72);
     cursor: pointer;
-  }
-  
-  .slider::-moz-range-thumb {
+}
+
+.slider::-moz-range-thumb {
     width: 15px;
     height: 15px;
     background: rgb(241, 190, 72);
     cursor: pointer;
-  }
+}
 
-.hidden_divs{
+.hidden_divs {
     width: 100%;
     padding: 0em 0em 0em 2em;
 
 }
+
 select {
     width: 100%;
     padding: 0.35em 1.2em;
@@ -99,9 +100,9 @@ select {
 select:hover {
     color: black;
     /* #000000; */
-    background-color:rgb(241, 190, 72);
+    background-color: rgb(241, 190, 72);
 }
-  
+
 
 .drawing_div {
     margin: 0em 1em 0em 1em;
@@ -144,5 +145,25 @@ select:hover {
     pointer-events: none;
     opacity: 0;
     /* start with div invisible */
+}
 
+.rt_status {
+    margin:0px;
+    padding: 0px;
+    font: 8px sans-serif;
+    /* background: rgb(108, 172, 228); */
+}
+
+.rt_state {
+    margin: 0px 2px 1px 6px;
+    /* padding: 1px 2px 1px 6px; */
+    font: 4px sans-serif;
+    /* background: rgb(108, 255, 150); green*/
+    background: rgb(255, 108, 150);
+}
+
+.form_label{
+    margin: 1px;
+    /* padding: 1px 2px 1px 6px; */
+    font: 0.7em sans-serif;
 }
