@@ -10,6 +10,7 @@
 
 <!-- Local copy of d3 -->
 <script type="text/javascript" src="{% static 'js/d3.v6_5.min.js' %}"></script>
+<!-- <script type="text/javascript" src="{% static 'js/d3.v5.min.js' %}"></script> -->
 
 <!-- JS SCRIPT for space snd building -->
 <script type="text/javascript" src="{% static 'space/js/space.js' %}"></script>
@@ -22,6 +23,10 @@
 
 <!-- heatmap class  -->
 <script type='text/javascript' src="{% static 'space/js/heatmap.js' %}"></script>
+
+<!-- RTMonitor tests -->
+<script type='text/javascript' src="{% static 'space/js/RTmonitor.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 
 <!-- building.js defines class SpaceBuilding -->
 <script type='text/javascript' src="{% static 'space/js/floor.js' %}"></script>
@@ -74,6 +79,12 @@ Spatial Building and Sensor Data: FLOOR VIEW
 
     <div id="legend_and_buttons">
         <div id="legend_container"></div>
+        <!-- MAIN HEATMAP ACTIVATION -->
+        <div class="button_wrapper">
+            <!-- <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button> -->
+            <a id="rt_monitor" class="button1">Connect RT</a>
+        </div>
+        <br>
 
         <!-- MAIN HEATMAP ACTIVATION -->
         <div class="button_wrapper">
@@ -81,6 +92,7 @@ Spatial Building and Sensor Data: FLOOR VIEW
             <a id="show_heatmap" class="button1">Show Heatmap</a>
 
         </div>
+
         <!-- HEATMAP CONFIGURATION/HIDE SETTINGS -->
         <div class='hidden_divs'>
 
@@ -140,9 +152,10 @@ Spatial Building and Sensor Data: FLOOR VIEW
         <div class="button_wrapper">
             <div class="slidecontainer">
                 <label for="opacity_slider">Sensor Opacity:</label>
-                    <br>
-                <input type="range" min="0" max="100" value="50" name='opacity_slider' class="slider" id="sensor_opacity">
-              </div>
+                <br>
+                <input type="range" min="0" max="100" value="50" name='opacity_slider' class="slider"
+                    id="sensor_opacity">
+            </div>
         </div>
 
     </div>

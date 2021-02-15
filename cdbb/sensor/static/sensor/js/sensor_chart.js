@@ -234,8 +234,8 @@ function init_feature_select(readings, sensor_metadata) {
     feature_select_el2.value = selected_feature['feature_id'];
 
     feature_select_el.onchange = function (e) {
-        onchange_feature_select(e, readings, features)
-    };
+        onchange_feature_select(e, readings, features);
+        };
 
     feature_select_el2.onchange = function (e) {
         onchange_secondary_select(e, readings, features)
@@ -417,7 +417,6 @@ function init_chart() {
 
 }
 
-
 // ****************************************************************************
 // *********  Update the chart with sensor readings data **********************
 // ****************************************************************************
@@ -428,31 +427,40 @@ function draw_chart(readings, feature, feature2) {
     }
     // do nothing if no data is available
     if (readings.length == 0) return;
-
     var chart_xScale; // d3 scale fn for x axis
     var chart_xAxis; // x axis
     var chart_xValue; // value for x axis selected from current data object (i.e. timestamp)
     var chart_xMap; // fn for x display value
-
+    
     var chart_yScale;
     var chart_yAxis;
     var chart_yValue;
     var chart_yMap;
-
+    
     var chart_yScale2;
     var chart_yAxis2;
     var chart_yValue2;
     var chart_yMap2;
-
+    
+    
     //var chart_cValue; // value from current data point to determine color of circle (i.e. route_id)
     var chart_color; // color chosen for current circle on scatterplaot
     var chart_color2; // color chosen for current circle on scatterplaot
-
+    
     // time of day for scatterplot to start/end
     var CHART_START_TIME = 0; // start chart at midnight
     var CHART_END_TIME = 24; // end chart at midnight
-
+    
     var CHART_DOT_RADIUS = 6; // size of dots on scatterplot
+
+
+
+
+
+
+
+
+
 
     // Erase of previous drawn chart
     chart_svg.select("#graph_elements").remove();

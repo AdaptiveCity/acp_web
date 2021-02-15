@@ -18,7 +18,8 @@ class SpaceFloor {
 
         // Instantiate a Heatmap class
         this.heatmap = new HeatMap(this);
-
+        // Instatiante an RTmonitor class
+        this.rt_mon = new RTmonitor();
 
         // Transform parameters to scale SVG to screen
         this.svg_transform = ""; // updated by set_svg_transform()
@@ -79,6 +80,15 @@ class SpaceFloor {
 
         // Do an http request to the SPACE api, and call handle_building_space_data() on arrival
         this.get_floor_crate(parent);
+
+
+
+        //Set up event listener to connect to RTmonitor
+        document.getElementById('rt_monitor').addEventListener('click', () => {
+            let sensor_list=Object.keys(space_floor.sensor_data);
+            //do rtmonitor connect
+            parent.rt_mon.init2(sensor_list);
+        })
 
         //Set up event listener for the HEATMAP BUTTON
         document.getElementById('show_heatmap').addEventListener('click', () => {

@@ -67,7 +67,6 @@ class SpaceFloorspace {
         this.rateById = new Map(); //d3 v6 standard
 
         //Other global variables
-
         this.previous_circle_radius = 0; // set on mouse over, used to remember radius for reset on mouse out.
 
         // Do an http request to the SPACE api, and call handle_building_space_data() on arrival
@@ -145,7 +144,7 @@ class SpaceFloorspace {
 
         let floorspace_polygons = parent.page_floor_svg.querySelectorAll("#"+CRATE_ID);
 
-        d3.select("#"+CRATE_ID).attr("style","stroke: #448844");
+        d3.select("#"+CRATE_ID).attr("style","stroke: #448844").style('fill', '#3CB371');
 
         console.log("handle_floor_svg",polygons.length,"polygons");
 
