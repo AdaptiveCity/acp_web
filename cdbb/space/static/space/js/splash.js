@@ -5,22 +5,65 @@ class SplashMap {
     // Called to create instance in page : space_floorplan = SpaceFloorplan()
     constructor(floorspace) {
 
+        let self = this;
+
         //throughout the class the master is the main visualisation, parent is HeatMap
-        this.master = floorspace;
+        self.master = floorspace;
+
+        // Instatiante an RTmonitor class
+        self.rt_con = new RTconnect(self);
 
         // Instantiate a jb2328 utility class e.g. for getBoundingBox()
-        this.viz_tools = new VizTools();
+        self.viz_tools = new VizTools();
 
         //a set of useful d3 functions
-        this.jb_tools = new VizTools2();
+        self.jb_tools = new VizTools2();
 
-        this.CIRCLE_RADIUS = 0.5;
+        self.circle_radius = 0.5;
+
+        //set div id's show status change upon connect
+        self.txt_div_id = 'splash_rt';
+        self.status_div_id = 'splash_rt_state'
+
+        //--------------------------------------//
+        //--------SET UP EVENT LISTENERS--------//
+        //--------------------------------------//
+        //Set up event listener to connect to RTmonitor
+        document.getElementById('rt_monitor').addEventListener('click', () => {
+            self.init(self);
+        })
+
     }
 
+
+
     // init() called when page loaded
-    init() {}
+    init(parent) {
+
+        //get a list of all sensors rendered on screen
+        parent.sub_list=Object.keys(parent.master.sensor_data);
+        console.log('sensors',parent.sub_list)
+        //do rtmonitor connect, telling which sensors to subscribe to
+        parent.rt_con.connect(parent.check_status.bind(parent), parent.sub_list);
+
+    }
+
+    check_status(value) {
+        let parent = this;
+        console.log('returned', value, parent)
+        //make a switch statement instead
+        if (value == '1') {
+            document.getElementById(parent.txt_div_id).innerHTML = 'RTm Connected';
+            document.getElementById(parent.status_div_id).style.backgroundColor = 'rgb(108, 255, 150)';
+        } else if (value == '2') {
+
+        } else {}
+    }
+
 
     draw_ripples(self, acp_id) { //<-D
+
+        console.log('ripple', acp_id);
         self.draw_splash(self, acp_id);
 
         for (var i = 1; i < 3; ++i) {
@@ -56,27 +99,27 @@ class SplashMap {
 
     update_floorplan(self, msg_data) {
         let acp_id = msg_data.acp_id;
-
+        //console.lo
         //self.add_hist(self, acp_id, msg_data)
         //self.set_colorbar(self)
         // self.reset_animations(self)
-        self.do_pre_transition(self, acp_id);
+        self.draw_ripples(self, acp_id);
     }
 
 
     draw_splash(self, acp_id) {
-        //let multiplier = 1.1; //10% increaseCIRCLE_RADIUS
+        //let multiplier = 1.1; //10% increase self.circle_radius
         let sensor_circle = d3.select('#' + acp_id);
         let new_color = 'purple' //self.color_scheme(self.msg_history[acp_id].pinged);
         sensor_circle
             .transition().duration(700)
-            .attr('r', CIRCLE_RADIUS / 3)
+            .attr('r', self.circle_radius / 3)
             //.ease(d3.easeBackInOut.overshoot(3.5))
             //flash red to indicate a splash
             .style('fill', 'red')
             //in case a new animation starts before the this one has finished, we want to finish the original ASAP 
             .on("interrupt", function () {
-                sensor_circle.attr('r', CIRCLE_RADIUS);
+                sensor_circle.attr('r', self.circle_radius);
                 sensor_circle.attr('fill', new_color);
             })
             .on('end', function (d) {
@@ -86,10 +129,10 @@ class SplashMap {
                     .transition().duration(450)
                     //overshoot the easing to add a little wiggle effect, brings some life to circles
                     // .ease(d3.easeBackInOut.overshoot(3.5))
-                    .attr('r', CIRCLE_RADIUS)
+                    .attr('r', self.circle_radius)
                     //in case a new animation starts before the this one has finished, we want to finish the original ASAP 
                     .on("interrupt", function () {
-                        sensor_circle.attr('r', CIRCLE_RADIUS);
+                        sensor_circle.attr('r', self.circle_radius);
                         sensor_circle.attr('fill', new_color);
                     });
             });
@@ -97,6 +140,7 @@ class SplashMap {
 
     mock_data(self) {
         let acp_id = self.sub_list[Math.floor(Math.random() * self.sub_list.length)];
+        console.log('moooooock', acp_id)
         let msg_data = {
             'acp_id': acp_id,
             'acp_ts': 999,
@@ -109,9 +153,9 @@ class SplashMap {
                 "occupancy": 0
             }
         }
-        self.msg_received(msg_data)
+        //self.msg_received(msg_data)
         //self.update_viz(self, acp_id, msg_data)
-        self.update_floorplan(self, acp_id, msg_data);
+        self.update_floorplan(self, msg_data);
 
     }
 

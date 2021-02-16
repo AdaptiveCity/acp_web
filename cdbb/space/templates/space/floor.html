@@ -21,11 +21,14 @@
 <script type="text/javascript" src="{% static 'space/js/viz_tools.js' %}"></script>
 <script type="text/javascript" src="{% static '/js/VizTools2.js' %}"></script>
 
-<!-- heatmap class  -->
+<!-- LOAD APP SCRIPTS -->
+<!-- Rain class  -->
 <script type='text/javascript' src="{% static 'space/js/heatmap.js' %}"></script>
+<!-- Splash class  -->
+<script type='text/javascript' src="{% static 'space/js/splash.js' %}"></script>
 
 <!-- RTMonitor tests -->
-<script type='text/javascript' src="{% static 'space/js/RTmonitor.js' %}"></script>
+<script type='text/javascript' src="{% static 'space/js/RTconnect.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 
 <!-- building.js defines class SpaceBuilding -->
@@ -84,7 +87,8 @@ Spatial Building and Sensor Data: FLOOR VIEW
             <!-- <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button> -->
             <a id="rt_monitor" class="button1">Splash</a>
         </div>
-        <div id='splash_rt' class='rt_status'><span id='splash_rt_state' class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbspRtM not connected</div>
+        <div id='splash_control' class='rt_status'><span id='splash_rt_state'
+                class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='splash_rt'>RtM not connected</span></div>
         <br>
 
         <!-- MAIN HEATMAP ACTIVATION -->
@@ -92,7 +96,8 @@ Spatial Building and Sensor Data: FLOOR VIEW
             <!-- <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button> -->
             <a id="show_heatmap" class="button1">Rain</a>
         </div>
-        <div id='rain_rt' class='rt_status'><span id='rain_rt_state' class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbspRtM not connected</div>
+        <div id='rain_control' class='rt_status'><span id='rain_rt_state'
+                class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='rain_rt'>RtM not connected</span></div>
 
         <!-- HEATMAP CONFIGURATION/HIDE SETTINGS -->
         <div class='hidden_divs'>

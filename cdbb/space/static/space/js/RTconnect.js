@@ -1,6 +1,6 @@
 "use strict"
 
-class RTmonitor {
+class RTconnect {
     constructor(master) {
 
         //master element e.g. SSD, Rain, Splash that RTmon is going to report to upon receiving messages
@@ -39,7 +39,7 @@ class RTmonitor {
 
     }
 
-    connect(sensor_list) {
+    connect(callback, sensor_list) {
         let self = this;
 
         if (sensor_list == undefined) {
@@ -82,8 +82,8 @@ class RTmonitor {
             //-------------------------------//
             if (msg.msg_type != null && msg.msg_type == "rt_connect_ok") {
                 console.log("Connected")
-                document.getElementById('rt_monitor').innerHTML = 'Connected'
                 self.socket.send(JSON.stringify(self.CONNECT_FILTER))
+                callback && callback('1');
             }
 
             //-------------------------------//

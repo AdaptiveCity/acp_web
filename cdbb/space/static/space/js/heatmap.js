@@ -12,6 +12,9 @@ class HeatMap {
         //throughout the class the master is the main visualisation, parent is HeatMap
         this.master = floorspace;
 
+        // Instatiante an RTmonitor class
+        this.rt_con = new RTconnect(this);
+
         // Instantiate a jb2328 utility class e.g. for getBoundingBox()
         this.viz_tools = new VizTools();
 
@@ -697,6 +700,7 @@ class HeatMap {
                             let color = parent.color_scheme(cell_value);
 
 
+                            //draw the cells (rects) on screen 
                             main_svg
                                 .append("rect")
                                 //.style('pointer-events', 'none')
@@ -718,19 +722,15 @@ class HeatMap {
                                 .attr('data-value', cell_value)
 
                                 .on("mouseover", function (d) {
+                                    //on mouseover show th cell's value on the colorbar
                                     parent.set_cbar_value(parent, cell_value)
                                 })
                                 .on("mouseout", function (d) {
                                     d3.select('#hover_val').remove();
                                 })
-                                //.call(parent.transition_value, duration)
-                                // .call(parent.transition_random, duration)
-                                // .call(parent.transition_sideways, duration)
 
                                 .transition() // <------- TRANSITION STARTS HERE --------
                                 .delay(function (d, i) {
-
-                                    //let delay=Math.random() * (4000 - 1500) + 1500;
                                     let delay = parent.animation_delay(cell_value);
                                     return delay;
                                 })

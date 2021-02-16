@@ -18,9 +18,10 @@ class SpaceFloor {
 
         // Instantiate a Heatmap class
         this.heatmap = new HeatMap(this);
-        // Instatiante an RTmonitor class
-        this.rt_mon = new RTmonitor(this);
 
+        // Instantiate a Splah class
+        this.splash = new SplashMap(this);
+      
         // Transform parameters to scale SVG to screen
         this.svg_transform = ""; // updated by set_svg_transform()
         this.next_color = 0;
@@ -85,14 +86,6 @@ class SpaceFloor {
         //--------SET UP EVENT LISTENERS--------//
         //--------------------------------------//
 
-        //Set up event listener to connect to RTmonitor
-        document.getElementById('rt_monitor').addEventListener('click', () => {
-            //get a list of all sensors rendered on screen
-            let sensor_list = Object.keys(space_floor.sensor_data);
-            //do rtmonitor connect, telling which sensors to subscribe to
-            parent.rt_mon.connect(sensor_list);
-        })
-
         //Set up event listener for the HEATMAP BUTTON
         document.getElementById('show_heatmap').addEventListener('click', () => {
             //first reset the drawn floorplan to it's original location
@@ -122,13 +115,12 @@ class SpaceFloor {
             let opacity_value = this.value / 100;
             parent.change_sensor_opacity(parent, opacity_value);
         }
-
-        //declare zooming/panning function
-        parent.manage_zoom(parent)
-
         //--------------------------------------//
         //----------END EVENT LISTENERS---------//
         //--------------------------------------//
+        
+        //declare zooming/panning function
+        parent.manage_zoom(parent)
     }
 
 
