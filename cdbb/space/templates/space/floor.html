@@ -85,7 +85,7 @@ Spatial Building and Sensor Data: FLOOR VIEW
         <!-- MAIN HEATMAP ACTIVATION -->
         <div class="button_wrapper">
             <!-- <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button> -->
-            <a id="rt_monitor" class="button1">Splash</a>
+            <a id="show_splash" class="button1">Splash</a>
         </div>
         <div id='splash_control' class='rt_status'><span id='splash_rt_state'
                 class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='splash_rt'>RtM not connected</span></div>
@@ -94,16 +94,22 @@ Spatial Building and Sensor Data: FLOOR VIEW
         <!-- MAIN HEATMAP ACTIVATION -->
         <div class="button_wrapper">
             <!-- <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button> -->
-            <a id="show_heatmap" class="button1">Rain</a>
+            <a id="show_rain" class="button1">Rain</a>
         </div>
-        <div id='rain_control' class='rt_status'><span id='rain_rt_state'
-                class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='rain_rt'>RtM not connected</span></div>
-
+        <br>
         <!-- HEATMAP CONFIGURATION/HIDE SETTINGS -->
         <div class='hidden_divs'>
 
             <!-- FEATURE SELECT -->
             <div class="button_wrapper" id='heatmap_activation'>
+
+                <!-- Real Time Subscription for Rain -->
+                <div class="button_wrapper" id='heatmap_rt_con'>
+                    <a id="rain_rt_connect" class="button1">RT Subscribe</a>
+                </div>
+                <div id='rain_control' class='rt_status'><span id='rain_rt_state'
+                        class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='rain_rt'>RtM not connected</span>
+                </div>
 
                 <!-- I know the following should not be hardcoded, this is just for debug -->
                 <form id="feature_form">

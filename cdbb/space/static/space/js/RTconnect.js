@@ -9,13 +9,9 @@ class RTconnect {
         //initiate socket
         this.socket;
 
-        // Instantiate a jb2328 utility class e.g. for getBoundingBox()
-        this.viz_tools = new VizTools();
-        this.jb_tools = new VizTools2();
+        this.connect_url = 'https://tfc-app9.cl.cam.ac.uk/rtmonitor/A/mqtt_acp' //'https://tfc-app6.cl.cam.ac.uk/rtmonitor/A/mqtt_acp';
 
-        this.CONNECT_URL = 'https://tfc-app9.cl.cam.ac.uk/rtmonitor/A/mqtt_acp' //'https://tfc-app6.cl.cam.ac.uk/rtmonitor/A/mqtt_acp';
-
-        this.CONNECT_MSG = {
+        this.connect_msg = {
             "msg_type": "rt_connect",
             "client_data": {
                 "rt_client_name": "Socket Client",
@@ -25,14 +21,7 @@ class RTconnect {
             }
         };
 
-        this.CONNECT_FILTER_ALL = {
-            "msg_type": "rt_subscribe",
-            "request_id": "abc",
-        };
-
-        //this.SENSOR_LIST = ["elsys-co2-041ba8", "elsys-co2-041ba9", "elsys-co2-041baa", "elsys-co2-0460ec", "elsys-co2-0461e4", "elsys-co2-0461e6", "elsys-co2-0461e7", "elsys-ems-048f2b", "elsys-eye-044501", "ijl20-co2-0366b0"];
-
-        this.CONNECT_FILTER = {
+        this.connect_filter = {
             "msg_type": "rt_subscribe",
             "request_id": "abc"
         };
@@ -42,26 +31,28 @@ class RTconnect {
     connect(callback, sensor_list) {
         let self = this;
 
-        if (sensor_list == undefined) {
-            // this.sub_list = SENSOR_LIST
-            //this.CONNECT_FILTER['filters']=[];
-        } else {
+        //if the sensor list is undefined, we want to open the socket for all messages
+        if (sensor_list != undefined) {
+            console.log('sensor list is defined', sensor_list)
+
             self.sub_list = sensor_list
-            self.CONNECT_FILTER['filters'] = {
+
+            //else filter it based on the selected sensors from the list
+            self.connect_filter['filters'] = [{
                 "key": "acp_id",
                 "test": "in",
                 "values": self.sub_list
-            };
-        }
+            }];
+        };
 
-        self.socket = new SockJS(self.CONNECT_URL);
+        self.socket = new SockJS(self.connect_url);
 
         //-------------------------------//
         //------------on_open------------//
         //-------------------------------//
         self.socket.onopen = function () {
             console.log('open');
-            self.socket.send(JSON.stringify(self.CONNECT_MSG));
+            self.socket.send(JSON.stringify(self.connect_msg));
         };
 
         //-------------------------------//
@@ -81,8 +72,8 @@ class RTconnect {
             //-----on successful connect-----//
             //-------------------------------//
             if (msg.msg_type != null && msg.msg_type == "rt_connect_ok") {
-                console.log("Connected")
-                self.socket.send(JSON.stringify(self.CONNECT_FILTER))
+                console.log("Connected", self.connect_filter)
+                self.socket.send(JSON.stringify(self.connect_filter))
                 callback && callback('1');
             }
 
@@ -91,11 +82,9 @@ class RTconnect {
             //-------------------------------//
             if (msg.msg_type != null && msg.msg_type == "rt_data") {
                 let msg_data = JSON.parse(e.data).request_data[0]
-                console.log(msg_data);
 
                 //report the data back to the master
-                self.master.on_message(self.master, msg_data);
-
+                callback && callback('2', msg_data);
             }
         };
     }

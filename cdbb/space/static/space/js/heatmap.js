@@ -9,53 +9,91 @@ class HeatMap {
     // Called to create instance in page : space_floorplan = SpaceFloorplan()
     constructor(floorspace) {
 
+        let self = this;
+
         //throughout the class the master is the main visualisation, parent is HeatMap
-        this.master = floorspace;
+        self.master = floorspace;
+
+        //declare the url to request data from
+        self.query_url = "https://tfc-app9.cl.cam.ac.uk/api/readings/get_floor_feature/";
 
         // Instatiante an RTmonitor class
-        this.rt_con = new RTconnect(this);
-
-        // Instantiate a jb2328 utility class e.g. for getBoundingBox()
-        this.viz_tools = new VizTools();
+        self.rt_con = new RTconnect(self);
 
         //a set of useful d3 functions
-        this.jb_tools = new VizTools2();
+        self.jb_tools = new VizTools2();
 
-        //sensor data+location required to draw the heatmap
-        this.sensor_data = {};
+        self.init(self);
 
-        //sensor data saved per crate
-        this.crates_with_sensors = {};
+        //--------------------------------------//
+        //--------SET UP EVENT LISTENERS--------//
+        //--------------------------------------//
 
-        //resolution
-        this.rect_size = DEFAULT_REZ;
+        //Set up event listener for the HEATMAP BUTTON
+        document.getElementById('show_rain').addEventListener('click', () => {
+            //first reset the drawn floorplan to it's original location
+            self.master.manage_zoom.reset(self);
+            //generate the heatmap
+            self.show_heatmap(self);
 
-        //heatmap opacity
-        this.default_opacity = 0.75;
-        this.sensor_opacity = 0.1;
-
+        })
     }
 
     // init() called when page loaded
-    init() {
+    init(parent) {
+        //----------------------------------//
+        //-----declare object globals-------//
+        //----------------------------------//
 
-        var parent = this;
-        parent.viz_tools.init();
+        //sensor data+location required to draw the heatmap
+        parent.sensor_data = {};
+
+        //sensor data saved per crate
+        parent.crates_with_sensors = {};
 
         //declare the min max range of values for temp/co2/humidity - will change during runtime
-        parent.min_max_range = {}
+        parent.min_max_range = {};
+
+        //resolution
+        parent.rect_size = DEFAULT_REZ;
 
         //declare the main colorscheme for the heatmap
         parent.color_scheme = d3.scaleSequential(d3.interpolateInferno)
 
         //total time to draw transitions between activating the heatmap
         parent.animation_dur = 350;
+
         //the delay for drawing individual items during the animation
         parent.animation_delay = d3.scaleLinear().range([3000, 1000]);
+
+        //heatmap opacity
+        parent.default_opacity = 0.75;
+        parent.sensor_opacity = 0.1;
+
+        //set div id's show status change upon connect
+        parent.txt_div_id = 'rain_rt';
+        parent.status_div_id = 'rain_rt_state'
 
         //Use get_floor_sensors for the API calls, get_local_sensors for faked offline data
         //parent.get_floor_sensors(parent);
         parent.get_local_sensors(parent);
+
+        //--------------------------------------//
+        //--------SET UP EVENT LISTENERS-2------//
+        //--------------------------------------//
+
+        document.getElementById('rain_rt_connect').addEventListener('click', () => {
+            //get a list of all sensors rendered on screen
+            parent.sub_list = Object.keys(parent.master.sensor_data);
+            console.log('sensors', parent.sub_list)
+            //do rtmonitor connect, telling which sensors to subscribe to
+            parent.rt_con.connect(parent.check_status.bind(parent), parent.sub_list);
+        });
+
+        //Set up event listener to hide the HEATMAP
+        document.getElementById('reset').addEventListener('click', () => {
+            parent.hide_heatmap(parent);
+        });
 
         //attach an event listener to the list of properties
         document.getElementById('features_list').addEventListener('change', function () {
@@ -70,6 +108,20 @@ class HeatMap {
         });
 
     }
+
+    //updates the rtmonitor status icon on the page
+    check_status(value) {
+        let parent = this;
+        console.log('returned', value, parent)
+        //make a switch statement instead
+        if (value == '1') {
+            document.getElementById(parent.txt_div_id).innerHTML = 'RTm Connected';
+            document.getElementById(parent.status_div_id).style.backgroundColor = 'rgb(108, 255, 150)';
+        } else if (value == '2') {
+
+        } else {}
+    }
+
 
     //Generates the heatmap;
     //It is attached to an event listener on the template *heatmap* button 
@@ -293,7 +345,7 @@ class HeatMap {
         let floor = parent.master.floor_number;
         let feature = 'temperature';
 
-        let readings_url = "https://tfc-app9.cl.cam.ac.uk/api/readings/get_floor_feature/" + system + "/" + floor + "/" + feature + "/" + "?metadata=true";
+        let readings_url = parent.query_url + system + "/" + floor + "/" + feature + "/" + "?metadata=true";
         console.log('heatmap url', readings_url)
         d3.json(readings_url, {
             crossOrigin: "anonymous"
@@ -966,7 +1018,7 @@ class HeatMap {
         d3.selectAll('.non_heatmap_circle').style('opacity', 0.5);
 
         //make sure to pass the master object rather than the "heatmap parent" itself
-        parent.master.get_floor_heatmap(parent.master);
+        parent.master.get_choropleth(parent.master);
         parent.master.set_legend(parent.master)
     }
 

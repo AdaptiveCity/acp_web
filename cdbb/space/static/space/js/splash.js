@@ -28,8 +28,9 @@ class SplashMap {
         //--------------------------------------//
         //--------SET UP EVENT LISTENERS--------//
         //--------------------------------------//
+
         //Set up event listener to connect to RTmonitor
-        document.getElementById('rt_monitor').addEventListener('click', () => {
+        document.getElementById('show_splash').addEventListener('click', () => {
             self.init(self);
         })
 
@@ -41,22 +42,28 @@ class SplashMap {
     init(parent) {
 
         //get a list of all sensors rendered on screen
-        parent.sub_list=Object.keys(parent.master.sensor_data);
-        console.log('sensors',parent.sub_list)
+        parent.sub_list = Object.keys(parent.master.sensor_data);
+        console.log('sensors', parent.sub_list)
         //do rtmonitor connect, telling which sensors to subscribe to
         parent.rt_con.connect(parent.check_status.bind(parent), parent.sub_list);
 
     }
 
-    check_status(value) {
+    //updates the rtmonitor status icon on the page
+    check_status(value,msg) {
         let parent = this;
-        console.log('returned', value, parent)
         //make a switch statement instead
         if (value == '1') {
             document.getElementById(parent.txt_div_id).innerHTML = 'RTm Connected';
             document.getElementById(parent.status_div_id).style.backgroundColor = 'rgb(108, 255, 150)';
         } else if (value == '2') {
-
+            try {
+                console.log('new_msg', msg)
+                let msg_data = msg;
+                parent.update_floorplan(parent, msg_data)
+            } catch (err) {
+                console.log('something went wrong', err)
+            }
         } else {}
     }
 

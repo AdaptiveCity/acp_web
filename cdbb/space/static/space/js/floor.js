@@ -53,7 +53,7 @@ class SpaceFloor {
         this.floor_number = 0;
         this.floor_coordinate_system = null;
 
-        //Determines heatmap's color scheme
+        //Determines choropleth's color scheme
         this.hue = "g"; /* b=blue, g=green, r=red colours - from ColorBrewer */
 
         //Breaks the data values into 9 ranges, this is completely arbitrary and
@@ -86,19 +86,6 @@ class SpaceFloor {
         //--------SET UP EVENT LISTENERS--------//
         //--------------------------------------//
 
-        //Set up event listener for the HEATMAP BUTTON
-        document.getElementById('show_heatmap').addEventListener('click', () => {
-            //first reset the drawn floorplan to it's original location
-            parent.manage_zoom.reset(parent);
-            //generate the heatmap
-            parent.heatmap.show_heatmap(parent.heatmap);
-
-        })
-
-        //Set up event listener to hide the HEATMAP
-        document.getElementById('reset').addEventListener('click', () => {
-            parent.heatmap.hide_heatmap(parent.heatmap);
-        })
 
         //Set up event listener to RESET FLOORPLAN/HEATMAP
         document.getElementById('reset_zoom').addEventListener('click', () => {
@@ -248,8 +235,8 @@ class SpaceFloor {
         // call SENSORS api to get the metadata for sensors on this floor
         parent.get_sensors_metadata(parent);
 
-        //once all of the data is loaded/svg rendered, init the heatmap in the background
-        parent.heatmap.init()
+        // //once all of the data is loaded/svg rendered, init the heatmap in the background
+        // parent.heatmap.init()
 
     }
 
