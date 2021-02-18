@@ -14,8 +14,4 @@
     {% if '/sensor_edit/' in request.path %}<div class="contextual_link_active">{% else %}<div class="contextual_link">{% endif %}
         <a href="{% url 'dm_sensor_edit' acp_id %}">Edit</a>
     </div>
-    <div class="contextual_link">
-        <!-- note class "acp_type_id" will have the JS replace 'acp_type_id' with the correct value -->
-        <a class="acp_type_id" href="{% url 'dm_sensor_type' 'acp_type_id' %}">&#10132;Sensor Type</a>
-    </div>
 </div><!-- end contextual_links -->

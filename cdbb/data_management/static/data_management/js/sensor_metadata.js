@@ -1,6 +1,6 @@
 "use strict"
 
-class Sensor {
+class SensorMetadata {
 
     constructor() {
         console.log("sensor.js loading...");
@@ -11,7 +11,7 @@ class Sensor {
         console.log("init()");
         parent.sensor_info_el = document.getElementById('sensor_info');
         parent.type_info_el = document.getElementById('type_info');
-        parent.type_heading_type_el = document.getElementById('type_heading_type');
+        parent.type_info_heading_el = document.getElementById('type_info_heading');
         parent.handle_sensor_metadata(parent, SENSOR_METADATA);
     }
 
@@ -36,8 +36,18 @@ class Sensor {
         parent.sensor_info_el.appendChild(sensor_el);
 
         // Display the Sensor Type Metadata object
+
+        let type_id = sensor_metadata.acp_type_id;
+
+        // Create HTML link to sensor type page.
+        // This is SENSOR_TYPE_LINK provided in the template, with 'acp_type_id' replaced with the required string value.
+        let type_link = SENSOR_TYPE_LINK.replace('acp_type_id', type_id);
+
+        let type_heading_txt = '<a href="'+type_link+'"/>Sensor type metadata: '+type_id+'</a>';
+
         // Add the acp_type_id as a heading on the type_info section
-        parent.type_heading_type_el.innerHTML = sensor_metadata.acp_type_id;
+        parent.type_info_heading_el.innerHTML = type_heading_txt;
+
         let type_txt = JSON.stringify(type_info, null, 2);
         let type_el = document.createElement('pre');
         type_el.id = 'sensor_type_metadata';
@@ -56,4 +66,4 @@ class Sensor {
             }[tag]));
     }
 
-} // end class Sensor
+} // end class SensorMetadata

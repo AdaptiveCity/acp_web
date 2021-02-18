@@ -1,10 +1,9 @@
-{% extends "cdbb.html" %}
+{% extends "data_management/sensor.html" %}
 {% load static %}
-{% block title %}CDBB Sensor{% endblock %}
+{% block title %}{{ ACP_ID }} History{% endblock %}
 
 {% block head %}
     <!-- Our style sheets -->
-    <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/sensor.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/sensor_history.css' %}" />
 
     <!-- chart.js defines class SensorChart-->
@@ -29,28 +28,13 @@
 Sensor History {{ ACP_ID }}
 {% endblock %}
 
-{% block breadcrumbs %}
-<div class="breadcrumbs">
+{% block sensor_breadcrumbs %}
     <div class="breadcrumb">
-        <a href="{% url 'home' %}">
-            <img src="{% static 'images/home_icon.png' %}" />
-        </a>
+        &gt; Metadata
     </div>
-    <div class="breadcrumb">
-        &gt; <a href="{% url 'dm_home' %}">Data Management</a>
-    </div>
-    <div class="breadcrumb">
-        &gt; <a href="{% url 'dm_sensors' %}">Sensors</a>
-    </div>
-    <div class="breadcrumb">
-        &gt; Sensor History {{ ACP_ID }}
-    </div>
-</div>
-{% endblock %}
+{% endblock %} <!-- end sensor_breadcrumbs -->
 
-{% block content %}
-
-{% include "data_management/includes/sensor_tabs.html" %}
+{% block sensor_content %}
 
 <div id="sensor_history">
     <h2>Sensor History</h2>
@@ -64,8 +48,8 @@ Sensor History {{ ACP_ID }}
     <pre id="popup_content">
     </pre>
 </div>
-    
-{% endblock %} <!-- end content -->
+
+{% endblock %} <!-- end sensor_content -->
 
 <!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
 {% block lazy_script %}

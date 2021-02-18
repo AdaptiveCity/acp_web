@@ -136,9 +136,12 @@ class DMSensorEditView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-            context['API_BIM'] = settings.API_BIM
-            context['API_SENSORS'] = settings.API_SENSORS
+            response = requests.get(settings.API_SENSORS+'get/'+self.kwargs['acp_id']+'/')
+            sensor_metadata = response.json()
+
+            context = super().get_context_data(**kwargs)
             context['ACP_ID'] = self.kwargs['acp_id']
+            context['SENSOR_METADATA'] = json.dumps(sensor_metadata)
 
             return context
 
