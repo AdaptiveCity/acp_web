@@ -52,19 +52,30 @@ class SplashMap {
     //updates the rtmonitor status icon on the page
     check_status(value,msg) {
         let parent = this;
-        //make a switch statement instead
-        if (value == '1') {
-            document.getElementById(parent.txt_div_id).innerHTML = 'RTm Connected';
-            document.getElementById(parent.status_div_id).style.backgroundColor = 'rgb(108, 255, 150)';
-        } else if (value == '2') {
-            try {
-                console.log('new_msg', msg)
-                let msg_data = msg;
-                parent.update_floorplan(parent, msg_data)
-            } catch (err) {
-                console.log('something went wrong', err)
-            }
-        } else {}
+        
+        switch (value) {
+            //RealTime monitor connection successful
+            case '1':
+                document.getElementById(parent.txt_div_id).innerHTML = 'RTm Connected';
+                document.getElementById(parent.status_div_id).style.backgroundColor = 'rgb(108, 255, 150)';
+                break;
+
+                //Message successfully received
+            case '2':
+                try {
+                    console.log('new_msg', msg)
+                    let msg_data = msg;
+                    parent.update_floorplan(parent, msg_data)
+                } catch (err) {
+                    console.log('something went wrong', err)
+                }
+                break;
+
+            default:
+                break;
+        }
+
+       
     }
 
 

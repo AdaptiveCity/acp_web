@@ -17,7 +17,7 @@ class SpaceFloor {
         this.jb_tools = new VizTools2();
 
         // Instantiate a Heatmap class
-        this.heatmap = new HeatMap(this);
+        this.heatmap = new HeatMap(this); //initiated at the end of init so we can preload data
 
         // Instantiate a Splah class
         this.splash = new SplashMap(this);

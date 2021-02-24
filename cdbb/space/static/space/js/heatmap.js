@@ -23,19 +23,18 @@ class HeatMap {
         //a set of useful d3 functions
         self.jb_tools = new VizTools2();
 
-        self.init(self);
-
         //--------------------------------------//
         //--------SET UP EVENT LISTENERS--------//
         //--------------------------------------//
 
         //Set up event listener for the HEATMAP BUTTON
         document.getElementById('show_rain').addEventListener('click', () => {
+
+            //init the heatmap
+            self.init(self);
+
             //first reset the drawn floorplan to it's original location
             self.master.manage_zoom.reset(self);
-            //generate the heatmap
-            self.show_heatmap(self);
-
         })
     }
 
@@ -75,8 +74,9 @@ class HeatMap {
         parent.status_div_id = 'rain_rt_state'
 
         //Use get_floor_sensors for the API calls, get_local_sensors for faked offline data
-        //parent.get_floor_sensors(parent);
-        parent.get_local_sensors(parent);
+
+        parent.get_floor_sensors(parent);
+        //parent.get_local_sensors(parent);
 
         //--------------------------------------//
         //--------SET UP EVENT LISTENERS-2------//
@@ -110,20 +110,61 @@ class HeatMap {
     }
 
     //updates the rtmonitor status icon on the page
-    check_status(value) {
-        let parent = this;
-        console.log('returned', value, parent)
-        //make a switch statement instead
-        if (value == '1') {
-            document.getElementById(parent.txt_div_id).innerHTML = 'RTm Connected';
-            document.getElementById(parent.status_div_id).style.backgroundColor = 'rgb(108, 255, 150)';
-        } else if (value == '2') {
+    check_status(value, msg) {
+        let parent = this; //reference to the heatmap self object
 
-        } else {}
+        console.log('returned', value, parent)
+
+        switch (value) {
+            //RealTime monitor connection successful
+            case '1':
+                document.getElementById(parent.txt_div_id).innerHTML = 'RTm Connected';
+                document.getElementById(parent.status_div_id).style.backgroundColor = 'rgb(108, 255, 150)';
+                break;
+
+                //Message successfully received
+            case '2':
+                //MESSAGE RECEIVED, updates data structures
+                try {
+                    //sensor_data[sensor_id]=msg.value
+                    //do animation
+                    let msg_data = msg;
+                    console.log('value received', value, msg_data)
+
+                    //send not only acp_id but an entire msg 
+                    console.log('updating sensor data structs')
+                    parent.update_sensor_data(parent, msg_data);
+
+                    //check if the new message only contains a "motion" trigger event
+                    let motion_trigger = false;
+                    let cooked = msg_data.payload_cooked;
+                    //if payload_cooked only has a single key and it is 'motion' or 'occupancy'
+                    // (usually paired though) then we now 
+                    //it's an interrupt triggered motion event
+                    if ((Object.keys(cooked).length < 3) && (("motion" in cooked) || ("occupancy" in cooked))) {
+                        console.log('motion-only event detected', msg_data)
+                        motion_trigger = true;
+                    }
+
+                    //Draw a splash event on screen
+                    parent.draw_splash(parent, msg_data.acp_id, motion_trigger)
+
+                } catch (err) {
+                    console.log('something went wrong', err)
+                    console.log('msg received:', msg)
+
+                }
+                break;
+
+            default:
+                break;
+        }
     }
 
+    //-----------------------//
+    //Generates the heatmap--//
+    //-----------------------//
 
-    //Generates the heatmap;
     //It is attached to an event listener on the template *heatmap* button 
     show_heatmap(parent) {
         //stop drawn floorplan polygons from interacting with the heatmap overlay
@@ -132,8 +173,10 @@ class HeatMap {
         parent.show_heatmap_original(parent)
         //parent.show_heatmap_alt(parent)
     }
+    //-------------------------------------------------//
+    //Reloads the heatmap with a different resolution--//
+    //-------------------------------------------------//
 
-    //Reloads the heatmap with a different resolution
     update_resolution(parent, rez_value) {
         //remove current heatmap
         d3.selectAll('#heatmap').remove();
@@ -163,53 +206,9 @@ class HeatMap {
         parent.show_heatmap(parent);
     }
 
-    //callback to update sensors (for faked sensor data)
-    update_callback(parent, sensor, walk) {
-        parent.update_sensor(parent, sensor, walk);
-    }
-
-    //async update for faked sensor data - updates all;
-    //iterates through sensors and sets them to update on screen every *x* milliseconds
-    update_sensors(parent) {
-        console.log(parent.sensor_data)
-        for (let sensor in parent.sensor_data) {
-            console.log('incoming update ', sensor)
-            let wildcard = Math.random() < 0.5;
-            window.setInterval(parent.update_callback, parent.jb_tools.random_int(20000, 20000 * 10), parent, sensor, wildcard);
-        }
-    }
-
-    //show fake path
-    fake_path(parent) {
-        let sens_list = [
-            "elsys-fake-738bf2",
-            "elsys-fake-d6a9de",
-            "elsys-fake-372c9d",
-            "elsys-fake-290265",
-            "elsys-fake-9354d3",
-            "elsys-fake-f3b577",
-            "elsys-fake-ffdfb4",
-            "elsys-fake-c3e668",
-            "elsys-fake-6bf9d0",
-            "elsys-fake-1fd377",
-            "elsys-fake-c7cf58",
-            "elsys-fake-56f2e8",
-            "elsys-fake-8bae37",
-            "elsys-fake-2c9683"
-        ];
-
-        let counter = 1;
-        for (let i = 0; i < sens_list.length; i++) {
-            let sensor = sens_list[i];
-            console.log('incoming update ', sensor)
-            window.setTimeout(parent.update_callback, counter * 1000, parent, sensor, true);
-            counter++;
-        }
-    }
-
     //Main raindrop function for incoming data:
     //selects a sensor and sets it to update on by creating a raindrop
-    update_sensor(parent, acp_id, walk) {
+    draw_splash(parent, acp_id, walk) {
 
         //get the data from the sensor data variable
         let sensor_data = parent.sensor_data[acp_id];
@@ -248,7 +247,11 @@ class HeatMap {
 
             let dist_delay = parent.jb_tools.dist(rect_loc, sensor_loc);
 
-            d3.select(node)
+            let selected_node = d3.select(node);
+
+
+            //IMPORTANT TODO- ADD INTERUPT CASES TO END ANIMATIONS PREMATURELY
+            selected_node
                 .style("fill", function (d) {
                     return color
                 })
@@ -289,9 +292,13 @@ class HeatMap {
                     }
                     return opacity
                 })
-
+                //setup interrupt cases when animationcan get suddenly cancelled by another
+                .on("interrupt", function () {
+                    selected_node.attr('opacity', parent.default_opacity);
+                    selected_node.attr('fill', color);
+                })
                 .on('end', function (d, i) {
-                    d3.select(node)
+                    selected_node
                         .transition() // <------- TRANSITION STARTS HERE --------
                         .delay(function (d, i) {
 
@@ -328,13 +335,22 @@ class HeatMap {
                             }
                         })
                         .ease(d3.easeLinear)
-
                         .style("fill", function (d) {
                             return color //'red'
                         })
                         .style('opacity', parent.default_opacity)
+
+                        //setup interrupt cases when animationcan get suddenly cancelled by another
+                        .on("interrupt", function () {
+                            selected_node.attr('opacity', parent.default_opacity);
+                            selected_node.attr('fill', color);
+                        });
                 })
         });
+
+        //  todo to do important
+        //if WALK (or trigger) we DO NOT WANT TO UPDATE THE CRATE HEATMAP--> a lot of the time the msg only contains "motion":1 
+        //change the crate's heatmap by recoloring the cells in based on the new readings
         parent.update_crate_heatmap(parent, sensor_data.crate_id, acp_id);
     }
 
@@ -343,35 +359,26 @@ class HeatMap {
 
         let system = parent.master.floor_coordinate_system;
         let floor = parent.master.floor_number;
-        let feature = 'temperature';
+        console.log('master', system, floor, parent.master, parent.master['floor_coordinate_system'], parent.master.floor_coordinate_system)
+        //passs feature as argument from html list of features
+        let feature = document.getElementById('features_list').value;
 
         let readings_url = parent.query_url + system + "/" + floor + "/" + feature + "/" + "?metadata=true";
-        console.log('heatmap url', readings_url)
+        console.log('heatmap url', readings_url, feature)
+
+        //query the url to get all of the sensors on the floor
         d3.json(readings_url, {
             crossOrigin: "anonymous"
         }).then(function (received_data) {
             console.log('heatmap received', received_data)
             parent.handle_sensors_metadata(parent, received_data)
+
+            //-----------------------------------//
+            //---generate and show the heatmap---//
+            //-----------------------------------//
+            parent.show_heatmap(parent);
         });
 
-    }
-
-    // Alternative to get_readings() using local file for sensors API response
-    get_local_sensors(parent) {
-
-        console.log('loading local data')
-
-        let selection = CRATE_ID == 'FF' ? 'WGB' : 'VLAB'; //for now leaving the Lockdown Lab away from this
-
-        //local file loading from Django
-        d3.json("http://localhost:8000/static_web/js/" + selection + "_JSON.json", {
-            crossOrigin: "anonymous"
-
-        }).then(function (received_data) {
-            console.log('heatmap received', received_data)
-            parent.handle_sensors_metadata(parent, received_data)
-
-        });
     }
 
     // Returns a "list object" (i.e. dictionary on acp_id) of sensors on
@@ -384,12 +391,13 @@ class HeatMap {
         //iterate through results to extract data required to show sensors on the floorplan
         for (let sensor in results['sensors']) {
 
+            //TODO USE JSONPATH
             try {
                 parent.sensor_data[sensor] = {
                     'acp_id': sensor,
                     'location': results['sensors'][sensor].acp_location_xyz,
                     'crate_id': results['sensors'][sensor].crate_id,
-                    'payload': results['readings'][sensor].payload_cooked,
+                    'payload': results['readings'][sensor].payload_cooked, // change with jsonPath -- charts.js example
                     'features': results['sensors'][sensor].acp_type_info.features,
                     'acp_ts': results['readings'][sensor].acp_ts
                 }
@@ -417,38 +425,31 @@ class HeatMap {
         console.log('crates w sensors', parent.crates_with_sensors)
     }
 
-    //calculates value ranges for temp/co2/humidity and other during runtime;
-    //recalculations are made whenever a new heatmap is selected
-    get_min_max(parent, feature) {
+    update_sensor_data(parent, msg) {
+        //msg contains acp_id, acp_ts and payload_cooked
+        try {
+            let acp_id = msg.acp_id;
+            let new_acp_ts = msg.acp_ts;
+            let new_payload = msg.payload_cooked;
 
-        let min = 999;
-        let max = -999;
+            parent.sensor_data[acp_id].acp_ts = new_acp_ts;
+            //here we take into account that sensor's payload can have only one or multiple updates to features
+            //e.g. the new data packet can only have motion=1, w/out updates for other features, hence we can't
+            //just wipe the rest of the data by overwriting the entire payload_cooked property in the data struct
 
-        //iterate through the data based on requested feature and extract min/max values
-        for (let reading in parent.sensor_data) {
+            console.log('pre', parent.sensor_data[acp_id].payload)
+            for (let feature in new_payload) {
+                console.log('new', feature, 'is', new_payload[feature], 'was', parent.sensor_data[acp_id].payload[feature])
 
-            console.log('minmax', reading, parent.sensor_data[reading].payload)
-            let val = parent.sensor_data[reading].payload[feature]
-
-            if (val > max) {
-                max = val;
+                parent.sensor_data[acp_id].payload[feature] = new_payload[feature];
             }
-            if (val < min) {
-                min = val;
-            }
+            console.log('post', parent.sensor_data[acp_id].payload)
+
+
+        } catch (error) {
+            console.log('failed to update the data struct with payloads', error)
+            console.log('msg received:', msg)
         }
-
-        //reset the main variable
-        parent.min_max_range = {
-            max: max,
-            min: min
-        };
-
-        //reset min_max values for scaling
-        parent.color_scheme.domain([parent.min_max_range.min, parent.min_max_range.max]);
-        parent.animation_delay.domain([parent.min_max_range.min, parent.min_max_range.max]);
-
-        console.log('minmax', min, max)
 
     }
 
@@ -469,30 +470,35 @@ class HeatMap {
                 scale: parseFloat(raw_loc[2])
             }
 
+            //--------------------------------------------//
+            //--Uncomment bellow to fake sensor readings--//
+            //--------------------------------------------//
 
-            let temp_val = Math.random() * (3 + 3) - 3;
-            let current_val = parent.sensor_data[sensor_id].payload.temperature;
-            let new_val = temp_val + current_val;
+            /*
+             let temp_val = Math.random() * (3 + 3) - 3;
+             let current_val = parent.sensor_data[sensor_id].payload.temperature;
+             let new_val = temp_val + current_val;
 
-            if (new_val > 40 || new_val < -10) {
-                new_val = current_val;
-            }
+             if (new_val > 40 || new_val < -10) {
+                 new_val = current_val;
+             }
 
             //update the reading with a new rand value
             parent.sensor_data[sensor_id].payload.temperature = new_val;
+            */
 
-            ///space_floor.heatmap.crates_with_sensors['FE11']
+            //--------------------------------------------//
+            //------------End of the subsegment-----------//
+            //--------------------------------------------//
 
-            // console.log(crate_id, sensor_id)
             //recalculate the rect value based on the new feature
             let cell_value = parent.get_cell_value(parent, selected_crate, rect_loc);
 
             //transform the feature value into a color
             let color = parent.color_scheme(cell_value);
 
-            //   console.log(cell_value, color)
+            let feature = document.getElementById('features_list').value;
 
-            let feature = 'temperature';
             //update the rect on screen
             d3.select(rect)
                 .attr('data-crate', selected_crate)
@@ -505,17 +511,9 @@ class HeatMap {
                 .on("mouseout", function (d) {
                     d3.select('#hover_val').remove();
                 })
-                //    .style('opacity', 0)
-                //    .transition() // <------- TRANSITION STARTS HERE --------
-                //    .delay(function (d, i) {
-                //        let delay = parent.animation_delay(cell_value);
-                //        return delay;
-                //    })
-                //    .duration(parent.animation_dur)
                 .style("fill", function (d) {
                     return color
                 })
-            //  .style('opacity', parent.default_opacity)
         })
     }
 
@@ -917,8 +915,6 @@ class HeatMap {
 
         console.log('items:', 'rects:', rects.length, 'polygons', polygons.length);
 
-        let last_pick = '';
-
         //pick a rectangle on screen
         for (let u = 0; u < rects.length; u++) {
             let rect = rects[u];
@@ -1022,6 +1018,10 @@ class HeatMap {
         parent.master.set_legend(parent.master)
     }
 
+    //----------------------------------------------------------------//
+    //-------------------END HEATMAP CALCULATIONS---------------------//
+    //----------------------------------------------------------------//
+
     //display sensor on top of the heatmap
     attach_sensors(parent, results, scale) {
         let main_svg = d3.select('#drawing_svg').append('g').attr('id', 'heatmap_sensors');
@@ -1060,8 +1060,86 @@ class HeatMap {
         }
     }
     //-----------------------------------------------------------------//
+    //------------------------FAKE DEPLOYMENT--------------------------//
+    //-----------------------------------------------------------------//
+
+
+    //callback to update sensors (for faked sensor data)
+    update_callback(parent, acp_id, walk) {
+        parent.draw_splash(parent, acp_id, walk);
+    }
+
+    //async update for faked sensor data - updates all;
+    //iterates through sensors and sets them to update on screen every *x* milliseconds
+    fake_splashes(parent) {
+        console.log(parent.sensor_data)
+        for (let sensor in parent.sensor_data) {
+            console.log('incoming update ', sensor)
+            let wildcard = Math.random() < 0.5;
+            window.setInterval(parent.update_callback, parent.jb_tools.random_int(20000, 20000 * 10), parent, sensor, wildcard);
+        }
+    }
+
+    //show fake path
+    fake_path(parent) {
+        let sens_list = [
+            "elsys-fake-738bf2",
+            "elsys-fake-d6a9de",
+            "elsys-fake-372c9d",
+            "elsys-fake-290265",
+            "elsys-fake-9354d3",
+            "elsys-fake-f3b577",
+            "elsys-fake-ffdfb4",
+            "elsys-fake-c3e668",
+            "elsys-fake-6bf9d0",
+            "elsys-fake-1fd377",
+            "elsys-fake-c7cf58",
+            "elsys-fake-56f2e8",
+            "elsys-fake-8bae37",
+            "elsys-fake-2c9683"
+        ];
+
+        let counter = 1;
+        for (let i = 0; i < sens_list.length; i++) {
+            let sensor = sens_list[i];
+            console.log('incoming update ', sensor)
+            window.setTimeout(parent.update_callback, counter * 1000, parent, sensor, true);
+            counter++;
+        }
+    }
+
+    // Alternative to get_readings() using local file for sensors API response
+    get_local_sensors(parent) {
+
+        console.log('loading local data')
+
+        //we have fake data only for wgb and vlab
+        let selection = CRATE_ID == 'FF' ? 'WGB' : 'VLAB'; //for now leaving the Lockdown Lab away from this
+
+        //local file loading from Django
+        d3.json(window.location.origin + "/static_web/js/" + selection + "_JSON.json", {
+            crossOrigin: "anonymous"
+
+        }).then(function (received_data) {
+            console.log('heatmap received', received_data)
+            parent.handle_sensors_metadata(parent, received_data)
+
+            //-----------------------------------//
+            //---generate and show the heatmap---//
+            //-----------------------------------//
+            parent.show_heatmap(parent);
+        });
+    }
+
+    //-----------------------------------------------------------------//
+    //---------------------END FAKE DEPLOYMENT-------------------------//
+    //-----------------------------------------------------------------//
+
+    //-----------------------------------------------------------------//
     //----------------------------COLOR BAR----------------------------//
     //-----------------------------------------------------------------//
+
+    //draws the horizontal line over the colobar bar when hovering over the heatmap
     set_cbar_value(parent, value) {
         let c_conf = parent.jb_tools.canvas_conf(110, 320, 10, 5, 10, 5);
 
@@ -1085,10 +1163,11 @@ class HeatMap {
 
     }
 
+
+    //creates a colobar element that displays the range of sensor readings on screen
     set_colorbar(parent) {
         d3.select("#legend_svg").remove();
         d3.selectAll('.non_heatmap_circle').style('opacity', 0);
-
 
         //configure canvas size and margins, returns and object
         //(width, height,top, right, bottom, left)
@@ -1100,9 +1179,10 @@ class HeatMap {
             .attr("height", c_conf.height + c_conf.top + c_conf.bottom)
             .attr('id', "legend_svg");
 
-
-        var scale = d3.scaleLinear().domain([c_conf.height, 0]).range([parent.min_max_range.min, parent.min_max_range.max]);
-        var scale_inv = d3.scaleLinear().domain([parent.min_max_range.min, parent.min_max_range.max]).range([c_conf.height, 0]);
+        //set the scale 
+        let scale = d3.scaleLinear().domain([c_conf.height, 0]).range([parent.min_max_range.min, parent.min_max_range.max]);
+        //set the inverse scale 
+        let scale_inv = d3.scaleLinear().domain([parent.min_max_range.min, parent.min_max_range.max]).range([c_conf.height, 0]);
 
         //create a series of bars comprised of small rects to create a gradient illusion
         let bar = parent.master.legend_svg.selectAll(".bars")
@@ -1133,4 +1213,49 @@ class HeatMap {
 
     }
 
+    //-----------------------------------------------------------------//
+    //------------------------END COLOR BAR----------------------------//
+    //-----------------------------------------------------------------//
+
+    //-----------------------------------------------------------------//
+    //--------------------UTILITY FUNCTIONS----------------------------//
+    //-----------------------------------------------------------------//
+
+    //calculates value ranges for temp/co2/humidity and other during runtime;
+    //recalculations are made whenever a new heatmap is selected
+    get_min_max(parent, feature) {
+
+        let min = 999;
+        let max = -999;
+
+        //iterate through the data based on requested feature and extract min/max values
+        for (let reading in parent.sensor_data) {
+
+            console.log('minmax', reading, parent.sensor_data[reading].payload)
+            let val = parent.sensor_data[reading].payload[feature]
+
+            if (val > max) {
+                max = val;
+            }
+            if (val < min) {
+                min = val;
+            }
+        }
+
+        //reset the main variable
+        parent.min_max_range = {
+            max: max,
+            min: min
+        };
+
+        //reset min_max values for scaling
+        parent.color_scheme.domain([parent.min_max_range.min, parent.min_max_range.max]);
+        parent.animation_delay.domain([parent.min_max_range.min, parent.min_max_range.max]);
+
+        console.log('minmax', min, max)
+
+    }
+    //-----------------------------------------------------------------//
+    //-------------------END UTILITY FUNCTIONS-------------------------//
+    //-----------------------------------------------------------------//
 }
