@@ -11,6 +11,8 @@
     <!-- Page local script -->
     <script type="text/javascript">
         var ACP_ID = '{{ ACP_ID }}'; // e.g. 'temperature'
+        var ACP_PERSON_ID = '{{ user.get_username }}';
+        var ACP_PERSON_NAME = '{{ user.get_full_name }}';
         // This link will embed the correct acp_id value as was given for this page
         var SENSOR_METADATA = JSON.parse('{{ SENSOR_METADATA|escapejs }}');
     </script>
@@ -27,13 +29,25 @@ Sensor Edit {{ ACP_ID }}
 {% endblock %} <!-- end sensor_breadcrumbs -->
 
 {% block sensor_content %}
+<h2>{{ ACP_ID }} Sensor Metadata (editor: {{ user.get_username }} {{ user.get_full_name }})</h2>
 
-<div id="sensor_form">
-    <h2>Sensor Metadata (editor: {{ user.get_username }})</h2>
-    <textarea id="sensor_info">
-    </textarea>
-</div>
+<form name="compForm"
+    method="post"
+    action="{{ SENSOR_METADATA_SAVE_URL }}"
+    spellcheck="false"
+    onsubmit="if(sensor.validate()){this.myDoc.value=oDoc.innerHTML;return true;}return false;">
 
+    <input type="hidden" name="myDoc">
+    <div id="edit_box" contenteditable="true">
+        <p>No sensor metadata available</p>
+    </div>
+    <p>
+        <input type="submit" value="Save" />
+        <input type="button" value="Clean" onclick="sensor.format_selected('removeFormat')" />
+        <input type="button" value="Bold" onclick="sensor.format_selected('bold')" />
+        <input type="button" name="switchMode" id="switchBox" onchange="sensor.showHTML(this.checked);" value="Debug HTML"/>
+    </p>
+</form>
 {% endblock %} <!-- end sensor_content -->
 
 <!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
