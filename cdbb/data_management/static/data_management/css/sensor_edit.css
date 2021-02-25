@@ -1,0 +1,13 @@
+
+#sensor_info {
+    display: block;
+    vertical-align: top;
+
+    background-color: #ffffff;
+    padding: 4px;
+    border-radius: 8px;
+    font-family: sans-serif;
+    font-style: normal;
+    width: 80%;
+    height: calc(100vh - 300px);
+}

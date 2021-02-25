@@ -1,0 +1,83 @@
+{% extends "cdbb.html" %}
+{% load static %}
+{% block title %}CDBB Sensor List{% endblock %}
+
+{% block head %}
+    <!-- Our style sheets -->
+    <link rel="stylesheet" type="text/css" href="{% static 'sensor/css/sensor_home.css' %}" />
+
+    <script type='text/javascript' src="{% static 'sensor/js/sensor_home.js' %}"></script>
+
+{% endblock %}
+
+{% block header_title %}
+Sensors
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <div class="breadcrumb">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/home_icon.png' %}" />
+        </a>
+    </div>
+    <div class="breadcrumb">
+         &gt; Data Management
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+        <div class="card_title">
+            Sensors
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'dm_sensors' %}">
+                <img src="{% static 'data_management/images/sensor_data_management.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                Manage data for each installed sensor, such as
+                its location. Also add new sensors.
+            </div>
+        </div>
+</div>
+
+<div class="card">
+        <div class="card_title">
+            Sensor types
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'dm_sensor_types' %}">
+                <img src="{% static 'images/elsys_ems.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                Manage data for each sensor type, such as the readings properties. Also
+                create new sensor types.
+            </div>
+        </div>
+</div>
+
+<div class="card">
+        <div class="card_title">
+            BIM
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'dm_sensors' %}"><!-- DEBUG need url for BIM -->
+                <img src="{% static 'data_management/images/bim_data_management.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                Manage and create data for Building Objects, such as buildings, offices and
+                components such as windows.
+            </div>
+        </div>
+</div>
+
+{% endblock %}

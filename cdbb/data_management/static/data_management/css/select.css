@@ -1,0 +1,41 @@
+
+.selection_wrapper {
+  text-align: center;
+  display: block;
+  vertical-align: top;
+  width: 100%;
+}
+
+.selection_form {
+    display: block;
+}
+
+.selection_input {
+    display: inline-block;
+}
+
+input[type=date], select {
+    /* width: 100%; */
+    padding: 12px 20px;
+    margin: 8px 0;
+    text-align: center;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+
+  button {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 16px 32px;
+    text-align: center;
+    text-decoration: none;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+
+  input[type=submit]:hover {
+    background-color: #45a049;
+  }

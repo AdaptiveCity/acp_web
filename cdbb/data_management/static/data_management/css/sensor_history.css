@@ -1,0 +1,72 @@
+
+.sensor_history_table {
+    border-spacing: 5px 20px;
+}
+
+.sensor_history_record {
+}
+
+.sensor_history_record:hover {
+    background-color: #eeeeff;
+    cursor: pointer;
+}
+
+.sensor_history_record_selected {
+    background-color: white;
+}
+
+.sensor_history_ts {
+    vertical-align: top;
+}
+
+.sensor_history_diff {
+}
+
+.sensor_history_diff_prop_pos {
+    border-radius: 5px;
+    background-color: #DEF8C3;
+    border: 1px solid #aaa;
+    padding: 4px 8px 4px 8px;
+}
+
+.sensor_history_diff_prop_neg {
+    border-radius: 5px;
+    background-color: #F8C3C4;
+    border: 1px solid #aaa;
+    padding: 4px 8px 4px 8px;
+}
+
+.sensor_history_person {
+    display: inline-block;
+}
+
+.sensor_history_comment {
+    display: inline-block;
+    vertical-align: top;
+}
+
+#popup {
+    position: absolute;
+    left: 30%;
+    top: 30px;
+    height: 85%;
+    width: 60%;
+    display: none;
+    background-color: #eeeeff;
+    border-radius: 20px;
+    border-color: #aaa;
+    padding: 20px;
+}
+
+#popup_close {
+    float: right;
+    cursor: pointer;
+}
+
+#popup_content {
+    overflow-y: auto;
+    height: 100%;
+    font-family: monospace;
+    font-style: normal;
+    font-size: 0.7em;
+}

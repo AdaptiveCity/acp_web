@@ -1,0 +1,36 @@
+{% extends "cdbb.html" %}
+{% load static %}
+{% block title %}CDBB Sensor{% endblock %}
+
+{% block header_title %}
+Sensor {{ ACP_ID }}
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <div class="breadcrumb">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/home_icon.png' %}" />
+        </a>
+    </div>
+    <div class="breadcrumb">
+        &gt; <a href="{% url 'dm_home' %}">Data Management</a>
+    </div>
+    <div class="breadcrumb">
+        &gt; <a href="{% url 'dm_sensors' %}">Sensors</a>
+    </div>
+    <div class="breadcrumb">
+        &gt; Sensor {{ ACP_ID }}
+    </div>
+    {% block sensor_breadcrumbs %}
+    {% endblock %}
+</div>
+{% endblock %}
+
+{% block content %}
+
+{% include "data_management/includes/sensor_tabs.html" %}
+
+    {% block sensor_content %}
+    {% endblock %}
+{% endblock %} <!-- end content -->

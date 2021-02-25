@@ -1,0 +1,46 @@
+{% extends "data_management/sensor.html" %}
+{% load static %}
+{% block title %}{{ ACP_ID }} Edit{% endblock %}
+
+{% block head %}
+    <!-- Our style sheets -->
+    <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/sensor_edit.css' %}" />
+
+    <script type='text/javascript' src="{% static 'data_management/js/sensor_edit.js' %}"></script>
+
+    <!-- Page local script -->
+    <script type="text/javascript">
+        var ACP_ID = '{{ ACP_ID }}'; // e.g. 'temperature'
+        // This link will embed the correct acp_id value as was given for this page
+        var SENSOR_METADATA = JSON.parse('{{ SENSOR_METADATA|escapejs }}');
+    </script>
+{% endblock %}
+
+{% block header_title %}
+Sensor Edit {{ ACP_ID }}
+{% endblock %}
+
+{% block sensor_breadcrumbs %}
+    <div class="breadcrumb">
+        &gt; Metadata
+    </div>
+{% endblock %} <!-- end sensor_breadcrumbs -->
+
+{% block sensor_content %}
+
+<div id="sensor_form">
+    <h2>Sensor Metadata (editor: {{ user.get_username }})</h2>
+    <textarea id="sensor_info">
+    </textarea>
+</div>
+
+{% endblock %} <!-- end sensor_content -->
+
+<!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
+{% block lazy_script %}
+<script>
+    console.log('lazy_script');
+    var sensor = new SensorEdit();
+    sensor.init();
+</script>
+{% endblock %} <!-- lazy_script -->
