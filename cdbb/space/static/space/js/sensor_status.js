@@ -19,6 +19,11 @@ class SensorStatusDisplay {
 
         this.sensor_list = [];
 
+        this.CIRCLE_RADIUS = 15;
+        this.scaling = 60;
+        this.columns = 8;
+        this.spacing = 25;
+        this.margin=25;
         this.rt_mon = new RTconnect();
 
 
@@ -48,15 +53,23 @@ class SensorStatusDisplay {
         }).then(function (queried_sensor_list) {
 
             parent.sensor_list = queried_sensor_list['sensors'];
-
+            console.log('QUERIED SENSORS', queried_sensor_list, 'len', Object.keys(queried_sensor_list['sensors']).length)
             //filter out the sensors with non-conventional acp_ids
-            let sub_list = Object.keys(parent.sensor_list).filter(full_acp_id => {
-                let acp_id_split = full_acp_id.split("-");
+            // let sub_list = Object.keys(parent.sensor_list).filter(full_acp_id => {
+            //     let acp_id_split = full_acp_id.split("-");
 
-                if (acp_id_split[2] != undefined && acp_id_split[2].length > 5) {
-                    return full_acp_id
-                }
+            //     if (acp_id_split[2] != undefined && acp_id_split[2].length > 5) {
+            //         return full_acp_id
+            //     }
+            // });
+
+            //TODO parse this using jsonPath or else to look if an acp_type property exists
+            let sub_list = Object.keys(parent.sensor_list).filter(sensor_object => {
+                console.log(sensor_object, parent.sensor_list[sensor_object]['acp_type_id'])
+                if (parent.sensor_list[sensor_object].hasOwnProperty('acp_type_id')) return sensor_object;
             });
+
+            console.log('new len', sub_list.length)
 
             parent.draw_sensors(parent, sub_list);
 
@@ -91,30 +104,32 @@ class SensorStatusDisplay {
 
 
     draw_sensors(parent, sensor_list) {
-        parent.CIRCLE_RADIUS = 15;
         var dataset = [],
             counter = 0;
 
         for (let y = 0; y < 999; y++) {
-            for (let x = 0; x < 6; x++) {
+            for (let x = 0; x < parent.columns; x++) {
                 if (counter > sensor_list.length - 1) {
                     break;
                 }
                 let sensor_object = {
                     'acp_id': sensor_list[counter],
-                    'x': x * 60,
-                    'y': y * 60
+                    'x': x * parent.scaling+parent.margin,
+                    'y': y * parent.scaling+parent.margin
                 }
                 dataset.push(sensor_object);
                 counter++;
             }
         }
 
+        let height=Math.ceil(sensor_list.length/parent.columns)*parent.scaling+parent.margin;
+        let width=parent.scaling*parent.columns+parent.margin;
+        console.log('h and w (used to be 800,400)',height,width )
         var sampleSVG = d3.select("#viz")
             .append("svg")
             .attr('id', 'main_canvas')
-            .attr("width", 400)
-            .attr("height", 800); //write a funciton to estimate the height based on the len of SENSOR LIST
+            .attr("width",width+parent.margin )
+            .attr("height", height+parent.margin); //write a funciton to estimate the height based on the len of SENSOR LIST
 
         sampleSVG.selectAll(".sensors")
             .data(dataset)
@@ -135,10 +150,10 @@ class SensorStatusDisplay {
             })
             .attr("r", parent.CIRCLE_RADIUS)
             .attr("cx", function (d, i) {
-                return 30 + d.x
+                return parent.spacing + d.x
             })
             .attr("cy", function (d, i) {
-                return 20 + d.y
+                return parent.spacing + d.y
             }).attr('z-index', -1)
             .style('opacity', 0.85);
 
@@ -152,9 +167,11 @@ class SensorStatusDisplay {
             .style('fill', 'black')
             // .attr('z-index', 999)
             .attr("x", function (d, i) {
+                //TODO make parametrizable based one the #of digits
                 return 27 + d.x
             })
             .attr("y", function (d, i) {
+                //TODO make parametrizable based one the #of digits
                 return 22 + d.y
             })
             .style("font-size", "0.7em");
@@ -197,8 +214,6 @@ class SensorStatusDisplay {
         self.set_colorbar(self)
 
         self.draw_ripples(self, acp_id);
-
-
         // self.reset_animations(self)
     }
 
@@ -309,11 +324,6 @@ class SensorStatusDisplay {
 
         // txt_hist.innerHTML += JSON.stringify(clean_msg)+'\n';
     }
-
-
-
-
-
 
     set_colorbar(self) {
         let parent = self;
