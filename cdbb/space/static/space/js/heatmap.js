@@ -377,6 +377,8 @@ class HeatMap {
             //---generate and show the heatmap---//
             //-----------------------------------//
             parent.show_heatmap(parent);
+            parent.master.viz_tools.tooltips();
+
         });
 
     }
@@ -1011,7 +1013,7 @@ class HeatMap {
         d3.selectAll('#heatmap').remove();
         d3.selectAll('#heatmap_sensors').remove();
 
-        d3.selectAll('.non_heatmap_circle').style('opacity', 0.5);
+        d3.selectAll('.non_heatmap_circle').style('opacity', 0.65);
 
         //make sure to pass the master object rather than the "heatmap parent" itself
         parent.master.get_choropleth(parent.master);
@@ -1045,7 +1047,7 @@ class HeatMap {
                     .attr("transform", null)
                     .attr("r", rad)
                     .attr("class", 'sensor_node')
-                    .attr("id", 'hm_' + sensor_id)
+                    .attr("id",  sensor_id)//'hm_' +
                     .style("opacity", parent.sensor_opacity)
                     .style("fill", "pink")
                     .on('mouseover', function (d) {

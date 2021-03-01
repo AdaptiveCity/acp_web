@@ -7,7 +7,7 @@ body {
     /* font-family: serif; */
     font-family: Arial, Helvetica, sans-serif;
     /* Again just for debug but hey, this is Cambridge */
-    background-color: rgb(163, 193, 173);
+    background-color: rgba(163, 193, 173, 0.85);
     margin: 0px;
 }
 

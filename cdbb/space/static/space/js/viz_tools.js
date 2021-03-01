@@ -143,10 +143,10 @@ class VizTools {
 
         d3.selectAll("circle") // For new circle, go through the update process
             .on("mouseover", function (event, d) {
-                previous_circle_radius = 0.5;
+                previous_circle_radius = 0.5;//document.getElementById(el).getAttribute('r')
 
-                d3.select(this).transition().duration(250)
-                    .attr("r", 0.75);
+                // d3.select(this).transition().duration(250)
+                //     .attr("r", 0.75);
 
                 // Specify where to put label of text
                 let x = event.pageX - document.getElementById('drawing_svg').getBoundingClientRect().x + 50;
@@ -161,7 +161,7 @@ class VizTools {
                 let tooltip_offset_y = 6;
                 let tooltip_offset_x = 6;
 
-                console.log(x, y);
+                console.log('hover over',this,x, y);
 
                 var sensor_id = this.id;
 
@@ -176,7 +176,8 @@ class VizTools {
 
                 // Create API url for sensor reading AND metadata
                 //let readings_url = API_READINGS + 'get/' + sensor_id +'/?metadata=true';  OLD API
-                let readings_url = 'https://tfc-app9.cl.cam.ac.uk/api/readings/get_feature/' + sensor_id + '/temperature/?metadata=true'
+                //before we used tfc app9
+                let readings_url =API_READINGS +'/get_feature/' + sensor_id + '/temperature/?metadata=true'
                 console.log('circle mouseover fetching', readings_url)
 
                 d3.json(readings_url, {
@@ -248,9 +249,9 @@ class VizTools {
                         d3.select(this).style('visibility', 'hidden')
                     })
 
-                d3.select(this).transition()
-                    .duration(250)
-                    .attr("r", previous_circle_radius);
+                // d3.select(this).transition()
+                //     .duration(250)
+                //     .attr("r", previous_circle_radius);
 
             })
             // On a user 'click' of a sensor icon, jump to the 'sensor' page.

@@ -18,12 +18,13 @@ class SensorStatusDisplay {
         this.query_url = 'https://tfc-app9.cl.cam.ac.uk/api/sensors/list/?type_metadata=true'
 
         this.sensor_list = [];
+        this.sub_list = [];
 
         this.CIRCLE_RADIUS = 15;
         this.scaling = 60;
         this.columns = 8;
         this.spacing = 25;
-        this.margin=25;
+        this.margin = 25;
         this.rt_mon = new RTconnect();
 
 
@@ -64,16 +65,16 @@ class SensorStatusDisplay {
             // });
 
             //TODO parse this using jsonPath or else to look if an acp_type property exists
-            let sub_list = Object.keys(parent.sensor_list).filter(sensor_object => {
+            parent.sub_list = Object.keys(parent.sensor_list).filter(sensor_object => {
                 console.log(sensor_object, parent.sensor_list[sensor_object]['acp_type_id'])
                 if (parent.sensor_list[sensor_object].hasOwnProperty('acp_type_id')) return sensor_object;
             });
 
-            console.log('new len', sub_list.length)
+            console.log('new len', parent.sub_list.length)
 
-            parent.draw_sensors(parent, sub_list);
+            parent.draw_sensors(parent, parent.sub_list);
 
-            parent.rt_mon.connect(parent.check_status.bind(parent), sub_list);
+            parent.rt_mon.connect(parent.check_status.bind(parent), parent.sub_list);
 
             parent.today = new Date();
             parent.start_date = document.getElementById('start_time').innerHTML += parent.today.toString().slice(0, 24);
@@ -114,27 +115,29 @@ class SensorStatusDisplay {
                 }
                 let sensor_object = {
                     'acp_id': sensor_list[counter],
-                    'x': x * parent.scaling+parent.margin,
-                    'y': y * parent.scaling+parent.margin
+                    'x': x * parent.scaling + parent.margin,
+                    'y': y * parent.scaling + parent.margin
                 }
                 dataset.push(sensor_object);
                 counter++;
             }
         }
 
-        let height=Math.ceil(sensor_list.length/parent.columns)*parent.scaling+parent.margin;
-        let width=parent.scaling*parent.columns+parent.margin;
-        console.log('h and w (used to be 800,400)',height,width )
+        let height = Math.ceil(sensor_list.length / parent.columns) * parent.scaling + parent.margin;
+        let width = parent.scaling * parent.columns + parent.margin;
+        console.log('h and w (used to be 800,400)', height, width)
         var sampleSVG = d3.select("#viz")
             .append("svg")
             .attr('id', 'main_canvas')
-            .attr("width",width+parent.margin )
-            .attr("height", height+parent.margin); //write a funciton to estimate the height based on the len of SENSOR LIST
+            .attr("width", width + parent.margin)
+            .attr("height", height + parent.margin); //write a funciton to estimate the height based on the len of SENSOR LIST
 
         sampleSVG.selectAll(".sensors")
             .data(dataset)
             .enter().append('g').attr("class", "sensors")
-
+            .attr('id', function (d, i) {
+                return d.acp_id + '_parent'
+            })
             .append("circle")
             .style("stroke", "gray")
             .style("fill", "white")
@@ -158,6 +161,7 @@ class SensorStatusDisplay {
             .style('opacity', 0.85);
 
         sampleSVG.selectAll(".sensors")
+            .append('g')
             .append("text")
             .attr('id', function (d, i) {
                 return d.acp_id + '_pinged'
@@ -168,16 +172,20 @@ class SensorStatusDisplay {
             // .attr('z-index', 999)
             .attr("x", function (d, i) {
                 //TODO make parametrizable based one the #of digits
-                return 27 + d.x
+                return 24 + d.x
             })
             .attr("y", function (d, i) {
                 //TODO make parametrizable based one the #of digits
-                return 22 + d.y
+                return 28 + d.y
             })
+            .attr("text-anchor", "middle")
             .style("font-size", "0.7em");
 
-
         sampleSVG.selectAll(".sensors")
+            .append('g')
+            .attr('id', function (d, i) {
+                return d.acp_id + '_g'
+            })
             .append("text")
             .attr('id', function (d, i) {
                 return d.acp_id + '_txt'
@@ -185,27 +193,29 @@ class SensorStatusDisplay {
             .attr("class", "sensor_txt")
             .style('opacity', 1)
             .style('fill', 'black')
-            // .attr('z-index', 999)
+            .attr('z-index', 999)
             .attr("x", function (d, i) {
-                return d.x + 12
+                return d.x + 9
             })
             .attr("y", function (d, i) {
                 return 45 + d.y
             })
-            .attr("dy", "1em")
-            .style("font-size", "0.7em")
+            // .attr("dy", "0 1 2" )
+
+            .style("text-anchor", "middle")
+
+            .style("font-size", "0.65em")
             .html(function (d, i) {
                 let acp_id_array = d.acp_id.split("-");
                 let new_str = '';
                 for (let u = 0; u < acp_id_array.length; u++) {
 
-                    new_str += acp_id_array[u] + '<br>';
+                    new_str += acp_id_array[u] + '\n<br>';
                 }
-
-                return acp_id_array[2] //acp_id_array.join("<br>");
-                //return new_str
+                return acp_id_array[2] //lines(acp_id_array)//textRadius(acp_id_array)//new_str //acp_id_array[2] //acp_id_array.join("<br>");
 
             })
+
     }
 
 
@@ -457,10 +467,8 @@ class SensorStatusDisplay {
                 "occupancy": 0
             }
         }
-        self.msg_received(msg_data)
-        //self.update_viz(self, acp_id, msg_data)
-        self.update_floorplan(self, acp_id, msg_data);
 
+        self.update_viz(self, acp_id, msg_data)
     }
 
 
@@ -479,4 +487,28 @@ class SensorStatusDisplay {
         }
     }
 
+}
+
+function wrap(text, width) {
+    text.each(function () {
+        var text = d3.select(this),
+            words = text.text().split(/\s+/).reverse(),
+            word,
+            line = [],
+            lineNumber = 0,
+            lineHeight = 1.1, // ems
+            y = text.attr("y"),
+            dy = parseFloat(text.attr("dy")),
+            tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+        while (word = words.pop()) {
+            line.push(word);
+            tspan.text(line.join(" "));
+            if (tspan.node().getComputedTextLength() > width) {
+                line.pop();
+                tspan.text(line.join(" "));
+                line = [word];
+                tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+            }
+        }
+    });
 }
