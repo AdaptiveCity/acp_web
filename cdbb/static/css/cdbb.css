@@ -1,11 +1,24 @@
-
 /* test global css for base 'cdbb.html' template */
 
 body {
-    font-style: italic; /* This was initially just for style debug, but actually I quite like the retro vibe */ /*jb2328:was about to change it but if you like it that's ok*/
+    font-style: italic;
+    /* This was initially just for style debug, but actually I quite like the retro vibe */
+    /*jb2328:was about to change it but if you like it that's ok*/
     /* font-family: serif; */
     font-family: Arial, Helvetica, sans-serif;
-    background-color: rgb(163, 193, 173); /* Again just for debug but hey, this is Cambridge */
+    /* Again just for debug but hey, this is Cambridge */
+    background-color: rgb(163, 193, 173);
+    margin: 0px;
+}
+
+#bgr_img {
+    background-size: cover;
+    position: absolute;
+    z-index: -99;
+    width: 100%;
+    height: 100%;
+    opacity: 0.07;
+    background-image: url('/static_web/images/demo_bgr2.jpg');
 }
 
 /* ***************************************************************** */
@@ -17,6 +30,7 @@ body {
     height: 44px;
     display: flex;
     overflow-y: auto;
+    margin: 0.25em;
 }
 
 #header_left {
@@ -78,6 +92,7 @@ body {
 /* ***************************************************************** */
 
 .breadcrumbs {
+    margin: 0.5em;
     height: 35px;
 }
 
@@ -105,9 +120,9 @@ body {
 }
 
 .card {
- 	box-shadow: 0 3px 3px rgba(0,0,0,0.3);
+    box-shadow: 0 3px 3px rgba(0, 0, 0, 0.3);
     display: inline-block;
-    width:  250px;
+    width: 250px;
     height: 350px;
     background-color: #f0f0f0;
     border-radius: 5px;
@@ -117,10 +132,10 @@ body {
 
 .card:hover {
     transition: box-shadow 0.45s;
- 	box-shadow: 0 6px 6px rgba(0,0,0,0.4);
+    box-shadow: 0 6px 6px rgba(0, 0, 0, 0.4);
 }
 
-.card:hover >.card_title  {
+.card:hover>.card_title {
     transition: background-color 0.65s;
     background-color: #f1be48;
 }
@@ -198,11 +213,16 @@ body {
 .contextual_link_active {
     background-color: lightblue;
     display: inline-block;
-    font-size: 24px; /* Increase font-size */
-    padding: 12px 12px 12px 12px; /* Add some padding */
-    border-top: 1px solid #aaa; /* Add a grey border */
-    border-right: 1px solid #aaa; /* Add a grey border */
-    border-left: 1px solid #aaa; /* Add a grey border */
+    font-size: 24px;
+    /* Increase font-size */
+    padding: 12px 12px 12px 12px;
+    /* Add some padding */
+    border-top: 1px solid #aaa;
+    /* Add a grey border */
+    border-right: 1px solid #aaa;
+    /* Add a grey border */
+    border-left: 1px solid #aaa;
+    /* Add a grey border */
     margin: 4px 4px 0px 4px;
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
@@ -217,9 +237,12 @@ body {
 .contextual_link {
     background-color: #eeeeee;
     display: inline-block;
-    font-size: 24px; /* Increase font-size */
-    padding: 12px 12px 12px 12px; /* Add some padding */
-    border: 1px solid #ddd; /* Add a grey border */
+    font-size: 24px;
+    /* Increase font-size */
+    padding: 12px 12px 12px 12px;
+    /* Add some padding */
+    border: 1px solid #ddd;
+    /* Add a grey border */
     margin: 4px;
     border-radius: 8px;
     margin: 4px 4px 0px 4px;
