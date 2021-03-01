@@ -385,13 +385,16 @@ function init_chart() {
     chart_offsety = 20;
 
     // add the graph canvas to the body of the webpage
+    //TODO: make the chart drawing area a separate rectangle rather than use the entire canvas
+    //furthermore, the canvas should be transparent with only the main rect in the midlle+axes and labels
     chart_svg = d3.select("#chart").append("svg")
         .attr("width", svg_width)
         .attr("height", svg_height)
         .attr("class", "plot_svg")
+        // .style('opacity', 0.5)
         .attr("fill", "blue")
         .append("g")
-        .attr("transform", "translate(" + chart_offsetx + "," + chart_offsety + ")");
+        .attr("transform", "translate(" + chart_offsetx + "," + chart_offsety + ")")
     // .attr('pointer-events', 'none');
 
 
@@ -404,6 +407,7 @@ function init_chart() {
         .attr("fill", "rgb(163,193,173)") //cambridge blue https://www.cam.ac.uk/brand-resources/guidelines/typography-and-colour/colour-palette
         .attr("transform", "translate(" + -chart_offsetx + "," + -chart_offsety + ")")
         .attr('pointer-events', 'none');
+        // .attr('opacity', 0);
 
 
     //add overlay rect 
