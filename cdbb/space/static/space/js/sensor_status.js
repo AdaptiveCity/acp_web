@@ -30,7 +30,6 @@ class SensorStatusDisplay {
 
     }
 
-
     // init() called when page loaded
     init(parent) {
 
@@ -79,7 +78,50 @@ class SensorStatusDisplay {
             parent.today = new Date();
             parent.start_date = document.getElementById('start_time').innerHTML += parent.today.toString().slice(0, 24);
 
+
+            //set text box width to match that of the viz for aesthetics
+            let svg_width = document.getElementById('viz').clientWidth;
+            document.getElementById("text_collector").style.width = svg_width+'px';
+
         });
+
+
+        //--------------------------------------//
+        //--------SET UP EVENT LISTENERS--------//
+        //--------------------------------------//
+
+        //Set up event listener for the SSD radio buttons
+
+        let radios = document.forms["ssd_view_form"].elements["ssd_view"];
+        for (var i = 0, max = radios.length; i < max; i++) {
+            radios[i].onclick = function () {
+
+                let selection;
+
+                switch (this.value) {
+                    case 'text':
+                        document.getElementById("text_collector").style.display = "inline-block";
+                        document.getElementById("viz").style.display = "none";
+
+                        break;
+
+                    case 'sensors':
+                        document.getElementById("viz").style.display = "inline-block";
+                        document.getElementById("text_collector").style.display = "none";
+                        break;
+
+                    case 'both':
+                        document.getElementById("viz").style.display = "inline-block";
+                        document.getElementById("text_collector").style.display = "inline-block";
+                        break;
+
+                    default:
+                        document.getElementById("viz").style.display = "inline-block";
+                        document.getElementById("text_collector").style.display = "inline-block";
+                        break;
+                }
+            }
+        }
     }
 
     //updates the rtmonitor status icon on the page
@@ -153,7 +195,7 @@ class SensorStatusDisplay {
                 //will do tomorrow
                 // rt_mon.viz_tools.tooltips();
 
-                console.log('hover',d3.select(this).node().id, d.acp_id)
+                console.log('hover', d3.select(this).node().id, d.acp_id)
             })
             .attr("r", parent.CIRCLE_RADIUS)
             .attr("cx", function (d, i) {
@@ -215,12 +257,12 @@ class SensorStatusDisplay {
             for (let u = 0; u < acp_id_array.length; u++) {
                 d3.select('#' + acp_id + '_txt').append('tspan').text(acp_id_array[u])
                     .attr('x', function (d, i) {
-                        let x_offset=25;
+                        let x_offset = 25;
                         return d.x + x_offset
                     })
                     .attr('y', function (d, i) {
-                        let line_height=8 * (u + 1);
-                        let y_offset=40;
+                        let line_height = 8 * (u + 1);
+                        let y_offset = 40;
                         return d.y + y_offset + line_height
                     })
             }
@@ -422,7 +464,7 @@ class SensorStatusDisplay {
 
         parent.jb_tools.add_text(legend_svg, 'pinged', (c_conf.width / 2) - 180, scale_inv(parent.min_max_range.min) - 262, "0.85em", "rotate(-90)", 'pinged_bar') // 0 is the offset from the left
         //quick fix so that 
-       // d3.select('#pinged_bar').selectChild().attr('x', -170)
+        // d3.select('#pinged_bar').selectChild().attr('x', -170)
 
     }
 

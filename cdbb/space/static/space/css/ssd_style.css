@@ -1,3 +1,55 @@
+#ssd_main {
+    margin: 0.5em;
+}
+
+#viz_header {
+    display: block;
+    margin-left: 1em;
+
+    margin-top: 0.1em;
+    margin-bottom: 0.1em;
+}
+
+#ssd_control {
+
+    display: block;
+}
+.header_time_text{
+    margin-top: 0;
+    margin-bottom: 0;
+}
+#recent_update {
+    font-size: 0.75em;
+}
+
+#start_time {}
+
+#viz {
+    display: inline-block;
+    vertical-align: top;
+}
+
+#legend_container {
+    display: inline-block;
+    vertical-align: top;
+    padding-top: 2.5em;
+}
+
+#text_collector {
+    margin-top:1em;
+    margin-left: 1.5em;
+
+    display: inline-block;
+    height: 40em;
+    /* width: 45em; */
+    border: 1px solid #ccc;
+    background-color: rgba(245, 245, 245, 0.39);
+    font: 9px Arial;
+    overflow: auto;
+    overflow-x: auto;
+
+}
+
 .tooltip {
     position: absolute;
     /* width: 100%; */
@@ -22,15 +74,16 @@
 #green_span {
     color: rgb(0, 0, 0);
 
-    background-color: rgba(135, 184, 138,0.5);
+    background-color: rgba(135, 184, 138, 0.5);
 }
 
 .rt_status {
-    margin:0px;
+    margin: 0px;
     padding: 0px;
     font: 8px sans-serif;
     display: inline-block;
-    vertical-align: top; /* here */
+    vertical-align: top;
+    /* here */
     /* background: rgb(108, 172, 228); */
 }
 

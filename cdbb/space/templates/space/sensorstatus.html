@@ -59,26 +59,52 @@ Spatial Building and Sensor Data: Sensor Status Display
 
 {% block content %}
 
-<div id ='ssd_main' style='margin:0.5em;'>
-<div id='viz' style='display: inline-block;vertical-align:top;'>
-    <h4 id='start_time'style='margin-left:1em;'>Started: </h4>
-</div>
+<div id='ssd_main'>
 
-<div id="legend_container" style='display: inline-block;vertical-align:top;padding-top: 2.5em;'>
-    <div id="legend_svg"></div>
-</div>
 
-<div style='display: inline-block'>
-    <h4>Most Recent: <span id='most_recent'></span></h4>
-    <div id='text_collector'
-        style="height:40em;width:45em;border:1px solid #ccc;background-color: whitesmoke;font:9px Arial;overflow:auto;overflow-x: auto; ">
+    <div id='viz_header'>
 
+        <h4 id='start_time' class='header_time_text'>Started: </h4>
+
+        <h5 id='recent_update' class='header_time_text'>Most Recent: <span id='most_recent'></span></h5>
+
+        <div id='ssd_control' class='rt_status'><span id='ssd_rt_state'
+                class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='ssd_rt'>RtM not connected</span>
+        </div>
     </div>
 
-    <div id='ssd_control' class='rt_status'><span id='ssd_rt_state'
-            class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='ssd_rt'>RtM not connected</span>
+
+    <!-- MAIN D3 VIZ DIV FOR SENSOR CIRCLES -->
+    <div id='viz'>
+        <div id="legend_container">
+            <div id="legend_svg"></div>
+        </div>
     </div>
-</div>
+
+    <!-- TEXT BOX FOR MOST RECENT MESSAGES -->
+    <div id='text_collector'>
+    </div>
+
+    <!-- FORM FOR VIZ TYPE SELECTION -->
+    <form name="ssd_view_form">
+        <span>Select view:</span>
+
+        <input type="radio" id="ssd_sensors" name="ssd_view" value="sensors">
+        <label for="sensors">Sensors</label>
+
+        <!-- <br> -->
+
+        <input type="radio" id="ssd_text" name="ssd_view" value="text">
+        <label for="text">Text</label>
+
+        <!-- <br> -->
+
+        <input type="radio" id="ssd_both" name="ssd_view" value="both" checked>
+        <label for="both">Both</label>
+
+
+    </form>
+
 </div>
 
 <!-- <div id="drawing_coords">0,0</div>
