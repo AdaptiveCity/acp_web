@@ -98,7 +98,8 @@ class SensorEdit {
         let required_paths = [
             "$.acp_commit",
             "$.acp_commit.comment",
-            "$.foo",
+            "$.acp_commit.acp_person_id",
+            "$.acp_commit.acp_person_name",
             "$.acp_ts",
             "$.acp_type_id",
             "$.acp_id"
