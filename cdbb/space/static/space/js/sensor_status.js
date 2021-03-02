@@ -103,11 +103,12 @@ class SensorStatusDisplay {
         } else {}
     }
 
-
+    // Main drawing function that displays sensors as circles with their ids written underneath
     draw_sensors(parent, sensor_list) {
         var dataset = [],
             counter = 0;
 
+        //generate the grid to display the sensors on
         for (let y = 0; y < 999; y++) {
             for (let x = 0; x < parent.columns; x++) {
                 if (counter > sensor_list.length - 1) {
@@ -123,15 +124,18 @@ class SensorStatusDisplay {
             }
         }
 
+        //parametrise height and width of the grid based on the number of sensors and the selected number of columns
         let height = Math.ceil(sensor_list.length / parent.columns) * parent.scaling + parent.margin;
         let width = parent.scaling * parent.columns + parent.margin;
-        console.log('h and w (used to be 800,400)', height, width)
+
+        //create scg canvas
         var sampleSVG = d3.select("#viz")
             .append("svg")
             .attr('id', 'main_canvas')
             .attr("width", width + parent.margin)
-            .attr("height", height + parent.margin); //write a funciton to estimate the height based on the len of SENSOR LIST
+            .attr("height", height + parent.margin);
 
+        //draw sensors as circles
         sampleSVG.selectAll(".sensors")
             .data(dataset)
             .enter().append('g').attr("class", "sensors")
@@ -149,7 +153,7 @@ class SensorStatusDisplay {
                 //will do tomorrow
                 // rt_mon.viz_tools.tooltips();
 
-                console.log(d.acp_id)
+                console.log('hover',d3.select(this).node().id, d.acp_id)
             })
             .attr("r", parent.CIRCLE_RADIUS)
             .attr("cx", function (d, i) {
@@ -160,6 +164,7 @@ class SensorStatusDisplay {
             }).attr('z-index', -1)
             .style('opacity', 0.85);
 
+        //append text tags for #of pinged + acp_ids underneath (only the nodes, text will follow)
         sampleSVG.selectAll(".sensors")
             .append('g')
             .append("text")
@@ -171,16 +176,16 @@ class SensorStatusDisplay {
             .style('fill', 'black')
             // .attr('z-index', 999)
             .attr("x", function (d, i) {
-                //TODO make parametrizable based one the #of digits
                 return 24 + d.x
             })
             .attr("y", function (d, i) {
-                //TODO make parametrizable based one the #of digits
                 return 28 + d.y
             })
+            //makes sure that text is centered no matter how many digits are put inside the circle
             .attr("text-anchor", "middle")
             .style("font-size", "0.7em");
 
+        //prepare the nodes for acp_ids (this is a bit convoluted due to how d3 (doesn't) handle multiline text)
         sampleSVG.selectAll(".sensors")
             .append('g')
             .attr('id', function (d, i) {
@@ -194,28 +199,32 @@ class SensorStatusDisplay {
             .style('opacity', 1)
             .style('fill', 'black')
             .attr('z-index', 999)
-            .attr("x", function (d, i) {
-                return d.x + 9
-            })
-            .attr("y", function (d, i) {
-                return 45 + d.y
-            })
-            // .attr("dy", "0 1 2" )
-
             .style("text-anchor", "middle")
-
             .style("font-size", "0.65em")
-            .html(function (d, i) {
-                let acp_id_array = d.acp_id.split("-");
-                let new_str = '';
-                for (let u = 0; u < acp_id_array.length; u++) {
 
-                    new_str += acp_id_array[u] + '\n<br>';
-                }
-                return acp_id_array[2] //lines(acp_id_array)//textRadius(acp_id_array)//new_str //acp_id_array[2] //acp_id_array.join("<br>");
+        //iterate through all the sensors and add acp_ids to their previously predefined node locations;
+        //this makes sure that sensor names have line breaks where '-' used to be, so that all text
+        //fits nicely; this took waaaay too long to do and stack overflow was useless.
+        d3.selectAll(".sensors").nodes().forEach(el => {
 
-            })
+            console.log('here is', el, d3.select(el))
 
+            let acp_id = d3.select(el).selectChild().node().id
+            let acp_id_array = acp_id.split("-");
+
+            for (let u = 0; u < acp_id_array.length; u++) {
+                d3.select('#' + acp_id + '_txt').append('tspan').text(acp_id_array[u])
+                    .attr('x', function (d, i) {
+                        let x_offset=25;
+                        return d.x + x_offset
+                    })
+                    .attr('y', function (d, i) {
+                        let line_height=8 * (u + 1);
+                        let y_offset=40;
+                        return d.y + y_offset + line_height
+                    })
+            }
+        })
     }
 
 
@@ -376,7 +385,7 @@ class SensorStatusDisplay {
 
         //configure canvas size and margins, returns and object
         //(width, height,top, right, bottom, left)
-        let c_conf = parent.jb_tools.canvas_conf(110, 320, 20, 5, 20, 5);
+        let c_conf = parent.jb_tools.canvas_conf(38, 320, 0, 0, 37, 0);
 
         legend_svg_parent
             .append("svg")
@@ -407,15 +416,15 @@ class SensorStatusDisplay {
 
 
         //text showing range on left/right
-        //viz_tools.add_text(TARGET SVG, TXT VALUE, X LOC, Y LOC, FONT SIZE, TRANSLATE);
+        //viz_tools.add_text(TARGET SVG, TXT VALUE, X LOC, Y LOC, FONT SIZE, TRANSLATE, NODE_ID);
         parent.jb_tools.add_text(legend_svg, parent.min_max_range.max, (c_conf.width / 2) - 3, scale_inv(parent.min_max_range.max), "0.75em", "translate(0,0)") // 0 is the offset from the left
         parent.jb_tools.add_text(legend_svg, parent.min_max_range.min, (c_conf.width / 2) - 3, scale_inv(parent.min_max_range.min) + 25, "0.75em", "translate(0,0)") // 0 is the offset from the left
 
-        parent.jb_tools.add_text(legend_svg, 'pinged', (c_conf.width / 2) - 220, scale_inv(parent.min_max_range.min) - 265, "0.85em", "rotate(-90)") // 0 is the offset from the left
+        parent.jb_tools.add_text(legend_svg, 'pinged', (c_conf.width / 2) - 180, scale_inv(parent.min_max_range.min) - 262, "0.85em", "rotate(-90)", 'pinged_bar') // 0 is the offset from the left
+        //quick fix so that 
+       // d3.select('#pinged_bar').selectChild().attr('x', -170)
 
     }
-
-
 
 
     //calculates value ranges for temp/co2/humidity and other during runtime;

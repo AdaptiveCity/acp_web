@@ -113,10 +113,11 @@ class VizTools2 {
 	}
 
 	//add text to any location on the svg
-	add_text(svg_target,txt, x_pos,y_pos,font_size,transformation){
+	add_text(svg_target,txt, x_pos,y_pos,font_size,transformation,node_id){
 		//transformation defines location, it is a string e.g. 'translate(0,0)'
 		return svg_target
 				.append("g")
+                .attr('id', node_id)
            		.append("text")
            		.attr("x", x_pos)
                 .attr("y", y_pos)
