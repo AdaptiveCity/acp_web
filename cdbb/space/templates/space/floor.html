@@ -82,94 +82,115 @@ Spatial Building and Sensor Data: FLOOR VIEW
 
     <div id="legend_and_buttons">
         <div id="legend_container"></div>
-        <!-- MAIN HEATMAP ACTIVATION -->
-        <div class="button_wrapper">
-            <!-- <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button> -->
-            <a id="show_splash" class="button1">Splash</a>
-        </div>
-        <div id='splash_control' class='rt_status'><span id='splash_rt_state'
-                class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='splash_rt'>RtM not connected</span></div>
-        <br>
+        <!-- OUTERMOST WRAPPER FOR ALL BUTTONS -->
+        <div class='all_buttons'>
 
-        <!-- MAIN HEATMAP ACTIVATION -->
-        <div class="button_wrapper">
-            <!-- <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button> -->
-            <a id="show_rain" class="button1">Rain</a>
-        </div>
-        <br>
-        <!-- HEATMAP CONFIGURATION/HIDE SETTINGS -->
-        <div class='hidden_divs'>
-
-            <!-- FEATURE SELECT -->
-            <div class="button_wrapper" id='heatmap_activation'>
-
-                <!-- Real Time Subscription for Rain -->
-                <div class="button_wrapper" id='heatmap_rt_con'>
-                    <a id="rain_rt_connect" class="button1">RT Subscribe</a>
-                </div>
-                <div id='rain_control' class='rt_status'><span id='rain_rt_state'
-                        class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='rain_rt'>RtM not connected</span>
-                </div>
-
-                <!-- I know the following should not be hardcoded, this is just for debug -->
-                <form id="feature_form">
-                    <label class='form_label' for="features">Feature:</label>
-                    <br>
-                    <select name="features" id="features_list">
-                        <option value="co2">CO2</option>
-                        <option value="temperature" selected="selected">Temperature</option>
-                        <option value="humidity">Humidity</option>
-                        <option value="vdd">Battery</option>
-                    </select>
-                    <br>
-                </form>
-
-            </div>
-
-            <!-- CHANGE RESOLUTION -->
-            <div class="button_wrapper" id='heatmap_activation'>
-
-                <!-- I know the following should not be hardcoded, this is just for debug -->
-                <form id="resolution_form">
-                    <label class='form_label' for="resolution">Resolution:</label>
-                    <br>
-                    <select name="resolution" id="resolution_list">
-                        <option value="low">Low</option>
-                        <option value="regular" selected="selected">Regular</option>
-                        <option value="high">High</option>
-                    </select>
-                    <br>
-                </form>
-
-            </div>
-
-            <br>
-
-            <!-- change sensor opacity slider -->
+            <!-- MAIN SSD ACTIVATION -->
             <div class="button_wrapper">
-                <div class="slidecontainer">
-                    <label for="opacity_slider">Sensor Opacity:</label>
-                    <br>
-                    <input type="range" min="0" max="100" value="50" name='opacity_slider' class="slider"
-                        id="sensor_opacity">
+                <!-- <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button> -->
+                <a id="show_ssd" class="button1">Sensor Status</a>
+            </div>
+
+            <div id='ssd_control' class='rt_status'><span id='ssd_rt_state'
+                    class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='ssd_rt'>RtM not connected</span></div>
+
+            <br>
+
+            <!-- MAIN SPLASH ACTIVATION -->
+            <div class="button_wrapper">
+                <!-- <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button> -->
+                <a id="show_splash" class="button1">Splash</a>
+            </div>
+
+            <div id='splash_control' class='rt_status'><span id='splash_rt_state'
+                    class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='splash_rt'>RtM not connected</span></div>
+            <br>
+
+            <!-- MAIN RAIN ACTIVATION -->
+            <div class="button_wrapper">
+                <!-- <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button> -->
+                <a id="show_rain" class="button1">Rain</a>
+            </div>
+
+            <br>
+
+            <!-- RAIN CONFIGURATION/HIDE SETTINGS -->
+            <div class='hidden_divs'>
+
+                <!-- FEATURE SELECT -->
+                <div class="button_wrapper" id='heatmap_activation'>
+
+                    <!-- Real Time Subscription for Rain -->
+                    <div class="button_wrapper" id='heatmap_rt_con'>
+                        <a id="rain_rt_connect" class="button1">RT Subscribe</a>
+                    </div>
+                    <div id='rain_control' class='rt_status'><span id='rain_rt_state'
+                            class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='rain_rt'>RtM not connected</span>
+                    </div>
+
+                    <!-- I know the following should not be hardcoded, this is just for debug -->
+                    <form id="feature_form" >
+                        <label class='form_label' for="features">Feature:</label>
+                        <br>
+                        <select name="features" id="features_list">
+                            <option value="co2">CO2</option>
+                            <option value="temperature" selected="selected">Temperature</option>
+                            <option value="humidity">Humidity</option>
+                            <option value="vdd">Battery</option>
+                        </select>
+                        <br>
+                    </form>
+
                 </div>
+
+                <!-- CHANGE RESOLUTION -->
+                <div class="button_wrapper" id='heatmap_activation'>
+
+                    <!-- I know the following should not be hardcoded, this is just for debug -->
+                    <form id="resolution_form">
+                        <label class='form_label' for="resolution">Resolution:</label>
+                        <br>
+                        <select name="resolution" id="resolution_list">
+                            <option value="low">Low</option>
+                            <option value="regular" selected="selected">Regular</option>
+                            <option value="high">High</option>
+                        </select>
+                        <br>
+                    </form>
+
+                </div>
+
+                <br>
+
+                <!-- change sensor opacity slider -->
+                <div class="button_wrapper">
+                    <div class="slidecontainer">
+                        <label for="opacity_slider">Sensor Opacity:</label>
+                        <br>
+                        <input type="range" min="0" max="100" value="50" name='opacity_slider' class="slider"
+                            id="sensor_opacity">
+                    </div>
+                </div>
+
+                <br>
+
+                <!-- HIDE HEATMAP -->
+                <div class="button_wrapper" id='heatmap_activation'>
+                    <a id="reset" class="button1">Hide Heatmap</a>
+                </div>
+                <br>
+
             </div>
 
-            <br>
-
-            <!-- HIDE HEATMAP -->
-            <div class="button_wrapper" id='heatmap_activation'>
-                <a id="reset" class="button1">Hide Heatmap</a>
+            <!-- reset zoom -->
+            <div class="button_wrapper" id='reset_zoom_wrapper'>
+                <a id="reset_zoom" class="button1">Reset Zoom</a>
             </div>
-            <br>
 
+            <!-- close ALL_BUTTONS -->
         </div>
 
-        <!-- reset zoom -->
-        <div class="button_wrapper" id='reset_zoom_wrapper'>
-            <a id="reset_zoom" class="button1">Reset Zoom</a>
-        </div>
-
+        <!-- close LEGEND AND BUTTONS -->
     </div>
 
 </div>

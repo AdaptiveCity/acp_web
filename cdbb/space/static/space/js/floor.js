@@ -521,7 +521,7 @@ class SpaceFloor {
             .append("svg")
             .attr("id", "legend_svg")
             .style("width", 100)
-            .style("height", 300);
+            .style("height", 200);
 
         /* Thanks to http://stackoverflow.com/users/3128209/ameliabr for tips on creating a quantized legend */
         parent.legend = parent.legend_svg.selectAll('g.legendEntry')
@@ -534,7 +534,7 @@ class SpaceFloor {
             .append('rect')
             .attr("x", 20)
             .attr("y", function (d, i) {
-                return i * 25 + 20;
+                return i * 25 + 5;
             })
             .attr("width", 15)
             .attr("height", 15)
@@ -575,7 +575,7 @@ class SpaceFloor {
             .append('text')
             .attr("x", 40) //leaves space after the <rect>
             .attr("y", function (d, i) {
-                return i * 25 + 20;
+                return i * 25 + 5;
             })
             .attr("dy", "0.8em") //place text one line *below* the x,y point
             .text(function (d, i) {

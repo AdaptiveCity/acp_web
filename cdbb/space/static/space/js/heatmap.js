@@ -1143,9 +1143,10 @@ class HeatMap {
 
     //draws the horizontal line over the colobar bar when hovering over the heatmap
     set_cbar_value(parent, value) {
-        let c_conf = parent.jb_tools.canvas_conf(110, 320, 10, 5, 10, 5);
+        //make a global c_conf reference from the parent class
+        let c_conf = parent.jb_tools.canvas_conf(38, 200, 0, 0, 37, 0);//(110, 320, 10, 5, 10, 5);
 
-        var scale_inv = d3.scaleLinear().domain([parent.min_max_range.min, parent.min_max_range.max]).range([c_conf.height, 0]);
+        var scale_inv = d3.scaleLinear().domain([parent.min_max_range.min, parent.min_max_range.max]).range([c_conf.height+c_conf.bottom/2, c_conf.bottom/2]);//TODO adjust for top offset as well
         let target_svg = d3.select("#legend_svg");
 
         target_svg.append('g')
@@ -1160,8 +1161,9 @@ class HeatMap {
             .style("fill", 'lime');
 
         let rounded_val = Math.round(value * 100 + Number.EPSILON) / 100
-
-        parent.jb_tools.add_text(d3.select("#hover_val"), rounded_val, (c_conf.width / 3) + 50, scale_inv(value), "0.65em", "translate(0,0)") // 0 is the offset from the left
+        
+        //TODO: CHECK WHY FONT SIZE (4PX) DOESN'T WORK
+        parent.jb_tools.add_text(d3.select("#hover_val"), rounded_val, (c_conf.width / 3) + 15, scale_inv(value), "4px", "translate(0,0)") // 0 is the offset from the left
 
     }
 
@@ -1173,7 +1175,7 @@ class HeatMap {
 
         //configure canvas size and margins, returns and object
         //(width, height,top, right, bottom, left)
-        let c_conf = parent.jb_tools.canvas_conf(110, 320, 20, 5, 20, 5);
+        let c_conf = parent.jb_tools.canvas_conf(38, 200, 0, 0, 37, 0);//canvas_conf(110, 320, 20, 5, 20, 5);
 
         parent.master.legend_svg = d3.select('#legend_container')
             .append("svg")
@@ -1211,7 +1213,8 @@ class HeatMap {
         parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.max, (c_conf.width / 2) - 3, scale_inv(parent.min_max_range.max), "0.75em", "translate(0,0)") // 0 is the offset from the left
         parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.min, (c_conf.width / 2) - 3, scale_inv(parent.min_max_range.min) + 25, "0.75em", "translate(0,0)") // 0 is the offset from the left
 
-        parent.jb_tools.add_text(parent.master.legend_svg, document.getElementById('features_list').value, (c_conf.width / 2) - 220, scale_inv(parent.min_max_range.min) - 265, "0.85em", "rotate(-90)") // 0 is the offset from the left
+        //TODO: CHECK WHY FONT SIZE (4PX) DOESN'T WORK
+        parent.jb_tools.add_text(parent.master.legend_svg, document.getElementById('features_list').value, (c_conf.width / 2) - 180, scale_inv(parent.min_max_range.min) - 262, "4px", "rotate(-90)") // 0 is the offset from the left
 
     }
 

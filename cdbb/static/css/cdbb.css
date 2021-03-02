@@ -29,13 +29,15 @@ body {
     width: 100%;
     height: 44px;
     display: flex;
-    overflow-y: auto;
+    /* overflow-y: auto; */
     margin: 0.25em;
 }
 
 #header_left {
     height: 100%;
     display: inline-block;
+    padding-left: 1em;
+
 }
 
 #header_left img {
@@ -81,6 +83,7 @@ body {
 #header_right {
     height: 100%;
     display: inline-block;
+    padding-right: 1em;
 }
 
 #header_right img {
