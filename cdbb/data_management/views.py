@@ -2,8 +2,10 @@
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.conf import settings
+from django.shortcuts import redirect
 import requests
 import json
+import sys
 
 class DMHomeView(TemplateView):
     template_name = 'data_management/home.html'
@@ -133,6 +135,25 @@ class DMSensorLocationView(LoginRequiredMixin, TemplateView):
 
 class DMSensorEditView(LoginRequiredMixin, TemplateView):
     template_name = 'data_management/sensor_edit.html'
+
+    def post(self, request, acp_id):
+            sensor_metadata_str = request.POST.get('plain_text_value','{ "msg": "get failed" }')
+            try:
+                sensor_metadata_obj = json.loads(sensor_metadata_str)
+            except json.decoder.JSONDecodeError:
+                print(f'sensor_edit non-json in plain_text_value',file=sys.stderr)
+                #DEBUG can return sensor_edit error message here
+                return redirect('dm_sensor_edit',acp_id=acp_id)
+
+            res = requests.post(settings.API_SENSORS+'update/'+self.kwargs['acp_id']+'/',
+                                json=sensor_metadata_obj)
+            if res.ok:
+                print(f'sensor_edit wrote data to update',file=sys.stderr)
+                return redirect('dm_sensor_history',acp_id=acp_id)
+            else:
+                print(f'sensor_edit bad response from api/sensors/update',file=sys.stderr)
+                #DEBUG will return to edit page here
+            return redirect('dm_sensor_history',acp_id=acp_id)
 
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
