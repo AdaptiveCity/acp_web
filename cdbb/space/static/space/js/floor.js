@@ -57,16 +57,16 @@ class SpaceFloor {
         parent.floor_coordinate_system = null;
 
         //Determines choropleth's color scheme
-        parent.hue = "g"; /* b=blue, g=green, r=red colours - from ColorBrewer */
+        parent.hue = "q"; /* b=blue, g=green, r=red colours - from ColorBrewer */
 
-        //Breaks the data values into 9 ranges, this is completely arbitrary and
-        // can be changed with cat_lim
+        //Breaks the data values into 9 ranges, as css has nine hard color categories
         parent.cat_lim = 9;
 
         //determines how to color in polygon based on X property (e.g. # sensors)
         parent.quantize =
             d3.scaleQuantize()
             .domain([0, parent.cat_lim])
+            //TODO change the range that it matches the range of max sensors in a crate
             .range(d3.range(parent.cat_lim).map(function (i) {
                 return parent.hue + i + "-" + parent.cat_lim;
             }));

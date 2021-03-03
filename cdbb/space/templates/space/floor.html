@@ -70,6 +70,13 @@ Spatial Building and Sensor Data: FLOOR VIEW
     <div class="breadcrumb">
         &gt; Floor {{ CRATE_ID }}
     </div>
+
+    <div id='wrapped_ham'>
+        <a id='hamburger_link' onclick="openNav()">
+            <img id='hamburger_img' alt="hamburger_menu_icon" src="{% static 'images/bigmac.jpg' %}" />
+            <!-- burger.png -->
+        </a>
+    </div>
 </div>
 {% endblock %}
 
@@ -86,6 +93,119 @@ Spatial Building and Sensor Data: FLOOR VIEW
 
     <div id="legend_and_buttons">
         <div id="legend_container"></div>
+
+
+
+
+        <!-- close LEGEND AND BUTTONS -->
+    </div>
+
+    <div id='ssd_main'>
+
+
+        <div id='viz_header'>
+
+            <h4 id='start_time' class='header_time_text'>Started: </h4>
+
+            <h5 id='recent_update' class='header_time_text'>Most Recent: <span id='most_recent'></span></h5>
+
+            <!-- <div id='ssd_control' class='rt_status'><span id='ssd_rt_state'
+                    class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='ssd_rt'>RtM not connected</span>
+            </div> -->
+        </div>
+
+
+        <!-- MAIN D3 VIZ DIV FOR SENSOR CIRCLES -->
+        <div id='viz'>
+            <div id="legend_container">
+                <div id="legend_svg"></div>
+            </div>
+        </div>
+
+        <!-- TEXT BOX FOR MOST RECENT MESSAGES -->
+        <div id='text_collector' style='display: block;'>
+        </div>
+
+    </div>
+
+
+
+    <style>
+        /* The side navigation menu */
+        .sidenav {
+            height: 100%;
+            /* 100% Full-height */
+            width: 0;
+            /* 0 width - change this with JavaScript */
+            position: fixed;
+            /* Stay in place */
+            z-index: 1;
+            /* Stay on top */
+            top: 0;
+            /* Stay at the top */
+            right: 0;
+            background-color: rgba(17, 94, 103, 0.5);
+
+            /* rgba(23, 76, 80, 0.486); Black */
+            overflow-x: hidden;
+            /* Disable horizontal scroll */
+            padding-top: 60px;
+            /* Place content 60px from the top */
+            transition: 0.5s;
+            /* 0.5 second transition effect to slide in the sidenav */
+        }
+
+        /* The navigation menu links */
+        .closebtn {
+            position: absolute;
+            top: 0;
+            margin-right: 50px;
+            padding: 0.5em 0.5em;
+            font-size: 36px;
+            color: #f1f1f1;
+            display: block;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        /* When you mouse over the navigation links, change their color */
+        .closebtn:hover {
+            color: rgb(241, 190, 72);
+        }
+
+
+        .all_buttons {
+            margin: 1em;
+            bottom: 0;
+        }
+
+        /* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+        @media screen and (max-height: 450px) {
+            .sidenav {
+                padding-top: 15px;
+            }
+
+            .sidenav a {
+                font-size: 18px;
+            }
+        }
+
+        #hamburger_img {
+            height: 2em;
+            width: 2em;
+        }
+        #wrapped_ham{
+            display: inline-block;
+            float:right;
+            margin: 0.25em;;
+
+        }
+    </style>
+
+
+    <div id="mySidenav" class="sidenav">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+
         <!-- OUTERMOST WRAPPER FOR ALL BUTTONS -->
         <div class='all_buttons'>
 
@@ -208,40 +328,21 @@ Spatial Building and Sensor Data: FLOOR VIEW
 
             <!-- close ALL_BUTTONS -->
         </div>
-        <!-- close LEGEND AND BUTTONS -->
-    </div>
-
-    <div id='ssd_main'>
-
-
-        <div id='viz_header'>
-
-            <h4 id='start_time' class='header_time_text'>Started: </h4>
-
-            <h5 id='recent_update' class='header_time_text'>Most Recent: <span id='most_recent'></span></h5>
-
-            <!-- <div id='ssd_control' class='rt_status'><span id='ssd_rt_state'
-                    class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='ssd_rt'>RtM not connected</span>
-            </div> -->
-        </div>
-
-
-        <!-- MAIN D3 VIZ DIV FOR SENSOR CIRCLES -->
-        <div id='viz'>
-            <div id="legend_container">
-                <div id="legend_svg"></div>
-            </div>
-        </div>
-
-        <!-- TEXT BOX FOR MOST RECENT MESSAGES -->
-        <div id='text_collector' style='display: block;'>
-        </div>
-
     </div>
 
 
 
+    <script>
+        /* Set the width of the side navigation to 250px */
+        function openNav() {
+            document.getElementById("mySidenav").style.width = "250px";
+        }
 
+        /* Set the width of the side navigation to 0 */
+        function closeNav() {
+            document.getElementById("mySidenav").style.width = "0";
+        }
+    </script>
     <!-- end MAIN CONTENT -->
 </div>
 
