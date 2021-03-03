@@ -110,6 +110,7 @@ select:hover {
 
 .drawing_div {
     margin: 0em 1em 0em 1em;
+    display: inline-block;
     height: 88%;
     width: 50%;
     display: inline-block;

@@ -87,9 +87,9 @@ class SplashMap {
         for (var i = 1; i < 3; ++i) {
 
             let position = {
-                'x': d3.select('#' + acp_id).attr('cx'),
-                'y': d3.select('#' + acp_id).attr('cy'),
-                'transf': d3.select('#' + acp_id).attr("transform")
+                'x': d3.select('#' + acp_id+"_bim").attr('cx'),
+                'y': d3.select('#' + acp_id+"_bim").attr('cy'),
+                'transf': d3.select('#' + acp_id+"_bim").attr("transform")
             }
 
             let circle = d3.select('#bim_request').append("circle")
@@ -127,7 +127,7 @@ class SplashMap {
 
     draw_splash(self, acp_id) {
         //let multiplier = 1.1; //10% increase self.circle_radius
-        let sensor_circle = d3.select('#' + acp_id);
+        let sensor_circle = d3.select('#' + acp_id+"_bim");
         let new_color = 'purple' //self.color_scheme(self.msg_history[acp_id].pinged);
         sensor_circle
             .transition().duration(700)

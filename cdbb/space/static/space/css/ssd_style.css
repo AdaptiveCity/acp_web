@@ -1,5 +1,8 @@
 #ssd_main {
     margin: 0.5em;
+    display: inline-block;
+    vertical-align: top;
+    /* padding-top: 2.5em; */
 }
 
 #viz_header {
@@ -11,13 +14,14 @@
 }
 
 #ssd_control {
-
     display: block;
 }
-.header_time_text{
+
+.header_time_text {
     margin-top: 0;
     margin-bottom: 0;
 }
+
 #recent_update {
     font-size: 0.75em;
 }
@@ -36,10 +40,10 @@
 }
 
 #text_collector {
-    margin-top:1em;
+    margin-top: 1em;
     margin-left: 1.5em;
-
     display: inline-block;
+    justify-content: center;
     height: 40em;
     /* width: 45em; */
     border: 1px solid #ccc;

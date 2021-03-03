@@ -16,12 +16,15 @@ class SpaceFloor {
         this.viz_tools = new VizTools();
         this.jb_tools = new VizTools2();
 
-        // Instantiate a Heatmap class
+        // Instantiate a Heatmap class object
         this.heatmap = new HeatMap(this); //initiated at the end of init so we can preload data
 
-        // Instantiate a Splah class
+        // Instantiate a Splah class object
         this.splash = new SplashMap(this);
-      
+
+        // Instantiate an SensorStatusDisplay object
+        this.ssd = new SensorStatusDisplay(this);
+
         // Transform parameters to scale SVG to screen
         this.svg_transform = ""; // updated by set_svg_transform()
         this.next_color = 0;
@@ -35,36 +38,36 @@ class SpaceFloor {
         var parent = this;
 
         //start helper functions object
-        this.viz_tools.init();
+        parent.viz_tools.init();
 
         // Page template DOM elements we'll update
-        this.page_draw_div = document.getElementById("main_drawing_div");
-        this.page_floor_svg = document.getElementById("drawing_svg"); // drawing SVG element
+        parent.page_draw_div = document.getElementById("main_drawing_div");
+        parent.page_floor_svg = document.getElementById("drawing_svg"); // drawing SVG element
         console.log("page_floor_svg", this.page_floor_svg);
-        this.page_coords = document.getElementById("drawing_coords");
+        parent.page_coords = document.getElementById("drawing_coords");
 
         // debug for page x,y coordinates
-        this.page_floor_svg.addEventListener('mousemove', function (e) {
+        parent.page_floor_svg.addEventListener('mousemove', function (e) {
             parent.page_coords.innerHTML = e.clientX + "," + e.clientY;
         });
 
         // object to store BIM data for current floor when returned by BIM api
-        this.floor_bim_object = null;
-        this.floor_number = 0;
-        this.floor_coordinate_system = null;
+        parent.floor_bim_object = null;
+        parent.floor_number = 0;
+        parent.floor_coordinate_system = null;
 
         //Determines choropleth's color scheme
-        this.hue = "g"; /* b=blue, g=green, r=red colours - from ColorBrewer */
+        parent.hue = "g"; /* b=blue, g=green, r=red colours - from ColorBrewer */
 
         //Breaks the data values into 9 ranges, this is completely arbitrary and
         // can be changed with cat_lim
-        this.cat_lim = 9;
+        parent.cat_lim = 9;
 
         //determines how to color in polygon based on X property (e.g. # sensors)
-        this.quantize =
+        parent.quantize =
             d3.scaleQuantize()
-            .domain([0, this.cat_lim])
-            .range(d3.range(this.cat_lim).map(function (i) {
+            .domain([0, parent.cat_lim])
+            .range(d3.range(parent.cat_lim).map(function (i) {
                 return parent.hue + i + "-" + parent.cat_lim;
             }));
 
@@ -72,15 +75,22 @@ class SpaceFloor {
         //values with it (e.g. # sensors)
         parent.rateById = new Map(); //d3 v6 standard
 
-        //Other global variables
+        //-------------------------------------------//
+        //----------Other global variables-----------//
+        //-------------------------------------------//
 
-        this.previous_circle_radius = 0; // set on mouse over, used to remember radius for reset on mouse out.
-        this.defaultScale = 1; /* default scale of map - fits nicely on standard screen */
+        //set parametrs for drawn sensors on the floorplan
+        parent.sensor_opacity=0.5;
+        parent.sensor_radius=0.5; // radius of sensor icon in METERS (i.e. XYZF before transform)
+        parent.sensor_color="purple";
 
-        this.set_legend(parent);
+        parent.previous_circle_radius = 0; // set on mouse over, used to remember radius for reset on mouse out.
+        parent.defaultScale = 1; /* default scale of map - fits nicely on standard screen */
+
+        parent.set_legend(parent);
 
         // Do an http request to the SPACE api, and call handle_building_space_data() on arrival
-        this.get_floor_crate(parent);
+        parent.get_floor_crate(parent);
 
         //--------------------------------------//
         //--------SET UP EVENT LISTENERS--------//
@@ -95,17 +105,31 @@ class SpaceFloor {
 
         //Set up slider to change sensor opacity
         let slider = document.getElementById("sensor_opacity");
-        this.sensor_opacity = slider.value; // Display the default slider value
+        parent.sensor_opacity = slider.value; // Display the default slider value
 
         // Update the current slider value (each time you drag the slider handle)
         slider.oninput = function () {
-            let opacity_value = this.value / 100;
+            let opacity_value = parent.value / 100;
             parent.change_sensor_opacity(parent, opacity_value);
         }
+
+        //Set up a button listener to launch the SSD
+        document.getElementById('show_ssd').addEventListener('click', () => {
+
+            //check if the ssd is present then close it
+                //check if display is not none
+            //and change the button name to start
+
+            //else if display is none then initiate the viz
+            parent.ssd.init(parent.ssd, parent.sensor_metadata);
+            //and change the button name to close
+            //parent.ssd.close(parent.ssd)
+        })
+
         //--------------------------------------//
         //----------END EVENT LISTENERS---------//
         //--------------------------------------//
-        
+
         //declare zooming/panning function
         parent.manage_zoom(parent)
     }
@@ -368,31 +392,35 @@ class SpaceFloor {
     // Returns a "list object" (i.e. dictionary on acp_id) of sensors on
     // given floor#/coordinate system
     //   { "sensors": { "rad-ath-0099" : { <sensor metadata> }, ... }}
-    handle_sensors_metadata(parent, results) {
-        console.log("handle_sensors_metadata() loaded", results);
+    handle_sensors_metadata(parent, recieved_sensor_metadata) {
+        console.log("handle_sensors_metadata() loaded", recieved_sensor_metadata);
+
+        parent.sensor_metadata = recieved_sensor_metadata;
 
         //declare circle properties - opacity and radius
-        let opac = 0.5;
-        let rad = 0.5; // radius of sensor icon in METERS (i.e. XYZF before transform)
-
+        let opac = parent.sensor_opacity;
+        let rad = parent.sensor_radius; // radius of sensor icon in METERS (i.e. XYZF before transform)
+        let col = parent.sensor_color;
         //iterate through results to extract data required to show sensors on the floorplan
-        for (let sensor in results) {
+        //TODO change to jsonPath
+        for (let sensor in recieved_sensor_metadata) {
             try {
-                let x_value = results[sensor]['acp_location_xyz']['x']
+                let x_value = recieved_sensor_metadata[sensor]['acp_location_xyz']['x']
                 // Note y is NEGATIVE for XYZF (anti-clockwise) -> SVG (clockwise)
-                let y_value = -results[sensor]['acp_location_xyz']['y']
-                let floor_id = results[sensor]['acp_location_xyz']['f']
-                let sensor_id = results[sensor]['acp_id'];
+                let y_value = -recieved_sensor_metadata[sensor]['acp_location_xyz']['y']
+                let floor_id = recieved_sensor_metadata[sensor]['acp_location_xyz']['f']
+                let sensor_id = recieved_sensor_metadata[sensor]['acp_id'];
 
                 //draw sensors on screen
                 d3.select("#bim_request").append("circle")
                     .attr("cx", x_value)
                     .attr("cy", y_value)
                     .attr("r", rad)
-                    .attr("id", sensor_id)
+                    .attr("id", sensor_id + "_bim")
+                    .attr("data-acp_id", sensor_id)
                     .attr("class", 'non_heatmap_circle')
                     .style("opacity", opac)
-                    .style("fill", "purple")
+                    .style("fill", col)
                     .attr("transform", parent.svg_transform);
 
             } catch (error) {

@@ -163,7 +163,9 @@ class VizTools {
 
                 console.log('hover over',this,x, y);
 
-                var sensor_id = this.id;
+                //var sensor_id = this.id;
+                //extracted from the data-acp_id property embedded withing the html node
+                let sensor_id=this.dataset.acp_id; 
 
                 //define sensor name on the tooltips
                 //self.tooltip_div.attr("id", sensor_id + "-text");

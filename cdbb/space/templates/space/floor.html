@@ -21,6 +21,10 @@
 <script type="text/javascript" src="{% static 'space/js/viz_tools.js' %}"></script>
 <script type="text/javascript" src="{% static '/js/VizTools2.js' %}"></script>
 
+<!-- ssd files -->
+<link rel="stylesheet" type="text/css" href="{% static 'space/css/ssd_style.css' %}" />
+<script type="text/javascript" src="{% static 'space/js/sensor_status.js' %}"></script>
+
 <!-- LOAD APP SCRIPTS -->
 <!-- Rain class  -->
 <script type='text/javascript' src="{% static 'space/js/heatmap.js' %}"></script>
@@ -129,7 +133,7 @@ Spatial Building and Sensor Data: FLOOR VIEW
                     </div>
 
                     <!-- I know the following should not be hardcoded, this is just for debug -->
-                    <form id="feature_form" >
+                    <form id="feature_form">
                         <label class='form_label' for="features">Feature:</label>
                         <br>
                         <select name="features" id="features_list">
@@ -189,20 +193,65 @@ Spatial Building and Sensor Data: FLOOR VIEW
 
             <!-- close ALL_BUTTONS -->
         </div>
-
         <!-- close LEGEND AND BUTTONS -->
     </div>
 
-</div>
-
-</div>
+    <div id='ssd_main'>
 
 
-<div id="wrapper">
-    <div class="content" id="table_content">
-        <div id="table_container" class="csvTable"></div>
+        <div id='viz_header'>
+
+            <h4 id='start_time' class='header_time_text'>Started: </h4>
+
+            <h5 id='recent_update' class='header_time_text'>Most Recent: <span id='most_recent'></span></h5>
+
+            <!-- <div id='ssd_control' class='rt_status'><span id='ssd_rt_state'
+                    class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='ssd_rt'>RtM not connected</span>
+            </div> -->
+        </div>
+
+
+        <!-- MAIN D3 VIZ DIV FOR SENSOR CIRCLES -->
+        <div id='viz'>
+            <div id="legend_container">
+                <div id="legend_svg"></div>
+            </div>
+        </div>
+
+        <!-- TEXT BOX FOR MOST RECENT MESSAGES -->
+        <div id='text_collector'  style='display: block;'>
+        </div>
+
+        <!-- FORM FOR VIZ TYPE SELECTION -->
+        <form name="ssd_view_form">
+            <span>Select view:</span>
+
+            <input type="radio" id="ssd_sensors" name="ssd_view" value="sensors">
+            <label for="sensors">Sensors</label>
+
+            <!-- <br> -->
+
+            <input type="radio" id="ssd_text" name="ssd_view" value="text">
+            <label for="text">Text</label>
+
+            <!-- <br> -->
+
+            <input type="radio" id="ssd_both" name="ssd_view" value="both" checked>
+            <label for="both">Both</label>
+
+
+        </form>
+
     </div>
+
+    
+
+
+    <!-- end MAIN CONTENT -->
 </div>
+
+</div>
+
 
 <!-- TOOLTIP - will be made visible/invisible as mouse moves over sensors -->
 <div id="tooltip" class="tooltip">
@@ -216,6 +265,7 @@ Spatial Building and Sensor Data: FLOOR VIEW
     console.log('lazy_script');
     var space_floor = new SpaceFloor();
     space_floor.init();
+
 </script>
 {% endblock %}
 <!-- lazy_script -->
