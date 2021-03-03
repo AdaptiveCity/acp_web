@@ -46,6 +46,9 @@ class SensorEdit {
         this.save_button_el = document.getElementById("save_button");
         this.save_button_el.onclick = function (e) { parent.save(parent); };
 
+        this.cancel_button_el = document.getElementById("cancel_button");
+        this.cancel_button_el.onclick = function (e) { parent.cancel(parent); };
+
         this.error_box_init(parent);
 
         this.highlight_acp_comment(this.edit_box);
@@ -156,12 +159,20 @@ class SensorEdit {
     //         User has hit 'SAVE' button
     // ******************************************************
     save(parent) {
-        console.log('user_submitted');
+        console.log('user save');
         let plain_text = parent.edit_box_el.innerText;
         if (parent.validate(parent, plain_text)) {
             parent.plain_text_el.value = plain_text;
             parent.edit_form_el.submit();
         }
+    }
+
+    // ******************************************************
+    //         User has hit 'CANCEL' button
+    // ******************************************************
+    cancel(parent) {
+        console.log('user cancel');
+        location.reload();
     }
 
     // ******************************************************
