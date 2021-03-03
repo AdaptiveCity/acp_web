@@ -74,3 +74,8 @@
     font-style: normal;
     font-size: 0.7em;
 }
+
+.error_div {
+    font-size: large;
+    color: red;
+}

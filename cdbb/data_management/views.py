@@ -50,7 +50,12 @@ class DMSensorView(LoginRequiredMixin, TemplateView):
             if selected_date is not None:
                 query_string += '&date='+selected_date
             response = requests.get(settings.API_READINGS+'get_day/'+self.kwargs['acp_id']+'/'+query_string)
-            sensor_readings = response.json()
+            try:
+                sensor_readings = response.json()
+            except json.decoder.JSONDecodeError:
+                context["SENSOR_READINGS"] = '{ "acp_error": "Sensor readings unavailable" }'
+                return context
+                
             context['SENSOR_READINGS'] = json.dumps(sensor_readings)
 
             return context
@@ -59,11 +64,16 @@ class DMSensorMetadataView(LoginRequiredMixin, TemplateView):
     template_name = 'data_management/sensor_metadata.html'
 
     def get_context_data(self, **kwargs):
-            response = requests.get(settings.API_SENSORS+'get/'+self.kwargs['acp_id']+'/')
-            sensor_metadata = response.json()
-
             context = super().get_context_data(**kwargs)
             context['ACP_ID'] = self.kwargs['acp_id']
+
+            response = requests.get(settings.API_SENSORS+'get/'+self.kwargs['acp_id']+'/')
+            try:
+                sensor_metadata = response.json()
+            except json.decoder.JSONDecodeError:
+                    context["SENSOR_METADATA"] = '{ "acp_error": "Sensor metadata unavailable" }'
+                    return context
+
             context['SENSOR_METADATA'] = json.dumps(sensor_metadata)
 
             return context
@@ -72,11 +82,17 @@ class DMSensorHistoryView(LoginRequiredMixin, TemplateView):
     template_name = 'data_management/sensor_history.html'
 
     def get_context_data(self, **kwargs):
-            response = requests.get(settings.API_SENSORS+'get_history/'+self.kwargs['acp_id']+'/')
-            sensor_history_obj = response.json()
-
             context = super().get_context_data(**kwargs)
             context['ACP_ID'] = self.kwargs['acp_id']
+            response = requests.get(settings.API_SENSORS+'get_history/'+self.kwargs['acp_id']+'/')
+            try:
+                sensor_history_obj = response.json()
+            except json.decoder.JSONDecodeError:
+                context["API_SENSOR_INFO"] = '{ "acp_error": "Sensor history unavailable" }'
+                context['API_SENSOR_HISTORY'] = '[]'
+                context['ACP_TYPE_INFO'] = '{}'
+                return context
+
             if 'sensor_info' in sensor_history_obj:
                 context['API_SENSOR_INFO'] = json.dumps(sensor_history_obj['sensor_info'])
             if 'sensor_history' in sensor_history_obj:
@@ -90,11 +106,17 @@ class DMSensorLocationView(LoginRequiredMixin, TemplateView):
     template_name = 'data_management/sensor_location.html'
 
     def get_context_data(self, **kwargs):
-            context = super().get_context_data(**kwargs)
             acp_id = self.kwargs['acp_id']
+            context = super().get_context_data(**kwargs)
+            context['ACP_ID'] = acp_id
+
             # Get crate_id from the metadata for the selected sensor
             response = requests.get(settings.API_SENSORS+'get/'+acp_id+'/')
-            sensor_info = response.json()
+            try:
+                sensor_info = response.json()
+            except json.decoder.JSONDecodeError:
+                context["API_SENSORS_INFO"] = '{ "acp_error": "Sensor metadata unavailable" }'
+                return context
 
             if "crate_id" in sensor_info:
                 crate_id = sensor_info["crate_id"]
@@ -129,8 +151,6 @@ class DMSensorLocationView(LoginRequiredMixin, TemplateView):
                 sensors_info[acp_id] = sensor_info
                 context['API_SENSORS_INFO'] = json.dumps(sensors_info)
 
-            context['ACP_ID'] = acp_id
-
             return context
 
 class DMSensorEditView(LoginRequiredMixin, TemplateView):
@@ -157,11 +177,14 @@ class DMSensorEditView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-            response = requests.get(settings.API_SENSORS+'get/'+self.kwargs['acp_id']+'/')
-            sensor_metadata = response.json()
-
-            context = super().get_context_data(**kwargs)
             context['ACP_ID'] = self.kwargs['acp_id']
+            response = requests.get(settings.API_SENSORS+'get/'+self.kwargs['acp_id']+'/')
+            try:
+                sensor_metadata = response.json()
+            except json.decoder.JSONDecodeError:
+                context["SENSOR_METADATA"] = '{ "acp_error": "Sensor metadata unavailable" }'
+                return context
+
             context['SENSOR_METADATA'] = json.dumps(sensor_metadata)
 
             return context
