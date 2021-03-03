@@ -8,16 +8,26 @@ body {
     font-family: Arial, Helvetica, sans-serif;
     /* Again just for debug but hey, this is Cambridge */
     background-color: rgba(163, 193, 173, 0.8);
-    margin: 0px;
 }
 
 #bgr_img {
     background-size: cover;
-    position: absolute;
     z-index: -99;
-    width: 100%;
-    height: 100%;
     opacity: 0.1;
+
+    /* Set rules to fill background */
+    min-height: 100%;
+    min-width: 1024px;
+
+    /* Set up proportionate scaling */
+    width: 100%;
+    height: auto;
+
+    /* Set up positioning */
+    position: fixed;
+    top: 0;
+    left: 0;
+
     background-image: url('/static_web/images/demo_bgr2.jpg');
 }
 
@@ -27,19 +37,22 @@ body {
 
 #page_header {
     width: 100%;
-    height: 44px;
+    height: 2.5em;
     display: flex;
     /* overflow-y: auto; */
-    margin: 0.5em;
+    padding-bottom: 0.5em;
 }
 
 #header_left {
     height: 100%;
     display: inline-block;
+    margin: 0.5em;
+
 }
 
 #header_left img {
     height: 100%;
+
 }
 
 #header_middle {
@@ -49,6 +62,8 @@ body {
     display: inline-block;
     min-width: 50px;
     flex-grow: 1;
+    padding-top: 0.25em;
+
 }
 
 #header_user {
@@ -207,16 +222,21 @@ body {
 /* ***************************************************************** */
 
 .contextual_links {
-    background-color: #eeeeee;
-    border-radius: 12px;
+
+    /* background-color: rgba(236, 236, 236, 0.4); */
+    /* jb2328:added a gradient but it might get annoying soon */
+    background-image: linear-gradient(to right, rgba(236, 236, 236, 0.4) , rgba(236, 236, 236, 0.0));
+
+    border-radius: 5px;
+    margin: 0.25em 0em;
 }
 
 .contextual_link_active {
-    background-color: lightblue;
+    background-color: #f1be48ab;
     display: inline-block;
-    font-size: 24px;
+    font-size: 20px;
     /* Increase font-size */
-    padding: 12px 12px 12px 12px;
+    padding: 6px 12px 6px 12px;
     /* Add some padding */
     border-top: 1px solid #aaa;
     /* Add a grey border */
@@ -238,7 +258,7 @@ body {
 .contextual_link {
     background-color: #eeeeee;
     display: inline-block;
-    font-size: 24px;
+    font-size: 20px;
     /* Increase font-size */
     padding: 12px 12px 12px 12px;
     /* Add some padding */
@@ -251,12 +271,23 @@ body {
     border-top-right-radius: 8px;
     vertical-align: bottom;
     cursor: pointer;
+    opacity: 0.65;   
 }
 
 .contextual_link a {
     text-decoration: none;
 }
 
+.contextual_link:hover {
+    transition: background-color 0.65s;
+    background-color: #f1be48;
+    opacity: 1;
+}
+
+.contextual_link_active:hover {
+    transition: background-color 0.65s;
+    background-color: #f1be48;
+}
 
 /* ***************************************************************** */
 /* Generally useful CSS classes                                      */

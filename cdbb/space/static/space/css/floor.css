@@ -131,7 +131,7 @@ select:hover {
 .drawing_div {
     margin: 0em 1em 0em 1em;
     display: inline-block;
-    height: 88%;
+    height: 86%;
     width: 50%;
     display: inline-block;
     border: Gray dashed 1px;
@@ -140,7 +140,7 @@ select:hover {
 .main_content {
     width: 100%;
     /* matches the predefined height of drawing_div */
-    height: 88%;
+    height: 86%;
 }
 
 #drawing_coords {
