@@ -86,23 +86,15 @@ Spatial Building and Sensor Data: Sensor Status Display
     </div>
 
     <!-- FORM FOR VIZ TYPE SELECTION -->
-    <form name="ssd_view_form">
-        <span>Select view:</span>
 
-        <input type="radio" id="ssd_sensors" name="ssd_view" value="sensors">
-        <label for="sensors">Sensors</label>
-
-        <!-- <br> -->
-
-        <input type="radio" id="ssd_text" name="ssd_view" value="text">
-        <label for="text">Text</label>
-
-        <!-- <br> -->
-
-        <input type="radio" id="ssd_both" name="ssd_view" value="both" checked>
-        <label for="both">Both</label>
-
-
+    <form id="ssd_view_form">
+        <label class='form_label' for="ssd_view">Select view:</label>
+        <br>
+        <select name="ssd_view" id="ssd_view_selection">
+            <option value="sensors">Sensors</option>
+            <option value="text">Text</option>
+            <option value="both" selected="selected">Both</option>
+        </select>
     </form>
 
 </div>

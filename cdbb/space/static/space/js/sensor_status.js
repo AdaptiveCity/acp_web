@@ -73,36 +73,46 @@ class SensorStatusDisplay {
         //--------SET UP EVENT LISTENERS--------//
         //--------------------------------------//
 
-        //Set up event listener for the SSD radio buttons
+        //get the default state that the txt_collector started with;
+        //this depends on the page that it loaded in (either block or inline-block)
+        let default_text=document.getElementById("text_collector").style.display;
 
-        let radios = document.forms["ssd_view_form"].elements["ssd_view"];
-        for (var i = 0, max = radios.length; i < max; i++) {
-            radios[i].onclick = function () {
+        //Set up event listener for the SSD drop down selection//
+        document.getElementById('ssd_view_selection').addEventListener('change', function () {
+            //check the default for text_collector
+            console.log('You selected: ', this.value, 'txt default', default_text);
 
-                switch (this.value) {
-                    case 'text':
-                        document.getElementById("text_collector").style.display = "inline-block";
-                        document.getElementById("viz").style.display = "none";
+            switch (this.value) {
+                case 'text':
+                    document.getElementById("text_collector").style.display = "inline-block";
+                    document.getElementById("viz").style.display = "none";
 
-                        break;
+                    break;
 
-                    case 'sensors':
-                        document.getElementById("viz").style.display = "inline-block";
-                        document.getElementById("text_collector").style.display = "none";
-                        break;
+                case 'sensors':
+                    document.getElementById("viz").style.display = "inline-block";
+                    document.getElementById("text_collector").style.display = "none";
+                    break;
 
-                    case 'both':
-                        document.getElementById("viz").style.display = "inline-block";
-                        document.getElementById("text_collector").style.display = "inline-block";
-                        break;
+                case 'both':
+                    //this will have to depend on context since sometimes text-collector will have to be block (e.g. floorpage) and sometimes inline(e.g. ssd)
+                    document.getElementById("viz").style.display = "inline-block";
+                    document.getElementById("text_collector").style.display = default_text;
+                    break;
 
-                    default:
-                        document.getElementById("viz").style.display = "inline-block";
-                        document.getElementById("text_collector").style.display = "inline-block";
-                        break;
-                }
+                default:
+                    document.getElementById("viz").style.display = "inline-block";
+                    document.getElementById("text_collector").style.display = "inline-block";
+                    break;
             }
-        }
+
+            //parent.redraw_heatmap(parent, this.value)
+        });
+
+
+
+
+       
     }
 
     //checks a list of sensors for their acp_type_ids, draws them on screen

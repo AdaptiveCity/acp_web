@@ -98,7 +98,22 @@ Spatial Building and Sensor Data: FLOOR VIEW
             <div id='ssd_control' class='rt_status'><span id='ssd_rt_state'
                     class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='ssd_rt'>RtM not connected</span></div>
 
-            <br>
+            <!-- RAIN CONFIGURATION/HIDE SETTINGS -->
+            <div class='hidden_divs'>
+                <!-- FORM FOR VIZ TYPE SELECTION -->
+
+                <form id="ssd_view_form">
+                    <label class='form_label' for="ssd_view">Select view:</label>
+                    <br>
+                    <select name="ssd_view" id="ssd_view_selection">
+                        <option value="sensors">Sensors</option>
+                        <option value="text">Text</option>
+                        <option value="both" selected="selected">Both</option>
+                    </select>
+                </form>
+                <br>
+
+            </div>
 
             <!-- MAIN SPLASH ACTIVATION -->
             <div class="button_wrapper">
@@ -219,32 +234,12 @@ Spatial Building and Sensor Data: FLOOR VIEW
         </div>
 
         <!-- TEXT BOX FOR MOST RECENT MESSAGES -->
-        <div id='text_collector'  style='display: block;'>
+        <div id='text_collector' style='display: block;'>
         </div>
-
-        <!-- FORM FOR VIZ TYPE SELECTION -->
-        <form name="ssd_view_form">
-            <span>Select view:</span>
-
-            <input type="radio" id="ssd_sensors" name="ssd_view" value="sensors">
-            <label for="sensors">Sensors</label>
-
-            <!-- <br> -->
-
-            <input type="radio" id="ssd_text" name="ssd_view" value="text">
-            <label for="text">Text</label>
-
-            <!-- <br> -->
-
-            <input type="radio" id="ssd_both" name="ssd_view" value="both" checked>
-            <label for="both">Both</label>
-
-
-        </form>
 
     </div>
 
-    
+
 
 
     <!-- end MAIN CONTENT -->
@@ -265,7 +260,6 @@ Spatial Building and Sensor Data: FLOOR VIEW
     console.log('lazy_script');
     var space_floor = new SpaceFloor();
     space_floor.init();
-
 </script>
 {% endblock %}
 <!-- lazy_script -->

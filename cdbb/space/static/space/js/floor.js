@@ -102,7 +102,6 @@ class SpaceFloor {
             parent.manage_zoom.reset(parent);
         })
 
-
         //Set up slider to change sensor opacity
         let slider = document.getElementById("sensor_opacity");
         parent.sensor_opacity = slider.value; // Display the default slider value
