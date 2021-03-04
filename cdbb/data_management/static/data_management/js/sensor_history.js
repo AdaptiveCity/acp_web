@@ -28,7 +28,11 @@ class SensorHistory {
     handle_sensor_history(parent) {
         console.log("handle_sensor_history");
 
-        parent.sort_history(parent);
+        try {
+            parent.sort_history(parent);
+        } catch (e) {
+            API_SENSOR_HISTORY = [];
+        }
 
         // Create DOM object to hold this history list
         let sensor_history_el = document.getElementById('sensor_history');
@@ -41,7 +45,7 @@ class SensorHistory {
         }
         console.log('history_length=',history_length);
 
-        if (history_length == 0) {
+        if (typeof API_SENSOR_INFO == "undefined") {
             let error_div = document.createElement('div');
             error_div.className = 'error_div';
             let error_text = 'An error occurred - no metadata found for this sensor.';
