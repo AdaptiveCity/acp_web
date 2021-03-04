@@ -28,15 +28,34 @@ class SensorHistory {
     handle_sensor_history(parent) {
         console.log("handle_sensor_history");
 
-        parent.sort_history(parent);
+        try {
+            parent.sort_history(parent);
+        } catch (e) {
+            API_SENSOR_HISTORY = [];
+        }
 
         // Create DOM object to hold this history list
         let sensor_history_el = document.getElementById('sensor_history');
 
+        let history_length = 0;
+        try {
+            history_length = API_SENSOR_HISTORY.length;
+        } catch {
+            history_length = 0;
+        }
+        console.log('history_length=',history_length);
+
+        if (typeof API_SENSOR_INFO == "undefined") {
+            let error_div = document.createElement('div');
+            error_div.className = 'error_div';
+            let error_text = 'An error occurred - no metadata found for this sensor.';
+            error_div.appendChild(document.createTextNode(error_text));
+            sensor_history_el.appendChild(error_div);
+            return;
+        }
+
         let history_table = document.createElement('table');
         history_table.className = 'sensor_history_table';
-
-        let history_length = API_SENSOR_HISTORY.length;
 
         let history_index = 0;
 

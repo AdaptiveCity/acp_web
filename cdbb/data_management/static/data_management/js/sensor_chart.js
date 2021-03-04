@@ -143,7 +143,14 @@ function init_feature_select(readings, sensor_metadata) {
     let selected_feature = null; // Will return this value
 
     let feature_count = 0;
-    let features = sensor_metadata["acp_type_info"]["features"]
+    let features;
+    try {
+        features = sensor_metadata["acp_type_info"]["features"]
+    }
+    catch (e) {
+        return;
+    }
+
     let feature_id = null;
 
     // add a select option for each feature in the sensor metadata

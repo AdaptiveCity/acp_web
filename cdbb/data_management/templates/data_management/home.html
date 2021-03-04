@@ -1,6 +1,6 @@
 {% extends "cdbb.html" %}
 {% load static %}
-{% block title %}CDBB Sensor List{% endblock %}
+{% block title %}CDBB Data Management{% endblock %}
 
 {% block head %}
     <!-- Our style sheets -->
@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% block header_title %}
-Sensors
+Data Management
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -46,6 +46,7 @@ Sensors
         </div>
 </div>
 
+<!--
 <div class="card">
         <div class="card_title">
             Sensor types
@@ -68,7 +69,7 @@ Sensors
             BIM
         </div>
         <div class="card_image">
-            <a class="card_link" href="{% url 'dm_sensors' %}"><!-- DEBUG need url for BIM -->
+            <a class="card_link" href="{% url 'dm_sensors' %}">
                 <img src="{% static 'data_management/images/bim_data_management.png' %}"/>
             </a>
         </div>
@@ -79,5 +80,6 @@ Sensors
             </div>
         </div>
 </div>
+-->
 
 {% endblock %}

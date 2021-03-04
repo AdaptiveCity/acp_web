@@ -43,6 +43,10 @@
 .sensor_history_comment {
     display: inline-block;
     vertical-align: top;
+    margin-left: 10px;
+    background-color: white;
+    padding: 5px;
+    border-radius: 4px;
 }
 
 #popup {
@@ -69,4 +73,9 @@
     font-family: monospace;
     font-style: normal;
     font-size: 0.7em;
+}
+
+.error_div {
+    font-size: large;
+    color: red;
 }

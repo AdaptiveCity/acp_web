@@ -6,11 +6,15 @@
     <!-- Our style sheets -->
     <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/sensor_edit.css' %}" />
 
+    <!-- JS files -->
+    <script src="{% static 'js/jsonpath.js' %}" charset="utf-8"></script>
     <script type='text/javascript' src="{% static 'data_management/js/sensor_edit.js' %}"></script>
 
     <!-- Page local script -->
     <script type="text/javascript">
         var ACP_ID = '{{ ACP_ID }}'; // e.g. 'temperature'
+        var ACP_PERSON_ID = '{{ user.get_username }}';
+        var ACP_PERSON_NAME = '{{ user.get_full_name }}';
         // This link will embed the correct acp_id value as was given for this page
         var SENSOR_METADATA = JSON.parse('{{ SENSOR_METADATA|escapejs }}');
     </script>
@@ -27,11 +31,39 @@ Sensor Edit {{ ACP_ID }}
 {% endblock %} <!-- end sensor_breadcrumbs -->
 
 {% block sensor_content %}
+<h2>Edit Sensor Metadata: {{ ACP_ID }}. Editor {{ user.get_full_name }} ({{ user.get_username }})</h2>
 
-<div id="sensor_form">
-    <h2>Sensor Metadata (editor: {{ user.get_username }})</h2>
-    <textarea id="sensor_info">
-    </textarea>
+<form name="edit_form" id="edit_form"
+    method="post"
+    action="{{ SENSOR_METADATA_SAVE_URL }}"
+    spellcheck="false"
+>
+<!--    onsubmit="if(sensor.validate()){this.myDoc.value=oDoc.innerHTML;return true;}return false;"> -->
+{% csrf_token %}
+    <input type="hidden" name="plain_text_value" id="plain_text_value" value='{"foo": "bar"}'>
+    <div id="edit_box" contenteditable="true">
+        <p>No sensor metadata available</p>
+    </div>
+    <p>
+        <button type="button" id="cancel_button">Cancel</button>
+        <button type="button" id="save_button">Save</button>
+        <!--
+        <button type="button" onclick="sensor.format_selected('removeFormat')" >Clean</button>
+        <button type="button" onclick="sensor.format_selected('bold')">Bold</button>
+        <button type="button" name="switchMode" id="switchBox" onchange="sensor.showHTML(this.checked);">
+            Debug HTML
+        </button>
+        -->
+    </p>
+</form>
+
+<div id="error_box" class="error_box">
+    <div id="error_box_close" class="error_box_close">
+        <img src="{% static 'sensor/images/reading_close.png' %}" />
+    </div>
+    <div id="error_box_content" class="error_box_content">
+        foo
+    </div>
 </div>
 
 {% endblock %} <!-- end sensor_content -->
