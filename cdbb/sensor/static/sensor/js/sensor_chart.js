@@ -948,7 +948,7 @@ function draw_chart(readings, feature, feature2) {
             .style('fill', '#333')
             .text(jsonPath(p, feature['jsonpath']) + p_time_str);
     }
-    
+
     chart_graph.transition().duration(200).style('opacity',1)
     //---------------------------------------------------------------------------//
     //---------------------------------------------------------------------------//
