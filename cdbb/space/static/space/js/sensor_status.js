@@ -38,6 +38,8 @@ class SensorStatusDisplay {
 
         parent.status_div_id = 'ssd_rt_state';
         parent.txt_div_id = 'ssd_rt';
+        parent.timer_short; //the socket has been unactive for a while -- color yellow
+        parent.timer_long; //assume the socket connection was lost -- color red
 
         //declare the min max range of values for temp/co2/humidity - will change during runtime
         parent.min_max_range = {
@@ -163,10 +165,6 @@ class SensorStatusDisplay {
     //updates the rtmonitor status icon on the page
     check_status(value, msg) {
         let parent = this;
-
-        let timer_short; //the socket has been unactive for a while -- color yellow
-        let timer_long; //assume the socket connection was lost -- color red
-
         console.log('returned', value, parent)
 
         //make a switch statement instead
@@ -184,11 +182,11 @@ class SensorStatusDisplay {
             }
 
             //clear the previous timer since last message
-            clearTimeout(timer_short);
-            clearTimeout(timer_long);
+            clearTimeout(parent.timer_short);
+            clearTimeout(parent.timer_long);
 
             //set a short timer to know how long the messages haven't been coming in for
-            timer_short = setTimeout(function () {
+            parent.timer_short = setTimeout(function () {
 
                 console.log('no messages for 5mins', new Date())
                 document.getElementById(parent.txt_div_id).innerHTML = 'RTm unresponsive';
@@ -197,7 +195,7 @@ class SensorStatusDisplay {
             }, 1000 * 60 * 5); //5mins
 
             //set a long timer to assume that the socket has been dropped
-            timer_short = setTimeout(function () {
+            parent.timer_long = setTimeout(function () {
 
                 console.log('no messages for 15mins', new Date())
                 document.getElementById(parent.txt_div_id).innerHTML = 'RTm failed';

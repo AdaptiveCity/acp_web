@@ -72,6 +72,8 @@ class HeatMap {
         //set div id's show status change upon connect
         parent.txt_div_id = 'rain_rt';
         parent.status_div_id = 'rain_rt_state'
+        parent.timer_short; //the socket has been unactive for a while -- color yellow
+        parent.timer_long; //assume the socket connection was lost -- color red
 
         //Use get_floor_sensors for the API calls, get_local_sensors for faked offline data
 
@@ -113,8 +115,7 @@ class HeatMap {
     check_status(value, msg) {
         let parent = this; //reference to the heatmap self object
 
-        let timer_short; //the socket has been unactive for a while -- color yellow
-        let timer_long; //assume the socket connection was lost -- color red
+       
 
         console.log('returned', value, parent)
 
@@ -158,11 +159,11 @@ class HeatMap {
                 }
 
                 //clear the previous timer since last message
-                clearTimeout(timer_short);
-                clearTimeout(timer_long);
+                clearTimeout(parent.timer_short);
+                clearTimeout(parent.timer_long);
 
                 //set a short timer to know how long the messages haven't been coming in for
-                timer_short = setTimeout(function () {
+                parent.timer_short = setTimeout(function () {
 
                     console.log('no messages for 5mins', new Date())
                     document.getElementById(parent.txt_div_id).innerHTML = 'RTm unresponsive';
@@ -171,7 +172,7 @@ class HeatMap {
                 }, 1000 * 60 * 5); //5mins
 
                 //set a long timer to assume that the socket has been dropped
-                timer_short = setTimeout(function () {
+                parent.timer_long = setTimeout(function () {
 
                     console.log('no messages for 15mins', new Date())
                     document.getElementById(parent.txt_div_id).innerHTML = 'RTm failed';
