@@ -19,8 +19,6 @@ class SplashMap {
         //a set of useful d3 functions
         self.jb_tools = new VizTools2();
 
-        self.circle_radius = 0.5;
-
         //set div id's show status change upon connect
         self.txt_div_id = 'splash_rt';
         self.status_div_id = 'splash_rt_state'
@@ -46,6 +44,11 @@ class SplashMap {
         console.log('sensors', parent.sub_list)
         //do rtmonitor connect, telling which sensors to subscribe to
         parent.rt_con.connect(parent.check_status.bind(parent), parent.sub_list);
+
+        //get the contextual scaling for ripples
+        parent.circle_radius = parent.master.sensor_radius;
+        parent.svg_scale = parent.master.svg_scale;
+
 
     }
 
@@ -100,8 +103,6 @@ class SplashMap {
             default:
                 break;
         }
-
-
     }
 
 
@@ -111,6 +112,9 @@ class SplashMap {
         self.draw_splash(self, acp_id);
 
         for (var i = 1; i < 3; ++i) {
+
+            //calculate the stroke for the splash's circle
+            let stroke = 4 / (self.svg_scale * i);
 
             let position = {
                 'x': d3.select('#' + acp_id + "_bim").attr('cx'),
@@ -123,14 +127,14 @@ class SplashMap {
                 .attr("cy", position.y)
                 .attr('transform', position.transf)
                 .attr("r", 0)
-                .style("stroke-width", 1 / (2 * i))
+                .style("stroke-width", stroke)
                 .style("fill", 'none')
                 .style('stroke', '#cc0000')
                 .transition()
                 .delay(Math.pow(i, 2.5) * 100)
                 .duration(2000)
                 .ease(d3.easeSin)
-                .attr("r", 5) //radius for waves
+                .attr("r", self.circle_radius * 10) //radius for waves
                 .style("stroke-opacity", 0)
                 .on("interrupt", function () {
                     d3.select(this).remove();

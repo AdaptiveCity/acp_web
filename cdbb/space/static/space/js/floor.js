@@ -25,6 +25,8 @@ class SpaceFloor {
         // Instantiate an SensorStatusDisplay object
         this.ssd = new SensorStatusDisplay(this);
 
+        this.svg_scale;
+
         // Transform parameters to scale SVG to screen
         this.svg_transform = ""; // updated by set_svg_transform()
         this.next_color = 0;
@@ -79,10 +81,14 @@ class SpaceFloor {
         //----------Other global variables-----------//
         //-------------------------------------------//
 
-        //set parametrs for drawn sensors on the floorplan
-        parent.sensor_opacity=0.5;
-        parent.sensor_radius=0.5; // radius of sensor icon in METERS (i.e. XYZF before transform)
-        parent.sensor_color="purple";
+        //----set parametrs for drawn sensors on the floorplan----//
+        parent.sensor_opacity = 0.5;
+        parent.radius_scaling = 6; // a parameters that helps calculates the sensor radius in response to svg scale
+        // radius is calculated wrt scale so we have consistent sensor radius across all spacefloors
+        //calculated in handle_sensors_metadata()
+        parent.sensor_radius;
+        parent.sensor_color = "purple";
+        //--------------------------------------------------------//
 
         parent.previous_circle_radius = 0; // set on mouse over, used to remember radius for reset on mouse out.
         parent.defaultScale = 1; /* default scale of map - fits nicely on standard screen */
@@ -116,7 +122,7 @@ class SpaceFloor {
         document.getElementById('show_ssd').addEventListener('click', () => {
 
             //check if the ssd is present then close it
-                //check if display is not none
+            //check if display is not none
             //and change the button name to start
 
             //else if display is none then initiate the viz
@@ -135,9 +141,9 @@ class SpaceFloor {
 
     //changes the url based on what we'd like to 
     //show on the page following the initial load
-manage_url(){
+    manage_url() {
 
-}
+    }
 
     // Use BIM api to get data for this floor
     get_floor_crate(parent) {
@@ -362,6 +368,8 @@ manage_url(){
 
         // Set the svg scale to fit either x or y
         let svg_scale = x_scale < y_scale ? x_scale : y_scale;
+        parent.svg_scale = svg_scale;
+
         // x offset
         let svg_x = -min_x * svg_scale;
         let svg_y = -min_y * svg_scale;
@@ -401,10 +409,10 @@ manage_url(){
 
         parent.sensor_metadata = recieved_sensor_metadata;
 
-        //declare circle properties - opacity and radius
-        let opac = parent.sensor_opacity;
-        let rad = parent.sensor_radius; // radius of sensor icon in METERS (i.e. XYZF before transform)
-        let col = parent.sensor_color;
+        //declare circle properties - radius
+        parent.sensor_radius = parent.radius_scaling / parent.svg_scale;
+        //let rad = ; // radius of sensor icon in METERS (i.e. XYZF before transform)
+
         //iterate through results to extract data required to show sensors on the floorplan
         //TODO change to jsonPath
         for (let sensor in recieved_sensor_metadata) {
@@ -419,12 +427,12 @@ manage_url(){
                 d3.select("#bim_request").append("circle")
                     .attr("cx", x_value)
                     .attr("cy", y_value)
-                    .attr("r", rad)
+                    .attr("r", parent.sensor_radius)
                     .attr("id", sensor_id + "_bim")
                     .attr("data-acp_id", sensor_id)
                     .attr("class", 'non_heatmap_circle')
-                    .style("opacity", opac)
-                    .style("fill", col)
+                    .style("opacity", parent.sensor_opacity)
+                    .style("fill", parent.sensor_color)
                     .attr("transform", parent.svg_transform);
 
             } catch (error) {
