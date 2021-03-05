@@ -111,7 +111,7 @@ class FloorSpace {
 
         // Remove the "building" crates from the SVG
         let buildings = xml.querySelectorAll('polygon[data-crate_type=building]');
-        floors.forEach( function (el) {
+        buildings.forEach( function (el) {
             console.log("removing crate "+el.id);
             el.remove();
         });
