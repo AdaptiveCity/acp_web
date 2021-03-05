@@ -258,7 +258,7 @@ class VizTools {
             })
             // On a user 'click' of a sensor icon, jump to the 'sensor' page.
             .on('click', function (d) {
-                let sensor_id = this.id;
+                let sensor_id = d3.select(this).node().dataset['acp_id']
                 let sensor_url = SENSOR_LINK.replace('acp_id', sensor_id);
                 console.log('click', sensor_url)
                 window.location = sensor_url;

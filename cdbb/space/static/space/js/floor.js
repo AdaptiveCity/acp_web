@@ -289,6 +289,7 @@ class SpaceFloor {
         d3.select('#drawing_svg').call(zoom);
 
         //zooming/panning for the drawn polygons/rects/sensors
+        //TODO; add programmatic zoom for floorspace pages + disable mouse interaction
         function zoomed({
             transform
         }) {
