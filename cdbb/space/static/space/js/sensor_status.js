@@ -165,7 +165,7 @@ class SensorStatusDisplay {
     //updates the rtmonitor status icon on the page
     check_status(value, msg) {
         let parent = this;
-        console.log('returned', value, parent)
+       // console.log('returned', value, parent)
 
         //make a switch statement instead
         if (value == '1') {
@@ -181,6 +181,7 @@ class SensorStatusDisplay {
                 console.log('something went wrong', err)
             }
 
+            //TODO: put timers below in a separate function
             //clear the previous timer since last message
             clearTimeout(parent.timer_short);
             clearTimeout(parent.timer_long);

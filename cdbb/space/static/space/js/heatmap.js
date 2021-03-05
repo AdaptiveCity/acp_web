@@ -115,7 +115,7 @@ class HeatMap {
     check_status(value, msg) {
         let parent = this; //reference to the heatmap self object
 
-       
+
 
         console.log('returned', value, parent)
 
@@ -241,8 +241,8 @@ class HeatMap {
 
         //get drawn sensors' location on screen
         let sensor_loc = {
-            x: document.getElementById("hm_" + acp_id).getAttribute("cx"),
-            y: document.getElementById("hm_" + acp_id).getAttribute("cy")
+            x: document.getElementById(acp_id + "_hm").getAttribute("cx"),
+            y: document.getElementById(acp_id + "_hm").getAttribute("cy")
         }
 
         //debug location
@@ -419,14 +419,16 @@ class HeatMap {
         //iterate through results to extract data required to show sensors on the floorplan
         for (let sensor in results['sensors']) {
 
+            console.log(sensor, results['sensors'][sensor])
             //TODO USE JSONPATH
             try {
+                let sensor_type = results['sensors'][sensor]['acp_type_id']
                 parent.sensor_data[sensor] = {
                     'acp_id': sensor,
                     'location': results['sensors'][sensor].acp_location_xyz,
                     'crate_id': results['sensors'][sensor].crate_id,
                     'payload': results['readings'][sensor].payload_cooked, // change with jsonPath -- charts.js example
-                    'features': results['sensors'][sensor].acp_type_info.features,
+                    'features': results['sensor_types'][sensor_type].features,
                     'acp_ts': results['readings'][sensor].acp_ts
                 }
 
@@ -1073,7 +1075,8 @@ class HeatMap {
                     .attr("transform", null)
                     .attr("r", rad)
                     .attr("class", 'sensor_node')
-                    .attr("id", sensor_id) //'hm_' +
+                    .attr("id", sensor_id + "_hm") //'hm_' +
+                    .attr('data-acp_id', sensor_id)
                     .style("opacity", parent.sensor_opacity)
                     .style("fill", "pink")
                     .on('mouseover', function (d) {
@@ -1108,7 +1111,7 @@ class HeatMap {
         }
     }
 
-    //show fake path
+    //show fake path on wgb
     fake_path(parent) {
         let sens_list = [
             "elsys-fake-738bf2",

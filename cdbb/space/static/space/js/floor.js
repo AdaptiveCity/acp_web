@@ -114,7 +114,7 @@ class SpaceFloor {
 
         // Update the current slider value (each time you drag the slider handle)
         slider.oninput = function () {
-            let opacity_value = parent.value / 100;
+            let opacity_value = slider.value / 100;
             parent.change_sensor_opacity(parent, opacity_value);
         }
 
@@ -278,7 +278,7 @@ class SpaceFloor {
     change_sensor_opacity(parent, new_opacity) {
         //set new opacity
         // d3.selectAll('.non_heatmap_circle').style('opacity', new_opacity);
-
+        //console.log("changing sensor opacity", new_opacity)
         //if debug set the fake data sensor called sensor nodes
         d3.selectAll('.sensor_node').style('opacity', new_opacity);
     }
