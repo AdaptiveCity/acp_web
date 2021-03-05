@@ -75,7 +75,7 @@ class SensorStatusDisplay {
 
         //get the default state that the txt_collector started with;
         //this depends on the page that it loaded in (either block or inline-block)
-        let default_text=document.getElementById("text_collector").style.display;
+        let default_text = document.getElementById("text_collector").style.display;
 
         //Set up event listener for the SSD drop down selection//
         document.getElementById('ssd_view_selection').addEventListener('change', function () {
@@ -112,7 +112,7 @@ class SensorStatusDisplay {
 
 
 
-       
+
     }
 
     //checks a list of sensors for their acp_type_ids, draws them on screen
@@ -163,7 +163,12 @@ class SensorStatusDisplay {
     //updates the rtmonitor status icon on the page
     check_status(value, msg) {
         let parent = this;
+
+        let timer_short; //the socket has been unactive for a while -- color yellow
+        let timer_long; //assume the socket connection was lost -- color red
+
         console.log('returned', value, parent)
+
         //make a switch statement instead
         if (value == '1') {
             document.getElementById(parent.txt_div_id).innerHTML = 'RTm Connected';
@@ -177,6 +182,29 @@ class SensorStatusDisplay {
             } catch (err) {
                 console.log('something went wrong', err)
             }
+
+            //clear the previous timer since last message
+            clearTimeout(timer_short);
+            clearTimeout(timer_long);
+
+            //set a short timer to know how long the messages haven't been coming in for
+            timer_short = setTimeout(function () {
+
+                console.log('no messages for 5mins', new Date())
+                document.getElementById(parent.txt_div_id).innerHTML = 'RTm unresponsive';
+                document.getElementById(parent.status_div_id).style.backgroundColor = 'rgb(255, 255, 50)';
+
+            }, 1000 * 60 * 5); //5mins
+
+            //set a long timer to assume that the socket has been dropped
+            timer_short = setTimeout(function () {
+
+                console.log('no messages for 15mins', new Date())
+                document.getElementById(parent.txt_div_id).innerHTML = 'RTm failed';
+                document.getElementById(parent.status_div_id).style.backgroundColor = 'rgb(255, 50, 50)';
+
+            }, 1000 * 60 * 15); //15mins
+
 
         } else {}
     }

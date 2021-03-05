@@ -113,6 +113,9 @@ class HeatMap {
     check_status(value, msg) {
         let parent = this; //reference to the heatmap self object
 
+        let timer_short; //the socket has been unactive for a while -- color yellow
+        let timer_long; //assume the socket connection was lost -- color red
+
         console.log('returned', value, parent)
 
         switch (value) {
@@ -152,8 +155,30 @@ class HeatMap {
                 } catch (err) {
                     console.log('something went wrong', err)
                     console.log('msg received:', msg)
-
                 }
+
+                //clear the previous timer since last message
+                clearTimeout(timer_short);
+                clearTimeout(timer_long);
+
+                //set a short timer to know how long the messages haven't been coming in for
+                timer_short = setTimeout(function () {
+
+                    console.log('no messages for 5mins', new Date())
+                    document.getElementById(parent.txt_div_id).innerHTML = 'RTm unresponsive';
+                    document.getElementById(parent.status_div_id).style.backgroundColor = 'rgb(255, 255, 50)';
+
+                }, 1000 * 60 * 5); //5mins
+
+                //set a long timer to assume that the socket has been dropped
+                timer_short = setTimeout(function () {
+
+                    console.log('no messages for 15mins', new Date())
+                    document.getElementById(parent.txt_div_id).innerHTML = 'RTm failed';
+                    document.getElementById(parent.status_div_id).style.backgroundColor = 'rgb(255, 50, 50)';
+
+                }, 1000 * 60 * 15); //15mins
+
                 break;
 
             default:
@@ -1047,7 +1072,7 @@ class HeatMap {
                     .attr("transform", null)
                     .attr("r", rad)
                     .attr("class", 'sensor_node')
-                    .attr("id",  sensor_id)//'hm_' +
+                    .attr("id", sensor_id) //'hm_' +
                     .style("opacity", parent.sensor_opacity)
                     .style("fill", "pink")
                     .on('mouseover', function (d) {
@@ -1144,9 +1169,9 @@ class HeatMap {
     //draws the horizontal line over the colobar bar when hovering over the heatmap
     set_cbar_value(parent, value) {
         //make a global c_conf reference from the parent class
-        let c_conf = parent.jb_tools.canvas_conf(38, 200, 0, 0, 37, 0);//(110, 320, 10, 5, 10, 5);
+        let c_conf = parent.jb_tools.canvas_conf(38, 200, 0, 0, 37, 0); //(110, 320, 10, 5, 10, 5);
 
-        var scale_inv = d3.scaleLinear().domain([parent.min_max_range.min, parent.min_max_range.max]).range([c_conf.height+c_conf.bottom/2, c_conf.bottom/2]);//TODO adjust for top offset as well
+        var scale_inv = d3.scaleLinear().domain([parent.min_max_range.min, parent.min_max_range.max]).range([c_conf.height + c_conf.bottom / 2, c_conf.bottom / 2]); //TODO adjust for top offset as well
         let target_svg = d3.select("#legend_svg");
 
         target_svg.append('g')
@@ -1161,7 +1186,7 @@ class HeatMap {
             .style("fill", 'lime');
 
         let rounded_val = Math.round(value * 100 + Number.EPSILON) / 100
-        
+
         //TODO: CHECK WHY FONT SIZE (4PX) DOESN'T WORK
         parent.jb_tools.add_text(d3.select("#hover_val"), rounded_val, (c_conf.width / 3) + 15, scale_inv(value), "4px", "translate(0,0)") // 0 is the offset from the left
 
@@ -1175,7 +1200,7 @@ class HeatMap {
 
         //configure canvas size and margins, returns and object
         //(width, height,top, right, bottom, left)
-        let c_conf = parent.jb_tools.canvas_conf(38, 200, 0, 0, 37, 0);//canvas_conf(110, 320, 20, 5, 20, 5);
+        let c_conf = parent.jb_tools.canvas_conf(38, 200, 0, 0, 37, 0); //canvas_conf(110, 320, 20, 5, 20, 5);
 
         parent.master.legend_svg = d3.select('#legend_container')
             .append("svg")

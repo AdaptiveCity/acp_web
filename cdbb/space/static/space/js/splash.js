@@ -50,9 +50,12 @@ class SplashMap {
     }
 
     //updates the rtmonitor status icon on the page
-    check_status(value,msg) {
+    check_status(value, msg) {
         let parent = this;
-        
+
+        let timer_short; //the socket has been unactive for a while -- color yellow
+        let timer_long; //assume the socket connection was lost -- color red
+
         switch (value) {
             //RealTime monitor connection successful
             case '1':
@@ -69,13 +72,36 @@ class SplashMap {
                 } catch (err) {
                     console.log('something went wrong', err)
                 }
+
+                //clear the previous timer since last message
+                clearTimeout(timer_short);
+                clearTimeout(timer_long);
+
+                //set a short timer to know how long the messages haven't been coming in for
+                timer_short = setTimeout(function () {
+
+                    console.log('no messages for 5mins', new Date())
+                    document.getElementById(parent.txt_div_id).innerHTML = 'RTm unresponsive';
+                    document.getElementById(parent.status_div_id).style.backgroundColor = 'rgb(255, 255, 50)';
+
+                }, 1000 * 60 * 5); //5mins
+
+                //set a long timer to assume that the socket has been dropped
+                timer_short = setTimeout(function () {
+
+                    console.log('no messages for 15mins', new Date())
+                    document.getElementById(parent.txt_div_id).innerHTML = 'RTm failed';
+                    document.getElementById(parent.status_div_id).style.backgroundColor = 'rgb(255, 50, 50)';
+
+                }, 1000 * 60 * 15); //15mins
+
                 break;
 
             default:
                 break;
         }
 
-       
+
     }
 
 
@@ -87,9 +113,9 @@ class SplashMap {
         for (var i = 1; i < 3; ++i) {
 
             let position = {
-                'x': d3.select('#' + acp_id+"_bim").attr('cx'),
-                'y': d3.select('#' + acp_id+"_bim").attr('cy'),
-                'transf': d3.select('#' + acp_id+"_bim").attr("transform")
+                'x': d3.select('#' + acp_id + "_bim").attr('cx'),
+                'y': d3.select('#' + acp_id + "_bim").attr('cy'),
+                'transf': d3.select('#' + acp_id + "_bim").attr("transform")
             }
 
             let circle = d3.select('#bim_request').append("circle")
@@ -127,7 +153,7 @@ class SplashMap {
 
     draw_splash(self, acp_id) {
         //let multiplier = 1.1; //10% increase self.circle_radius
-        let sensor_circle = d3.select('#' + acp_id+"_bim");
+        let sensor_circle = d3.select('#' + acp_id + "_bim");
         let new_color = 'purple' //self.color_scheme(self.msg_history[acp_id].pinged);
         sensor_circle
             .transition().duration(700)
