@@ -26,10 +26,33 @@ class RTconnect {
             "request_id": "abc"
         };
 
+        this.sub_list;
+        this.parent_callback;
+
+        this.last_msg_received; //will save the ts from the last msg received
+
+        this.periodic_check = 1000 * 60 * 15; //every fifteen mins
+        this.last_msg_timeout = 1000 * 60 * 5; //5mins after last message
+
+        // Value	State	Description
+        // 0	CONNECTING	Socket has been created. The connection is not yet open.
+        // 1	OPEN	The connection is open and ready to communicate.
+        // 2	CLOSING	The connection is in the process of closing.
+        // 3	CLOSED	The connection is closed or couldn't be opened.
+
+        this.state_dict = {
+            0: 'CONNECTING',
+            1: 'OPEN',
+            2: 'CLOSING',
+            3: 'CLOSED'
+        };
     }
 
     connect(callback, sensor_list) {
         let self = this;
+
+        //save the parent callback, since we need it when reconnecting
+        self.parent_callback = callback;
 
         //if the sensor list is undefined, we want to open the socket for all messages
         if (sensor_list != undefined) {
@@ -75,6 +98,10 @@ class RTconnect {
                 console.log("Connected", self.connect_filter)
                 self.socket.send(JSON.stringify(self.connect_filter))
                 callback && callback('1');
+
+                //after the connection was successful, we want to check that 
+                //that the connection is stable every 15(?) minutes
+                self.check_periodic(self);
             }
 
             //-------------------------------//
@@ -85,6 +112,12 @@ class RTconnect {
 
                 //report the data back to the master
                 callback && callback('2', msg_data);
+
+                //clear the previous timer since last message
+                clearTimeout(self.last_msg_received);
+
+                //launch a new timer to check if new messages have arrived in the window of 5 mins
+                self.check_since_last(self)
             }
         };
     }
@@ -93,9 +126,9 @@ class RTconnect {
         console.log("Socket opened OK");
     }
 
-    do_disconnect() {
+    do_disconnect(self) {
         console.log("Disconnecting");
-        socket.close();
+        self.socket.close();
     }
 
     on_error(event) {
@@ -107,5 +140,58 @@ class RTconnect {
         console.log("Socket closed, clean = " + event.wasClean +
             ", code = " + event.code + " (" + closeCodeToString(event.code) + ")" +
             ", reason = " + event.reason);
+    }
+
+    check_periodic(self) {
+
+        //check state of the connection 
+        let socket_state = self.socket.readyState;
+
+        console.log('connection state is', self.state_dict[socket_state], '(' + socket_state + ')');
+
+        //check if the state is disconnecting or disconnected
+        if (socket_state == 2 || socket_state == 3) {
+
+            //discconnect for a good measure
+            self.do_disconnect(self);
+
+            //attempt reconnect
+            self.connect(self.parent_callback, self.sub_list)
+        }
+
+        //else we continue as usual 
+
+        //set a periodic timer to check the state every 15mins
+        setTimeout(function () {
+
+            console.log('checking connection status', new Date())
+            self.check_periodic(self);
+
+        }, self.periodic_check);
+    }
+
+    check_since_last(self) {
+
+        //define a timer that starts ticking after a new message has been received
+        self.last_msg_received = setTimeout(function () {
+
+            console.log('5 mins passed since last msd, checking connection status', new Date())
+            //check state of the connection 
+            let socket_state = self.socket.readyState;
+
+            console.log('connection state is', self.state_dict[socket_state], '(' + socket_state + ')');
+
+            //check if the state is disconnecting or disconnected
+            if (socket_state == 2 || socket_state == 3) {
+
+                //discconnect for a good measure
+                self.do_disconnect(self);
+
+                //attempt reconnect
+                self.connect(self.parent_callback, self.sub_list)
+            }
+
+
+        }, self.last_msg_timeout);
     }
 }

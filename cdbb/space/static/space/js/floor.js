@@ -133,7 +133,11 @@ class SpaceFloor {
         parent.manage_zoom(parent)
     }
 
+    //changes the url based on what we'd like to 
+    //show on the page following the initial load
+manage_url(){
 
+}
 
     // Use BIM api to get data for this floor
     get_floor_crate(parent) {
