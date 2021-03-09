@@ -33,7 +33,8 @@ class SensorStatusDisplay {
         this.rt_mon = new RTconnect();
     }
 
-    // init() called when page loaded
+    // init() called when page loaded#
+    //TODO add optional parameters on whether to load the text, circles or both
     init(parent, predefined_sensor_sub) {
 
         parent.status_div_id = 'ssd_rt_state';
@@ -74,6 +75,11 @@ class SensorStatusDisplay {
         //--------------------------------------//
         //--------SET UP EVENT LISTENERS--------//
         //--------------------------------------//
+        parent.add_buttons(parent);
+
+    }
+
+    add_buttons(parent){
 
         //get the default state that the txt_collector started with;
         //this depends on the page that it loaded in (either block or inline-block)
@@ -110,11 +116,6 @@ class SensorStatusDisplay {
 
             //parent.redraw_heatmap(parent, this.value)
         });
-
-
-
-
-
     }
 
     //checks a list of sensors for their acp_type_ids, draws them on screen
@@ -137,6 +138,7 @@ class SensorStatusDisplay {
 
         //draw the subscribed sensors on screen as circles
         parent.draw_sensors(parent, parent.sub_list);
+        //parent.show_txt_box(parent);
 
         //connect to the rt_monitor client
         parent.rt_mon.connect(parent.check_status.bind(parent), parent.sub_list);
@@ -391,7 +393,9 @@ class SensorStatusDisplay {
 
 
     update_viz(self, acp_id, msg_data) {
-        self.add_hist(self, acp_id, msg_data)
+
+        //if(state=='both')update all, else...only txt or only sensors
+        self.append_text(self, acp_id, msg_data)
         self.set_colorbar(self)
 
         self.draw_ripples(self, acp_id);
@@ -464,7 +468,8 @@ class SensorStatusDisplay {
             });
     }
 
-    add_hist(self, acp_id, msg) {
+    //adds stuff to the text box/to be renamed
+    append_text(self, acp_id, msg) {
         //test2['ccc']={'a':'b', 'c':[]}
         //test2.hasOwnProperty("ccc") // true
         let has_happened = self.msg_history.hasOwnProperty(acp_id);
