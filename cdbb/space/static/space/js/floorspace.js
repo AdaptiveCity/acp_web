@@ -16,7 +16,7 @@ class SpaceFloorspace {
         this.viz_tools = new VizTools();
 
          // Instantiate a Heatmap class
-         this.heatmap = new HeatMap(this);
+         //this.heatmap = new HeatMap(this);
 
         // Transform parameters to scale SVG to screen
         parent.svg_transform = ""; // updated by set_svg_transform()

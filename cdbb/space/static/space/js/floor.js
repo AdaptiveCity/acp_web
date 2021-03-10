@@ -136,7 +136,7 @@ class SpaceFloor {
         //--------------------------------------//
 
         //declare zooming/panning function
-        parent.manage_zoom(parent)
+        //parent.manage_zoom(parent)
     }
 
     //changes the url based on what we'd like to 
@@ -284,41 +284,122 @@ class SpaceFloor {
     }
 
     //allows to scroll into the floorplan/heatmap
-    manage_zoom(parent) {
+    manage_zoom(parent, id) {
 
-        //setup zooming parameters
+        let w = 500;
+        let h = 500;
+        //parametric zoom
+
+        let box =box_f(d3.select('#' + id).node().getBBox());
+
+        // Return { x,y,cx,cy,w,h } for an html DOM element (for us often SVG)
+        function box_f(element) {
+            //console.log('box called with element', element);
+            var bbox = element
+            var cx = bbox.x + bbox.width / 2;
+            var cy = bbox.y + bbox.height / 2;
+            //console.log('box bbox=', bbox);
+            return {
+                x: bbox.x,
+                y: bbox.y,
+                cx: cx,
+                cy: cy,
+                w: bbox.width,
+                h: bbox.height
+            };
+        }
+
+        let mh=document.getElementById("drawing_svg").height.baseVal.value
+        ;
+        let mw=document.getElementById("drawing_svg").width.baseVal.value
+        ;
+
+        let floor=d3.select('#FF').node().getBBox()
+        console.log('box', box, box.x, box.h, 'FF', floor)
+
+        /* scale is the max number of times bounding box will fit into container, capped at 3 times */
+        let scale = Math.min(mw / box.w, mh / box.h, 3);
+
+        /* tx and ty are the translations of the x and y co-ordinates */
+        /* the translation centers the bounding box in the container  */
+        let tx = -box.x + (mw - box.w * scale) / (2 * scale);
+        let ty = -box.y + (mh - box.h * scale) / (2 * scale);
+
+
+        console.log(scale, tx,ty)
+
+
+        let adj_scale=2
+        function random({
+            transform
+        }) {
+            // const [x, y] = data[Math.floor(Math.random() * data.length)];
+            d3.select('#bim_request').transition().duration(1500).call(
+                zoom.transform,
+                d3.zoomIdentity.translate(-0, -0).translate((-box.cx)*5.8+floor.width, (-box.cy)*5.8+floor.height).scale(adj_scale)
+            );
+        }
+
+        // const zoom = d3.zoom()
+        //     .scaleExtent([1, 40])
+        //     .on("zoom", zoomed);
+
         const zoom = d3.zoom()
-            .extent([
-                [-1, -1],
-                [1, 1]
-            ])
-            .scaleExtent([-0.5, 10])
+            // .extent([
+            //     [-1, -1],
+            //     [1, 1]
+            // ])
+            //.scaleExtent([-0.5, 10])
             .on("zoom", zoomed);
 
-        //bind the zoom variable to the svg canvas
-        d3.select('#drawing_svg').call(zoom);
+        d3.select('#bim_request').call(random);
 
-        //zooming/panning for the drawn polygons/rects/sensors
-        //TODO; add programmatic zoom for floorspace pages + disable mouse interaction
+
         function zoomed({
             transform
         }) {
             d3.select('#bim_request').attr("transform", transform);
-            d3.select('#heatmap').attr("transform", transform);
-            d3.select('#heatmap_sensors').attr("transform", transform);
         }
 
-        //resets the panned/zoomed svg to the initial transformation
-        function reset() {
 
-            d3.select('#drawing_svg').call(
-                zoom.transform,
-                d3.zoomIdentity,
-            );
+
+        if (false) //if floor else floorspace
+        {
+            //setup zooming parameters
+            const zoom = d3.zoom()
+                .extent([
+                    [-1, -1],
+                    [1, 1]
+                ])
+                .scaleExtent([-0.5, 10])
+                .on("zoom", zoomed);
+
+            //bind the zoom variable to the svg canvas
+            d3.select('#drawing_svg').call(zoom);
+
+            //zooming/panning for the drawn polygons/rects/sensors
+            //TODO; add programmatic zoom for floorspace pages + disable mouse interaction
+            function zoomed({
+                transform
+            }) {
+                d3.select('#bim_request').attr("transform", transform);
+                d3.select('#heatmap').attr("transform", transform);
+                d3.select('#heatmap_sensors').attr("transform", transform);
+            }
+
+            //resets the panned/zoomed svg to the initial transformation
+            function reset() {
+
+                d3.select('#drawing_svg').call(
+                    zoom.transform,
+                    d3.zoomIdentity,
+                );
+            }
+
+            //enable resetting from an outside scope
+            parent.manage_zoom.reset = reset;
         }
 
-        //enable resetting from an outside scope
-        parent.manage_zoom.reset = reset;
     }
 
     // Append each floor to page SVG but keep invisible for now
@@ -376,6 +457,12 @@ class SpaceFloor {
         parent.svg_transform = "translate(" + svg_x + "," + svg_y + ") " +
             "scale(" + svg_scale + ")";
 
+        return {
+            'x': svg_x,
+            'y': svg_y,
+            'scale': svg_scale
+        }
+
         //console.log("svg_transform", parent.svg_transform);
     }
 
@@ -410,6 +497,7 @@ class SpaceFloor {
         parent.sensor_metadata = recieved_sensor_metadata;
 
         //declare circle properties - radius
+        //TODO: perhaps worth looking into changing radius based on parent.page_floor_svg.clientWidth;
         parent.sensor_radius = parent.radius_scaling / parent.svg_scale;
         //let rad = ; // radius of sensor icon in METERS (i.e. XYZF before transform)
 
