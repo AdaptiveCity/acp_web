@@ -16,14 +16,8 @@ class SpaceFloor {
         this.viz_tools = new VizTools();
         this.jb_tools = new VizTools2();
 
-        // Instantiate a Heatmap class object
-        this.heatmap = new HeatMap(this); //initiated at the end of init so we can preload data
-
-        // Instantiate a Splah class object
-        this.splash = new SplashMap(this);
-
-        // Instantiate an SensorStatusDisplay object
-        this.ssd = new SensorStatusDisplay(this);
+        //check if any apps available
+        this.preload_apps(this);
 
         this.svg_scale;
 
@@ -33,11 +27,22 @@ class SpaceFloor {
         this.sensor_data; //metadata
         this.sensor_readings = {}; //sensor reading data
         this.sensors_in_crates = {};
+
+        this.display_crate_ids = false; // optional
     }
 
     // init() called when page loaded
     init() {
-        var parent = this;
+
+        if (typeof CRATE_ID == "undefined") {
+            let message_el = document.getElementById("message");
+            message.innerText = "No in-building location available for this sensor.";
+            return;
+        }
+
+        console.log("Loading Floorspace for " + CRATE_ID);
+
+        let parent = this;
 
         //start helper functions object
         parent.viz_tools.init();
@@ -101,8 +106,6 @@ class SpaceFloor {
         //--------------------------------------//
         //--------SET UP EVENT LISTENERS--------//
         //--------------------------------------//
-
-
         //Set up event listener to RESET FLOORPLAN/HEATMAP
         document.getElementById('reset_zoom').addEventListener('click', () => {
             parent.manage_zoom.reset(parent);
@@ -117,6 +120,8 @@ class SpaceFloor {
             let opacity_value = slider.value / 100;
             parent.change_sensor_opacity(parent, opacity_value);
         }
+
+        //TODO; move to SSD class;
 
         //Set up a button listener to launch the SSD
         document.getElementById('show_ssd').addEventListener('click', () => {
@@ -134,15 +139,38 @@ class SpaceFloor {
         //--------------------------------------//
         //----------END EVENT LISTENERS---------//
         //--------------------------------------//
-
-        //declare zooming/panning function
-        parent.manage_zoom(parent)
     }
 
     //changes the url based on what we'd like to 
     //show on the page following the initial load
     manage_url() {
 
+    }
+
+    //check if any of the created apps are embedded in the template + available to initiate
+    preload_apps(parent) {
+        //check for APP availablity
+        try {
+            // Instantiate a Heatmap class object
+            parent.heatmap = new HeatMap(parent); //initiated at the end of init so we can preload data
+            console.log('Rain preloaded')
+        } catch (error) {
+            console.log('Rain not available', error)
+        }
+        try {
+            // Instantiate a Splah class object
+            parent.splash = new SplashMap(parent);
+            console.log('Splash preloaded')
+        } catch (error) {
+            console.log('Splash not available', error)
+        }
+        try {
+            // Instantiate an SensorStatusDisplay object
+            parent.ssd = new SensorStatusDisplay(parent);
+            console.log('SSD preloaded')
+        } catch (error) {
+            console.log('SSD not available', error)
+        }
     }
 
     // Use BIM api to get data for this floor
@@ -169,6 +197,9 @@ class SpaceFloor {
         parent.floor_coordinate_system = crate["acp_location"]["system"];
         console.log("loaded BIM data for floor", parent.floor_coordinate_system + "/" + parent.floor_number)
 
+        //show BIM metadata on the side (if available)
+        parent.show_bim_metadata(parent, crate);
+
         parent.get_floor_svg(parent);
     }
 
@@ -192,9 +223,20 @@ class SpaceFloor {
         request.send();
     }
 
-    handle_floor_svg(parent, xml) {
-        console.log("handle_floor_svg() loaded floor SVG", xml);
+    handle_floor_svg(parent, space_info) {
+        console.log("handle_floor_svg() loaded floor SVG", space_info);
         let scale = 8.3; //DEBUG
+
+        //let xmlStr = atob(space_info["svg_encoded"]); // decode the SVG string
+        // let xmlStr = space_info["svg_encoded"]; // decode the SVG string
+
+        // const parser = new DOMParser();
+
+        // const xml = parser.parseFromString(xmlStr, "application/xml");
+
+        // console.log('xml', xml,xmlStr )
+
+        let xml = space_info;
 
         // Parent of the SVG polygons is <g id="bim_request"...>
         let bim_request = xml.getElementById('bim_request');
@@ -204,13 +246,22 @@ class SpaceFloor {
         floors.forEach(function (el) {
             console.log("moving floor polygon to beginning: " + el.id);
             //el.remove();
+            //we still needto prepend the floors svg since it is required to determine heatmap's boundary space
             bim_request.prepend(el);
+            d3.select(el).style('fill', 'none');
+            //d3.select(el).on('click',null);
+
+            //    d3.select(el).style('fill','none');
         });
+
         let buildings = xml.querySelectorAll('polygon[data-crate_type=building]');
         buildings.forEach(function (el) {
             console.log("moving building polygon to beginning: " + el.id);
-            bim_request.prepend(el);
+            el.remove();
+            //bim_request.prepend(el);
         });
+
+        console.log('appending to page_floor', parent.page_floor_svg, xml.querySelector('#bim_request'))
 
         parent.page_floor_svg.appendChild(xml.querySelector('#bim_request'));
 
@@ -265,12 +316,27 @@ class SpaceFloor {
             });
 
 
+        if (parent.display_crate_ids) {
+            let rooms = document.querySelectorAll('polygon[data-crate_type=room]');
+            let svg_el = document.querySelector("#bim_request");
+            rooms.forEach(function (room) {
+                let svgNS = "http://www.w3.org/2000/svg"; // sigh... thank you 1999
+                let box = parent.viz_tools.box(room);
+                let x = box.cx * parent.svg_scale + parent.svg_x;
+                let y = box.cy * parent.svg_scale + parent.svg_y;
+                let text = document.createElementNS(svgNS, "text");
+                text.setAttribute('x', x);
+                text.setAttribute('y', y);
+                text.textContent = room.id;
+                svg_el.appendChild(text);
+            });
+        }
+
         // call SENSORS api to get the metadata for sensors on this floor
         parent.get_sensors_metadata(parent);
 
-        // //once all of the data is loaded/svg rendered, init the heatmap in the background
-        // parent.heatmap.init()
-
+        //declare zooming/panning function
+        parent.manage_zoom(parent)
     }
 
     //TODO-modify for real vs fake sensors
@@ -284,7 +350,42 @@ class SpaceFloor {
     }
 
     //allows to scroll into the floorplan/heatmap
-    manage_zoom(parent) {//(parent, id)
+    manage_zoom(parent) { //(parent, id)
+
+        //setup zooming parameters
+        const zoom = d3.zoom()
+            .extent([
+                [-1, -1],
+                [1, 1]
+            ])
+            .scaleExtent([-0.5, 10])
+            .on("zoom", zoomed);
+
+        //bind the zoom variable to the svg canvas
+        d3.select('#drawing_svg').call(zoom);
+
+        //zooming/panning for the drawn polygons/rects/sensors
+        //TODO; add programmatic zoom for floorspace pages + disable mouse interaction
+        function zoomed({
+            transform
+        }) {
+            d3.select('#bim_request').attr("transform", transform);
+            d3.select('#heatmap').attr("transform", transform);
+            d3.select('#heatmap_sensors').attr("transform", transform);
+        }
+
+        //resets the panned/zoomed svg to the initial transformation
+        function reset() {
+
+            d3.select('#drawing_svg').call(
+                zoom.transform,
+                d3.zoomIdentity,
+            );
+        }
+
+        //enable resetting from an outside scope
+        parent.manage_zoom.reset = reset;
+
 
         // let w = 500;
         // let h = 500;
@@ -363,44 +464,15 @@ class SpaceFloor {
         //     d3.select('#bim_request').attr("transform", transform);
         // }
 
+        //check that we do not highlight the entire floor by accident
+        // let floor_id = document.querySelectorAll('polygon[data-crate_type=floor]')[0].id;
 
+        // if (CRATE_ID != floor_id) {
 
-        if (true) //if floor else floorspace
-        {
-            //setup zooming parameters
-            const zoom = d3.zoom()
-                .extent([
-                    [-1, -1],
-                    [1, 1]
-                ])
-                .scaleExtent([-0.5, 10])
-                .on("zoom", zoomed);
+        //     d3.select("#" + CRATE_ID).attr("style", "stroke: #448844").style('fill', '#3CB371');
 
-            //bind the zoom variable to the svg canvas
-            d3.select('#drawing_svg').call(zoom);
+        // }
 
-            //zooming/panning for the drawn polygons/rects/sensors
-            //TODO; add programmatic zoom for floorspace pages + disable mouse interaction
-            function zoomed({
-                transform
-            }) {
-                d3.select('#bim_request').attr("transform", transform);
-                d3.select('#heatmap').attr("transform", transform);
-                d3.select('#heatmap_sensors').attr("transform", transform);
-            }
-
-            //resets the panned/zoomed svg to the initial transformation
-            function reset() {
-
-                d3.select('#drawing_svg').call(
-                    zoom.transform,
-                    d3.zoomIdentity,
-                );
-            }
-
-            //enable resetting from an outside scope
-            parent.manage_zoom.reset = reset;
-        }
 
     }
 
@@ -496,8 +568,65 @@ class SpaceFloor {
     handle_sensors_metadata(parent, recieved_sensor_metadata) {
         console.log("handle_sensors_metadata() loaded", recieved_sensor_metadata);
 
+        //save the the received data as a global
         parent.sensor_metadata = recieved_sensor_metadata;
 
+        //show sensor metadata on the side (if available)
+        parent.show_sensor_metadata(parent);
+
+        //draw sensors over the floorplan
+        parent.attach_sensors(parent);
+
+        //activate tooltips on hover
+        parent.viz_tools.tooltips();
+        //fill polygons based on # of sensors 
+        parent.get_choropleth(parent);
+    }
+
+    //displays BIM metadata on the side, when loaded a floorspace page
+    show_bim_metadata(parent, crate) {
+
+        try {
+            console.log("handle_floorspace_crate got", crate);
+            //globals
+            //floorspace_bim_object = crate;
+            parent.floor_number = crate["acp_location"]["f"];
+            parent.floor_coordinate_system = crate["acp_location"]["system"];
+            console.log("loaded BIM data for crate ", crate["crate_id"],
+                parent.floor_coordinate_system + "/" + parent.floor_number);
+
+            let floorspace_bim_txt = JSON.stringify(crate, null, 2);
+            var bim_div = document.getElementById('bim_content')
+            bim_div.innerHTML = "<pre>" + floorspace_bim_txt + "</pre>";
+        } catch (error) {
+            console.log('nowhere to show the bim metadata', error)
+
+        }
+    }
+
+    //displays sensor metadata on the side, when loaded a floorspace page
+    show_sensor_metadata(parent) {
+        try {
+            let sensors = parent.sensor_metadata;
+            let txt = JSON.stringify(sensors, null, 2);
+
+            if (sensors == {}) {
+                txt = 'no sensors are present in this crate';
+            }
+
+            // Display the json sensor metadata on the page in #SENSOR_container
+            var sensor_div = document.getElementById('sensor_content')
+            sensor_div.innerHTML = "<pre>" + txt + "</pre>";
+
+        } catch (error) {
+            console.log('nowhere to show the sensors metadata', error)
+        }
+    }
+
+    //draw sensors on the floorplan
+    attach_sensors(parent) {
+
+        let recieved_sensor_metadata = parent.sensor_metadata;
         //declare circle properties - radius
         //TODO: perhaps worth looking into changing radius based on parent.page_floor_svg.clientWidth;
         parent.sensor_radius = parent.radius_scaling / parent.svg_scale;
@@ -530,12 +659,7 @@ class SpaceFloor {
             }
 
         }
-        //activate tooltips on hover
-        parent.viz_tools.tooltips();
-        //fill polygons based on # of sensors 
-        parent.get_choropleth(parent);
     }
-
 
     //--------------------------------------------------//
     //----------------choropleth definition----------------//

@@ -26,16 +26,26 @@ class HeatMap {
         //--------------------------------------//
         //--------SET UP EVENT LISTENERS--------//
         //--------------------------------------//
+        parent.setup_buttons(parent);
 
-        //Set up event listener for the HEATMAP BUTTON
-        document.getElementById('show_rain').addEventListener('click', () => {
+    }
 
-            //init the heatmap
-            self.init(self);
+    //TODO: add more buttons from the heatmaps class rather than floor
+    setup_buttons(parent) {
+        try {
+            //Set up event listener for the HEATMAP BUTTON
+            document.getElementById('show_rain').addEventListener('click', () => {
 
-            //first reset the drawn floorplan to it's original location
-            self.master.manage_zoom.reset(self);
-        })
+                //init the heatmap
+                self.init(self);
+
+                //first reset the drawn floorplan to it's original location
+                self.master.manage_zoom.reset(self);
+            })
+        } catch (error) {
+            console.log(error, 'no button present - heatmap not available')
+        }
+
     }
 
     // init() called when page loaded
@@ -67,7 +77,7 @@ class HeatMap {
 
         //heatmap opacity
         parent.default_opacity = 0.75;
-        parent.sensor_opacity = 0.1;
+        parent.sensor_opacity = parent.master.sensor_opacity;
 
         //set div id's show status change upon connect
         parent.txt_div_id = 'rain_rt';
@@ -228,6 +238,9 @@ class HeatMap {
 
         //load the new heatmap
         parent.show_heatmap(parent);
+
+        //update tooltips
+        parent.master.viz_tools.tooltips();
     }
 
     //Main raindrop function for incoming data:
@@ -402,7 +415,6 @@ class HeatMap {
             //-----------------------------------//
             parent.show_heatmap(parent);
             parent.master.viz_tools.tooltips();
-
         });
 
     }
@@ -730,6 +742,7 @@ class HeatMap {
         let h = parent.master.page_floor_svg.clientHeight;
         let w = parent.master.page_floor_svg.clientWidth;
 
+        //we check for the invisible floor element since it has necessary svg information required to draw the heatmap
         let floor = document.querySelector("[data-crate_type='floor']");
 
         //!!!-----------IMPORTANT--------------!!//
@@ -748,7 +761,8 @@ class HeatMap {
             x_off: x_offset,
             y_off: y_offset
         }
-        parent.consolidated_svg=consolidated_svg;
+
+        parent.consolidated_svg = consolidated_svg;
         //-----------------END-------------------//
 
         let counter = 0;
@@ -756,6 +770,7 @@ class HeatMap {
 
         let rect_count = 0;
 
+        //iterate through a list of polygons aka rooms and fill them with individual heatmaps
         d3.selectAll('polygon').nodes().forEach(element => {
             // let bbox = element.getBoundingClientRect();
             let has_sensors = crates_with_sensors_list.includes(element.id);
@@ -774,7 +789,7 @@ class HeatMap {
                 let offset = 0;
 
                 counter++;
-
+                //iterate throught rows and columns and fill in the selected polygon with rectangles representing heatmap cells
                 for (let i = pol_left; i < pol_w + pol_left; i += parent.rect_size) {
                     for (let u = pol_top; u < pol_h + pol_top; u += parent.rect_size) {
 
@@ -817,12 +832,15 @@ class HeatMap {
                                 .attr("width", parent.rect_size - offset)
                                 .attr("height", parent.rect_size - offset)
                                 .style('opacity', 0)
-                                .style('stroke-opacity', 0)
+                                .attr('stroke', 'none')
+
+                                //metadata attributes
                                 .attr('data-crate', selected_crate)
                                 .attr('data-loc', [loc.x, loc.y, loc.scale])
                                 .attr('data-type', selected_feature)
                                 .attr('data-value', cell_value)
 
+                                //mouse interactions
                                 .on("mouseover", function (d) {
                                     //on mouseover show th cell's value on the colorbar
                                     parent.set_cbar_value(parent, cell_value)
@@ -851,15 +869,14 @@ class HeatMap {
         let results = parent.sensor_data;
         //redraw the sensors on the newly generated heatmap;
         //mandatory passing the consolidated svg object due to svg offsetting
-        this.attach_sensors(parent, results, consolidated_svg)
+        parent.attach_sensors(parent, results, consolidated_svg)
 
         console.log('results', results)
 
         //debug only, "parent" now working somehow
-        this.set_colorbar(parent);
+        parent.set_colorbar(parent);
 
         console.log('done', Date.now())
-
     }
 
     //first get all rects on a floor, then reiterate for rooms
@@ -1052,11 +1069,11 @@ class HeatMap {
         //iterate through results to extract data required to show sensors on the floorplan
         //change name from results to else
         let results = parent.sensor_data;
-        this.attach_sensors(parent, results, scale)
+        parent.attach_sensors(parent, results, scale)
         console.log(results)
 
         //debug only, "parent" now working somehow
-        this.set_colorbar(parent);
+        parent.set_colorbar(parent);
 
         console.log('done', Date.now())
 
@@ -1081,8 +1098,8 @@ class HeatMap {
     attach_sensors(parent, results, svg_offset) {
         let scale = svg_offset.scale;
         let main_svg = d3.select('#drawing_svg').append('g').attr('id', 'heatmap_sensors');
+
         //declare circle properties - opacity and radius
-        let opac = 1;
         let rad = 4; // radius of sensor icon in METERS (i.e. XYZF before transform)
         for (let sensor in results) {
             try {
@@ -1103,8 +1120,9 @@ class HeatMap {
                     .attr("class", 'sensor_node')
                     .attr("id", sensor_id + "_hm") //'hm_' +
                     .attr('data-acp_id', sensor_id)
-                    .style("opacity", parent.sensor_opacity)
+                    .style("opacity", parent.master.sensor_opacity)
                     .style("fill", "pink")
+                    .style('stroke', 'black')
                     .on('mouseover', function (d) {
                         console.log(sensor_id, results[sensor]);
                     })
@@ -1285,35 +1303,34 @@ class HeatMap {
     //recalculations are made whenever a new heatmap is selected
     get_min_max(parent, feature) {
 
-        let min = 999;
-        let max = -999;
+        let value_array = [];
 
         //iterate through the data based on requested feature and extract min/max values
         for (let reading in parent.sensor_data) {
 
-            console.log('minmax', reading, parent.sensor_data[reading].payload)
-            let val = parent.sensor_data[reading].payload[feature]
+            //console.log('minmax', reading, parent.sensor_data[reading].payload)
+            let val = parent.sensor_data[reading].payload[feature];
 
-            if (val > max) {
-                max = val;
-            }
-            if (val < min) {
-                min = val;
+            if (val != undefined) {
+                value_array.push(val);
             }
         }
 
+        console.log('value arr', value_array)
+
         //reset the main variable
         parent.min_max_range = {
-            max: max,
-            min: min
+            max: q90(value_array), //max or the 90th percentile value to reduce outliers
+            min: q10(value_array), //min or the 10th percentile value to reduce outliers
+            max_abs: Math.max(...value_array), //absolute max
+            min_abs: Math.min(...value_array) //absolute min
         };
 
         //reset min_max values for scaling
         parent.color_scheme.domain([parent.min_max_range.min, parent.min_max_range.max]);
         parent.animation_delay.domain([parent.min_max_range.min, parent.min_max_range.max]);
 
-        console.log('minmax', min, max)
-
+        console.log('new minmax:', parent.min_max_range, 'feature:', feature);
     }
     //-----------------------------------------------------------------//
     //-------------------END UTILITY FUNCTIONS-------------------------//

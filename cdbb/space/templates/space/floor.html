@@ -20,14 +20,17 @@
 <script type="text/javascript" src="{% static 'js/parse_readings.js' %}"></script>
 <script type="text/javascript" src="{% static 'space/js/viz_tools.js' %}"></script>
 <script type="text/javascript" src="{% static '/js/VizTools2.js' %}"></script>
+<script type="text/javascript" src="{% static '/js/maths.js' %}"></script>
+
+<!-- LOAD APP SCRIPTS -->
 
 <!-- ssd files -->
 <link rel="stylesheet" type="text/css" href="{% static 'space/css/ssd_style.css' %}" />
 <script type="text/javascript" src="{% static 'space/js/sensor_status.js' %}"></script>
 
-<!-- LOAD APP SCRIPTS -->
 <!-- Rain class  -->
 <script type='text/javascript' src="{% static 'space/js/heatmap.js' %}"></script>
+
 <!-- Splash class  -->
 <script type='text/javascript' src="{% static 'space/js/splash.js' %}"></script>
 
@@ -94,9 +97,6 @@ Spatial Building and Sensor Data: FLOOR VIEW
     <div id="legend_and_buttons">
         <div id="legend_container"></div>
 
-
-
-
         <!-- close LEGEND AND BUTTONS -->
     </div>
 
@@ -127,81 +127,6 @@ Spatial Building and Sensor Data: FLOOR VIEW
         </div>
 
     </div>
-
-
-
-    <style>
-        /* The side navigation menu */
-        .sidenav {
-            height: 100%;
-            /* 100% Full-height */
-            width: 0;
-            /* 0 width - change this with JavaScript */
-            position: fixed;
-            /* Stay in place */
-            z-index: 1;
-            /* Stay on top */
-            top: 0;
-            /* Stay at the top */
-            right: 0;
-            background-color: rgba(17, 94, 103, 0.5);
-
-            /* rgba(23, 76, 80, 0.486); Black */
-            overflow-x: hidden;
-            /* Disable horizontal scroll */
-            padding-top: 60px;
-            /* Place content 60px from the top */
-            transition: 0.5s;
-            /* 0.5 second transition effect to slide in the sidenav */
-        }
-
-        /* The navigation menu links */
-        .closebtn {
-            position: absolute;
-            top: 0;
-            margin-right: 50px;
-            padding: 0.5em 0.5em;
-            font-size: 36px;
-            color: #f1f1f1;
-            display: block;
-            text-decoration: none;
-            transition: 0.3s;
-        }
-
-        /* When you mouse over the navigation links, change their color */
-        .closebtn:hover {
-            color: rgb(241, 190, 72);
-        }
-
-
-        .all_buttons {
-            margin: 1em;
-            bottom: 0;
-        }
-
-        /* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
-        @media screen and (max-height: 450px) {
-            .sidenav {
-                padding-top: 15px;
-            }
-
-            .sidenav a {
-                font-size: 18px;
-            }
-        }
-
-        #hamburger_img {
-            height: 2em;
-            width: 2em;
-        }
-        #wrapped_ham{
-            display: inline-block;
-            float:right;
-            margin: 0.25em;;
-
-        }
-    </style>
-
 
     <div id="mySidenav" class="sidenav">
         <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>

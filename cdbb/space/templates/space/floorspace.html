@@ -19,6 +19,7 @@
     <script type="text/javascript" src="{% static 'js/parse_readings.js' %}"></script>
     <script type="text/javascript" src="{% static 'space/js/viz_tools.js' %}"></script>
     <script type="text/javascript" src="{% static '/js/VizTools2.js' %}"></script>
+    <script type="text/javascript" src="{% static '/js/maths.js' %}"></script>
     
     <script type='text/javascript' src="{% static 'space/js/RTconnect.js' %}"></script>
 
@@ -27,6 +28,8 @@
 
     <!-- building.js defines class SpaceBuilding -->
     <script type='text/javascript' src="{% static 'space/js/floorspace.js' %}"></script>
+    <script type='text/javascript' src="{% static 'space/js/floor.js' %}"></script>
+
 
     <!-- Page local script -->
     <script type="text/javascript">
@@ -98,7 +101,7 @@ Spatial Building and Sensor Data: FLOORSPACE VIEW
 {% block lazy_script %}
 <script>
     console.log('lazy_script');
-    var space_floorspace = new SpaceFloorspace();
+    var space_floorspace = new SpaceFloor();
     space_floorspace.init();
 </script>
 {% endblock %} <!-- lazy_script -->
