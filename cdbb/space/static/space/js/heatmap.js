@@ -26,12 +26,12 @@ class HeatMap {
         //--------------------------------------//
         //--------SET UP EVENT LISTENERS--------//
         //--------------------------------------//
-        parent.setup_buttons(parent);
+        self.setup_buttons(self);
 
     }
 
     //TODO: add more buttons from the heatmaps class rather than floor
-    setup_buttons(parent) {
+    setup_buttons(self) {
         try {
             //Set up event listener for the HEATMAP BUTTON
             document.getElementById('show_rain').addEventListener('click', () => {
@@ -1327,8 +1327,8 @@ class HeatMap {
         };
 
         //reset min_max values for scaling
-        parent.color_scheme.domain([parent.min_max_range.min, parent.min_max_range.max]);
-        parent.animation_delay.domain([parent.min_max_range.min, parent.min_max_range.max]);
+        parent.color_scheme.domain([parent.min_max_range.min_abs, parent.min_max_range.max_abs]);
+        parent.animation_delay.domain([parent.min_max_range.min_abs, parent.min_max_range.max_abs]);
 
         console.log('new minmax:', parent.min_max_range, 'feature:', feature);
     }

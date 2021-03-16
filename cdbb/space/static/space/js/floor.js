@@ -32,7 +32,7 @@ class SpaceFloor {
     }
 
     // init() called when page loaded
-    init() {
+    init(mode) {
 
         if (typeof CRATE_ID == "undefined") {
             let message_el = document.getElementById("message");
@@ -43,6 +43,9 @@ class SpaceFloor {
         console.log("Loading Floorspace for " + CRATE_ID);
 
         let parent = this;
+
+        //determine viz mode - either floor or floorspace:
+        mode == (!undefined && 'floorspace') ? parent.floorspace = true : parent.floorspace = false;
 
         //start helper functions object
         parent.viz_tools.init();
