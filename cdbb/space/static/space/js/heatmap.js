@@ -15,7 +15,7 @@ class HeatMap {
         self.master = floorspace;
 
         //declare the url to request data from
-        self.query_url = "https://tfc-app9.cl.cam.ac.uk/api/readings/get_floor_feature/";
+        self.query_url = "https://cdbb.uk/api/readings/get_floor_feature/";
 
         // Instatiante an RTmonitor class
         self.rt_con = new RTconnect(self);
@@ -114,8 +114,6 @@ class HeatMap {
     //updates the rtmonitor status icon on the page
     check_status(value, msg) {
         let parent = this; //reference to the heatmap self object
-
-
 
         console.log('returned', value, parent)
 
@@ -419,7 +417,9 @@ class HeatMap {
         //iterate through results to extract data required to show sensors on the floorplan
         for (let sensor in results['sensors']) {
 
-            console.log(sensor, results['sensors'][sensor])
+            console.log('sensor', sensor, results['sensors'][sensor])
+            // Note jsonPath always returns a list of result, or false if path not found.
+            //let path_val = jsonPath(d, feature['jsonpath']); //d.payload_cooked.temperature;
             //TODO USE JSONPATH
             try {
                 let sensor_type = results['sensors'][sensor]['acp_type_id']
@@ -644,9 +644,12 @@ class HeatMap {
             let y_value = -parent.sensor_data[sensor.acp_id]['location']['y'];
 
             //pass the location to the sensor_loc object and adjust the scale for rendering
+            //+add the offset from the svg matrix transformation
+
+
             sensor_loc = {
-                x: x_value * scale,
-                y: y_value * scale
+                x: x_value * scale + parent.consolidated_svg.x_off,
+                y: y_value * scale + parent.consolidated_svg.y_off
             };
 
             //get the distance from the sensor_loc to the cell (rect) location
@@ -718,9 +721,10 @@ class HeatMap {
         let selected_feature = document.getElementById('features_list').value;
         parent.get_min_max(parent, selected_feature);
 
+        //make all polygons white so the underlying color does not interfere with the heatmap
         d3.selectAll('polygon').attr('class', 'g0-9')
 
-
+        //target the drawing_svg and append a sublayer for the heatmap
         let main_svg = d3.select('#drawing_svg').append('g').attr('id', 'heatmap'); //parent.page_floor_svg;
 
         let h = parent.master.page_floor_svg.clientHeight;
@@ -728,8 +732,24 @@ class HeatMap {
 
         let floor = document.querySelector("[data-crate_type='floor']");
 
+        //!!!-----------IMPORTANT--------------!!//
+        //This is actually an intergral part of how we show the heatamp:
+        //at first I barely used it but for some reasong the  lockdown lab's heatmap would get offset
+        //on x/y axes, so the consolidate() funciton determines the offset (in most cases it's 0)
+        //and draws the heatmap overlayed over the floorplan
+
         //https://stackoverflow.com/questions/19154631/how-to-get-coordinates-of-an-svg-element
-        let scale = floor.transform.baseVal.consolidate().matrix.a
+        let scale = floor.transform.baseVal.consolidate().matrix.a;
+        let x_offset = floor.transform.baseVal.consolidate().matrix.e;
+        let y_offset = floor.transform.baseVal.consolidate().matrix.f;
+
+        let consolidated_svg = {
+            scale: scale,
+            x_off: x_offset,
+            y_off: y_offset
+        }
+        parent.consolidated_svg=consolidated_svg;
+        //-----------------END-------------------//
 
         let counter = 0;
         let crates_with_sensors_list = Object.keys(parent.crates_with_sensors);
@@ -770,15 +790,17 @@ class HeatMap {
                         if (parent.jb_tools.inside(coords, polygon_points)) {
 
                             let selected_crate = element.id;
+
+                            //get the location data + an offset so that the reactangle's coords are in the middle
                             let loc = {
-                                x: i - parent.rect_size / 2,
-                                y: u - parent.rect_size / 2,
+                                x: (i - parent.rect_size / 2) + x_offset,
+                                y: (u - parent.rect_size / 2) + y_offset,
+                                cons_svg: consolidated_svg,
                                 scale: scale
                             }
 
                             let cell_value = parent.get_cell_value(parent, selected_crate, loc);
                             let color = parent.color_scheme(cell_value);
-
 
                             //draw the cells (rects) on screen 
                             main_svg
@@ -827,7 +849,10 @@ class HeatMap {
 
         //iterate through results to extract data required to show sensors on the floorplan
         let results = parent.sensor_data;
-        this.attach_sensors(parent, results, scale)
+        //redraw the sensors on the newly generated heatmap;
+        //mandatory passing the consolidated svg object due to svg offsetting
+        this.attach_sensors(parent, results, consolidated_svg)
+
         console.log('results', results)
 
         //debug only, "parent" now working somehow
@@ -1053,7 +1078,8 @@ class HeatMap {
     //----------------------------------------------------------------//
 
     //display sensor on top of the heatmap
-    attach_sensors(parent, results, scale) {
+    attach_sensors(parent, results, svg_offset) {
+        let scale = svg_offset.scale;
         let main_svg = d3.select('#drawing_svg').append('g').attr('id', 'heatmap_sensors');
         //declare circle properties - opacity and radius
         let opac = 1;
@@ -1063,9 +1089,9 @@ class HeatMap {
                 //    console.log(sensor)
                 //    console.log(results[sensor])
                 //    console.log(results[sensor]['location'])
-                let x_value = results[sensor]['location']['x'] * scale
+                let x_value = results[sensor]['location']['x'] * scale + svg_offset.x_off;
                 // Note y is NEGATIVE for XYZF (anti-clockwise) -> SVG (clockwise)
-                let y_value = -results[sensor]['location']['y'] * scale
+                let y_value = -results[sensor]['location']['y'] * scale + svg_offset.y_off;
                 let floor_id = results[sensor]['location']['f'] * scale
                 let sensor_id = results[sensor]['acp_id'];
 
