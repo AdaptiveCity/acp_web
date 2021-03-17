@@ -201,7 +201,9 @@ class SpaceFloor {
         console.log("loaded BIM data for floor", parent.floor_coordinate_system + "/" + parent.floor_number)
 
         //show BIM metadata on the side (if available)
-        parent.show_bim_metadata(parent, crate);
+        if (parent.floorspace) {
+            parent.show_bim_metadata(parent, crate);
+        }
 
         parent.get_floor_svg(parent);
     }
@@ -353,7 +355,29 @@ class SpaceFloor {
     }
 
     //allows to scroll into the floorplan/heatmap
-    manage_zoom(parent) { //(parent, id)
+    manage_zoom(parent) {
+
+        //if we're in  floorspace page, we need to zoom in on a crate
+        if (parent.floorspace) {
+            //check that we do not highlight the entire floor by accident
+            //let floor_id = document.querySelectorAll('polygon[data-crate_type=floor]')[0].id;
+            d3.select("#" + CRATE_ID).style("stroke", "#448844").attr("stroke-width", '0.5px').style('fill', '#3CB371');
+
+            function space_zoom() {
+                let bbox_room = d3.select('#' + CRATE_ID).node().getBBox();
+                let bbox_floor = document.querySelectorAll('polygon[data-crate_type=floor]')[0].getBBox();
+
+                // scale_new is the max number of times bounding box will fit into container, capped at 3 times 
+                let scale_new = Math.min(bbox_floor.width / bbox_room.width, bbox_floor.height / bbox_room.height, 3);
+
+                let tx = -bbox_room.x + (bbox_floor.width - bbox_room.width * scale_new) / (2 * scale_new);
+                let ty = -bbox_room.y + (bbox_floor.height - bbox_room.height * scale_new) / (2 * scale_new);
+
+                d3.select('#bim_request').transition().duration(500).attr('transform', 'scale(' + scale_new + ')translate(' + tx * parent.svg_scale + ',' + ty * parent.svg_scale + ')')
+
+            }
+            d3.select('#bim_request').call(space_zoom);
+        }
 
         //setup zooming parameters
         const zoom = d3.zoom()
@@ -372,6 +396,8 @@ class SpaceFloor {
         function zoomed({
             transform
         }) {
+
+            console.log('transform', transform)
             d3.select('#bim_request').attr("transform", transform);
             d3.select('#heatmap').attr("transform", transform);
             d3.select('#heatmap_sensors').attr("transform", transform);
@@ -388,93 +414,6 @@ class SpaceFloor {
 
         //enable resetting from an outside scope
         parent.manage_zoom.reset = reset;
-
-
-        // let w = 500;
-        // let h = 500;
-        // //parametric zoom
-
-        // //let box =box_f(d3.select('#' + id).node().getBBox());
-        // let box = box_f(d3.select('#' + id).node().getBoundingClientRect());
-        // // Return { x,y,cx,cy,w,h } for an html DOM element (for us often SVG)
-        // function box_f(element) {
-        //     //console.log('box called with element', element);
-        //     var bbox = element
-        //     var cx = bbox.x + bbox.width / 2;
-        //     var cy = bbox.y + bbox.height / 2;
-        //     //console.log('box bbox=', bbox);
-        //     return {
-        //         x: bbox.x,
-        //         y: bbox.y,
-        //         cx: cx,
-        //         cy: cy,
-        //         w: bbox.width,
-        //         h: bbox.height
-        //     };
-        // }
-
-        // let mh = document.getElementById("drawing_svg").height.baseVal.value;
-        // let mw = document.getElementById("drawing_svg").width.baseVal.value;
-
-        // //let floor=d3.select('#FF').node().getBBox()
-        // let floor = document.querySelectorAll('polygon[data-crate_type=floor]')[0].getBoundingClientRect()
-
-
-        // console.log('box', box, box.x, box.h, 'FF', floor)
-
-        // /* scale is the max number of times bounding box will fit into container, capped at 3 times */
-        // let scale = Math.min(mw / box.w, mh / box.h, 3);
-
-        // /* tx and ty are the translations of the x and y co-ordinates */
-        // /* the translation centers the bounding box in the container  */
-        // let tx = -box.x + (mw - box.w * scale) / (2 * scale);
-        // let ty = -box.y + (mh - box.h * scale) / (2 * scale);
-
-
-        // console.log(scale, tx, ty)
-        // let offset = Math.min(floor.width, floor.height)
-
-        // let adj_scale = 1.55
-
-        // function random({
-        //     transform
-        // }) {
-        //     // const [x, y] = data[Math.floor(Math.random() * data.length)];
-        //     d3.select('#bim_request').transition().duration(1500).call(
-        //         zoom.transform,
-        //         d3.zoomIdentity.translate(-0, -0).translate((-box.x) * adj_scale, (-box.y) * adj_scale).scale(adj_scale)
-        //     );
-        // }
-
-        // // const zoom = d3.zoom()
-        // //     .scaleExtent([1, 40])
-        // //     .on("zoom", zoomed);
-
-        // const zoom = d3.zoom()
-        //     // .extent([
-        //     //     [-1, -1],
-        //     //     [1, 1]
-        //     // ])
-        //     //.scaleExtent([-0.5, 10])
-        //     .on("zoom", zoomed);
-
-        // d3.select('#bim_request').call(random);
-
-
-        // function zoomed({
-        //     transform
-        // }) {
-        //     d3.select('#bim_request').attr("transform", transform);
-        // }
-
-        //check that we do not highlight the entire floor by accident
-        // let floor_id = document.querySelectorAll('polygon[data-crate_type=floor]')[0].id;
-
-        // if (CRATE_ID != floor_id) {
-
-        //     d3.select("#" + CRATE_ID).attr("style", "stroke: #448844").style('fill', '#3CB371');
-
-        // }
 
 
     }
@@ -512,10 +451,8 @@ class SpaceFloor {
             if (box.x + box.w > max_x) max_x = box.x + box.w;
             if (box.y < min_y) min_y = box.y;
             if (box.y + box.h > max_y) max_y = box.y + box.h;
-            //console.log("box", box);
+            // console.log("box", box);
         });
-
-        //console.log("box min_x:", min_x, "min_y:", min_y, "max_x", max_x, "max_y", max_y);
 
         // calculate appropriate scale for svg
         let w = parent.page_floor_svg.clientWidth;
@@ -523,7 +460,6 @@ class SpaceFloor {
 
         let x_scale = w / (max_x - min_x);
         let y_scale = h / (max_y - min_y);
-
         // Set the svg scale to fit either x or y
         let svg_scale = x_scale < y_scale ? x_scale : y_scale;
         parent.svg_scale = svg_scale;
@@ -531,6 +467,7 @@ class SpaceFloor {
         // x offset
         let svg_x = -min_x * svg_scale;
         let svg_y = -min_y * svg_scale;
+
         parent.svg_transform = "translate(" + svg_x + "," + svg_y + ") " +
             "scale(" + svg_scale + ")";
 
@@ -539,8 +476,6 @@ class SpaceFloor {
             'y': svg_y,
             'scale': svg_scale
         }
-
-        //console.log("svg_transform", parent.svg_transform);
     }
 
     // Get the metadata from the SENSORS api for the sensors on this floor
@@ -575,7 +510,9 @@ class SpaceFloor {
         parent.sensor_metadata = recieved_sensor_metadata;
 
         //show sensor metadata on the side (if available)
-        parent.show_sensor_metadata(parent);
+        if (parent.floorspace) {
+            parent.show_sensor_metadata(parent);
+        }
 
         //draw sensors over the floorplan
         parent.attach_sensors(parent);
@@ -588,42 +525,31 @@ class SpaceFloor {
 
     //displays BIM metadata on the side, when loaded a floorspace page
     show_bim_metadata(parent, crate) {
+        console.log("handle_floorspace_crate got", crate);
+        //globals
+        //floorspace_bim_object = crate;
+        parent.floor_number = crate["acp_location"]["f"];
+        parent.floor_coordinate_system = crate["acp_location"]["system"];
+        console.log("loaded BIM data for crate ", crate["crate_id"],
+            parent.floor_coordinate_system + "/" + parent.floor_number);
 
-        try {
-            console.log("handle_floorspace_crate got", crate);
-            //globals
-            //floorspace_bim_object = crate;
-            parent.floor_number = crate["acp_location"]["f"];
-            parent.floor_coordinate_system = crate["acp_location"]["system"];
-            console.log("loaded BIM data for crate ", crate["crate_id"],
-                parent.floor_coordinate_system + "/" + parent.floor_number);
-
-            let floorspace_bim_txt = JSON.stringify(crate, null, 2);
-            var bim_div = document.getElementById('bim_content')
-            bim_div.innerHTML = "<pre>" + floorspace_bim_txt + "</pre>";
-        } catch (error) {
-            console.log('nowhere to show the bim metadata', error)
-
-        }
+        let floorspace_bim_txt = JSON.stringify(crate, null, 2);
+        var bim_div = document.getElementById('bim_content')
+        bim_div.innerHTML = "<pre>" + floorspace_bim_txt + "</pre>";
     }
 
     //displays sensor metadata on the side, when loaded a floorspace page
     show_sensor_metadata(parent) {
-        try {
-            let sensors = parent.sensor_metadata;
-            let txt = JSON.stringify(sensors, null, 2);
+        let sensors = parent.sensor_metadata;
+        let txt = JSON.stringify(sensors, null, 2);
 
-            if (sensors == {}) {
-                txt = 'no sensors are present in this crate';
-            }
-
-            // Display the json sensor metadata on the page in #SENSOR_container
-            var sensor_div = document.getElementById('sensor_content')
-            sensor_div.innerHTML = "<pre>" + txt + "</pre>";
-
-        } catch (error) {
-            console.log('nowhere to show the sensors metadata', error)
+        if (sensors == {}) {
+            txt = 'no sensors are present in this crate';
         }
+
+        // Display the json sensor metadata on the page in #SENSOR_container
+        var sensor_div = document.getElementById('sensor_content')
+        sensor_div.innerHTML = "<pre>" + txt + "</pre>";
     }
 
     //draw sensors on the floorplan
