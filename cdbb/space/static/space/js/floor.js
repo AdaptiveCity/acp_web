@@ -366,6 +366,7 @@ class SpaceFloor {
             function space_zoom() {
                 let bbox_room = d3.select('#' + CRATE_ID).node().getBBox();
                 let bbox_floor = document.querySelectorAll('polygon[data-crate_type=floor]')[0].getBBox();
+                let bbox_floor_offset = document.querySelectorAll('polygon[data-crate_type=floor]')[0].getCTM();//required for lockdown laband potentially others
 
                 // scale_new is the max number of times bounding box will fit into container, capped at 3 times 
                 let scale_new = Math.min(bbox_floor.width / bbox_room.width, bbox_floor.height / bbox_room.height, 3);
@@ -373,7 +374,7 @@ class SpaceFloor {
                 let tx = -bbox_room.x + (bbox_floor.width - bbox_room.width * scale_new) / (2 * scale_new);
                 let ty = -bbox_room.y + (bbox_floor.height - bbox_room.height * scale_new) / (2 * scale_new);
 
-                d3.select('#bim_request').transition().duration(500).attr('transform', 'scale(' + scale_new + ')translate(' + tx * parent.svg_scale + ',' + ty * parent.svg_scale + ')')
+                d3.select('#bim_request').transition().duration(500).attr('transform', 'scale(' + scale_new + ')translate(' + (tx * parent.svg_scale-bbox_floor_offset.e) + ',' + (ty * parent.svg_scale-bbox_floor_offset.f) + ')')
 
             }
             d3.select('#bim_request').call(space_zoom);
