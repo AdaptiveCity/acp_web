@@ -182,7 +182,7 @@ class VizTools2 {
                 // Create API url for sensor reading AND metadata
                 //let readings_url = API_READINGS + 'get/' + sensor_id +'/?metadata=true';  OLD API
                 //before we used tfc app9
-                let readings_url = API_READINGS + '/get_feature/' + sensor_id + '/temperature/?metadata=true'
+                let readings_url = API_READINGS + 'get_feature/' + sensor_id + '/temperature/?metadata=true'
                 console.log('circle mouseover fetching', readings_url)
 
                 d3.json(readings_url, {
@@ -377,6 +377,7 @@ class VizTools2 {
 
     //draw an 8x8 matrix for elsys-eye sensors
     draw_heatmap(d, target_div) {
+        console.log('target', target_div,d)
         //list for reformatted data
         let grid_data = [];
 

@@ -386,7 +386,7 @@ class SpaceFloor {
                     d3.select(this).style("fill", '#ffffff');
                 } else {
                     //after hovering on CRATE ID crate, return it to normal
-                    d3.select("#" + CRATE_ID).style('fill', '#befabe'); //light green;
+                    d3.select("#" + CRATE_ID).style('fill', '#e0ffe0'); //light green;
                 }
             })
 
@@ -417,14 +417,14 @@ class SpaceFloor {
 
             //highlight the selected crate
             d3.select('#bim_request').transition()
-                .duration(500)
+                .duration(750)
                 .attr('transform', 'scale(' + scale_new + ')translate(' + translate_x + ',' + translate_y + ')')
                 .on('end', function () {
                     d3.select("#" + CRATE_ID).transition()
-                        .duration(1000)
+                        .duration(750)
                         .style("stroke", "#448844")
                         .attr("stroke-width", '2px')
-                        .style('fill', '#befabe'); //light green
+                        .style('fill', '#e0ffe0'); //light green
                 })
 
         }
@@ -533,6 +533,7 @@ class SpaceFloor {
 
         //activate tooltips on hover
         parent.jb_tools.tooltips();
+
         //fill polygons based on # of sensors 
         parent.get_choropleth(parent);
     }
