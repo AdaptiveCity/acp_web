@@ -304,7 +304,7 @@ class SpaceFloor {
                 let svgNS = "http://www.w3.org/2000/svg"; // sigh... thank you 1999
                 let box = room.getBBox();
                 let box_offset = room.getCTM(); //get consolidated matrix for offset
-                let x = (box.x + box.width / 2) * parent.svg_scale + box_offset.e;
+                let x = (box.x + box.width / 4) * parent.svg_scale + box_offset.e;
                 let y = (box.y + box.height / 2) * parent.svg_scale + box_offset.f;
                 console.log('box x y scale', box, x, y, parent.svg_scale, parent.svg_x, parent.svg_y)
                 let text = document.createElementNS(svgNS, "text");
@@ -312,7 +312,7 @@ class SpaceFloor {
                 text.setAttribute('y', y);
                 //set the font
                 //either 6 or the scale divided by two, our buildings have different sizes, so shoudl the fonts
-                text.setAttribute('font-size', Math.max(6, parent.svg_scale / 2));
+                text.setAttribute('font-size', Math.max(4.5, parent.svg_scale / 2));
                 text.textContent = room.id;
                 svg_el.appendChild(text);
             });
