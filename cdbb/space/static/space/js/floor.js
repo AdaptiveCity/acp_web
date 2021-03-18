@@ -27,7 +27,7 @@ class SpaceFloor {
         this.sensor_readings = {}; //sensor reading data
         this.sensors_in_crates = {};
 
-        this.display_crate_ids = false; // optional
+        this.display_crate_ids = true; // optional
     }
 
     // init() called when page loaded
@@ -146,21 +146,25 @@ class SpaceFloor {
         //--------------------------------------//
         //--------SET UP EVENT LISTENERS--------//
         //--------------------------------------//
-        //Set up event listener to RESET FLOORPLAN/HEATMAP
-        document.getElementById('reset_zoom').addEventListener('click', () => {
-            parent.manage_zoom.reset(parent);
-        })
 
-        //Set up slider to change sensor opacity
-        let slider = document.getElementById("sensor_opacity");
-        parent.sensor_opacity = slider.value; // Display the default slider value
+        try {
+            //Set up event listener to RESET FLOORPLAN/HEATMAP
+            document.getElementById('reset_zoom').addEventListener('click', () => {
+                parent.manage_zoom.reset(parent);
+            })
 
-        // Update the current slider value (each time you drag the slider handle)
-        slider.oninput = function () {
-            let opacity_value = slider.value / 100;
-            parent.change_sensor_opacity(parent, opacity_value);
+            //Set up slider to change sensor opacity
+            let slider = document.getElementById("sensor_opacity");
+            parent.sensor_opacity = slider.value; // Display the default slider value
+
+            // Update the current slider value (each time you drag the slider handle)
+            slider.oninput = function () {
+                let opacity_value = slider.value / 100;
+                parent.change_sensor_opacity(parent, opacity_value);
+            }
+        } catch (error) {
+
         }
-
         //--------------------------------------//
         //----------END EVENT LISTENERS---------//
         //--------------------------------------//
@@ -293,17 +297,22 @@ class SpaceFloor {
             });
 
 
-        if (parent.display_crate_ids) {
+        if (parent.floorspace) {
             let rooms = document.querySelectorAll('polygon[data-crate_type=room]');
             let svg_el = document.querySelector("#bim_request");
             rooms.forEach(function (room) {
                 let svgNS = "http://www.w3.org/2000/svg"; // sigh... thank you 1999
                 let box = room.getBBox();
-                let x = (box.x + bbox.width / 2) * parent.svg_scale + parent.svg_x;
-                let y = (box.y + bbox.height / 2) * parent.svg_scale + parent.svg_y;
+                let box_offset = room.getCTM(); //get consolidated matrix for offset
+                let x = (box.x + box.width / 2) * parent.svg_scale + box_offset.e;
+                let y = (box.y + box.height / 2) * parent.svg_scale + box_offset.f;
+                console.log('box x y scale', box, x, y, parent.svg_scale, parent.svg_x, parent.svg_y)
                 let text = document.createElementNS(svgNS, "text");
                 text.setAttribute('x', x);
                 text.setAttribute('y', y);
+                //set the font
+                //either 6 or the scale divided by two, our buildings have different sizes, so shoudl the fonts
+                text.setAttribute('font-size', Math.max(6, parent.svg_scale / 2));
                 text.textContent = room.id;
                 svg_el.appendChild(text);
             });

@@ -236,7 +236,7 @@ body {
     display: inline-block;
     font-size: 20px;
     /* Increase font-size */
-    padding: 6px 12px 6px 12px;
+    padding: 12px 12px 12px 12px;
     /* Add some padding */
     border-top: 1px solid #aaa;
     /* Add a grey border */
@@ -260,7 +260,7 @@ body {
     display: inline-block;
     font-size: 20px;
     /* Increase font-size */
-    padding: 12px 12px 12px 12px;
+    padding: 6px 12px 6px 12px;
     /* Add some padding */
     border: 1px solid #ddd;
     /* Add a grey border */

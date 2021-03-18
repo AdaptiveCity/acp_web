@@ -164,7 +164,7 @@ class VizTools2 {
                 let tooltip_offset_y = 6;
                 let tooltip_offset_x = 6;
 
-                console.log('hover over', this, x, y);
+                //console.log('hover over', this, x, y);
 
                 //var sensor_id = this.id;
                 //extracted from the data-acp_id property embedded withing the html node
@@ -189,7 +189,7 @@ class VizTools2 {
                     crossOrigin: "anonymous"
                 }).then(function (received_data) {
 
-                    console.log('tooltips() raw', received_data)
+                    // console.log('tooltips() raw', received_data)
                     let reading = received_data["reading"];
                     let sensor_metadata = received_data["sensor_info"];
 
@@ -377,7 +377,6 @@ class VizTools2 {
 
     //draw an 8x8 matrix for elsys-eye sensors
     draw_heatmap(d, target_div) {
-        console.log('target', target_div,d)
         //list for reformatted data
         let grid_data = [];
 
@@ -391,7 +390,7 @@ class VizTools2 {
             });
         }
 
-        let c_conf = this.canvas_conf(250, 250, 15, 15, 15, 15);
+        let c_conf = this.canvas_conf(200, 200, 15, 15, 15, 15);
         let h8x8_svg = this.make_canvas(c_conf, target_div, "translate(" + c_conf.left + "," + c_conf.top + ")");
 
         // Labels of row and columns
@@ -436,8 +435,8 @@ class VizTools2 {
     }
 
 
-     // Return a javascript Date, given EITHER a UTC timestamp or a ISO 8601 datetime string
-     make_date(ts) {
+    // Return a javascript Date, given EITHER a UTC timestamp or a ISO 8601 datetime string
+    make_date(ts) {
         let t;
 
         let ts_float = parseFloat(ts);
@@ -471,7 +470,7 @@ class VizTools2 {
         // multiplied by 1000 so that the argument is in milliseconds, not seconds.
         let date = new Date(ts * 1000);
         // Hours part from the timestamp
-        let hours =  "0" +date.getHours();
+        let hours = "0" + date.getHours();
         // Minutes part from the timestamp
         let minutes = "0" + date.getMinutes();
         // Seconds part from the timestamp
