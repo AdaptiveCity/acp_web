@@ -251,10 +251,6 @@ class VizTools {
                         d3.select(this).style('visibility', 'hidden')
                     })
 
-                // d3.select(this).transition()
-                //     .duration(250)
-                //     .attr("r", previous_circle_radius);
-
             })
             // On a user 'click' of a sensor icon, jump to the 'sensor' page.
             .on('click', function (d) {

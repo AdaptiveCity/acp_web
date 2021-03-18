@@ -4,33 +4,39 @@ class SensorStatusDisplay {
 
     // Called to create instance in page : space_floorplan = SpaceFloorplan()
     constructor(master) {
+        let self = this;
         //master class (e.g. floorspace) reference
-        this.master = master; //can also be undefined
+        self.master = master; //can also be undefined
 
         //make the main div (txt box+svg) invisible before instantiation
         document.getElementById("ssd_main").style.display = "none";
 
         // Instantiate a jb2328 utility class e.g. for getBoundingBox()
-        this.viz_tools = new VizTools();
+        self.viz_tools = new VizTools();
 
         //a set of useful d3 functions
-        this.jb_tools = new VizTools2();
+        self.jb_tools = new VizTools2();
 
         //counts the numbre of times each asp_id has been triggered
         //e.g. [{'acp_id':zzzzzzz, 'tt':3},...]
-        this.msg_history = {};
+        self.msg_history = {};
 
-        this.query_url = 'https://tfc-app9.cl.cam.ac.uk/api/sensors/list/?type_metadata=true'
+        self.query_url = 'https://tfc-app9.cl.cam.ac.uk/api/sensors/list/?type_metadata=true'
 
-        this.sensor_list = [];
-        this.sub_list = [];
+        self.sensor_list = [];
+        self.sub_list = [];
 
-        this.CIRCLE_RADIUS = 15;
-        this.scaling = 60;
-        this.columns = 8;
-        this.spacing = 25;
-        this.margin = 25;
-        this.rt_mon = new RTconnect();
+        self.CIRCLE_RADIUS = 15;
+        self.scaling = 60;
+        self.columns = 8;
+        self.spacing = 25;
+        self.margin = 25;
+        self.rt_mon = new RTconnect();
+
+        //--------------------------------------//
+        //--------SET UP EVENT LISTENERS--------//
+        //--------------------------------------//
+        self.setup_buttons(self);
     }
 
     // init() called when page loaded#
@@ -72,14 +78,29 @@ class SensorStatusDisplay {
         //make the main viz divs (svg+txt) visible
         document.getElementById("ssd_main").style.display = "inline-block";
 
-        //--------------------------------------//
-        //--------SET UP EVENT LISTENERS--------//
-        //--------------------------------------//
-        parent.add_buttons(parent);
+        //----------------------------------------------------------//
+        //--------SET UP EVENT LISTENERS FOR THE VIZ RUNTIME--------//
+        //----------------------------------------------------------//
+        parent.setup_controls(parent);
 
     }
+    setup_buttons(parent) {
 
-    add_buttons(parent){
+        //Set up a button listener to launch the SSD
+        document.getElementById('show_ssd').addEventListener('click', () => {
+
+            //check if the ssd is present then close it
+            //check if display is not none
+            //and change the button name to start
+
+            //else if display is none then initiate the viz
+            parent.ssd.init(parent.ssd, parent.sensor_metadata);
+            //and change the button name to close
+            //parent.ssd.close(parent.ssd)
+        })
+    }
+
+    setup_controls(parent) {
 
         //get the default state that the txt_collector started with;
         //this depends on the page that it loaded in (either block or inline-block)
@@ -167,7 +188,7 @@ class SensorStatusDisplay {
     //updates the rtmonitor status icon on the page
     check_status(value, msg) {
         let parent = this;
-       // console.log('returned', value, parent)
+        // console.log('returned', value, parent)
 
         //make a switch statement instead
         if (value == '1') {

@@ -13,7 +13,6 @@ class SpaceFloor {
     constructor() {
 
         // Instantiate a jb2328 utility class e.g. for getBoundingBox()
-        this.viz_tools = new VizTools();
         this.jb_tools = new VizTools2();
 
         //check if any apps available
@@ -45,10 +44,7 @@ class SpaceFloor {
         let parent = this;
 
         //determine viz mode - either floor or floorspace:
-        mode == (!undefined && 'floorspace') ? parent.floorspace = true : parent.floorspace = false;
-
-        //start helper functions object
-        parent.viz_tools.init();
+        parent.floorspace = mode == (!undefined && 'floorspace') ? true : false;
 
         // Page template DOM elements we'll update
         parent.page_draw_div = document.getElementById("main_drawing_div");
@@ -106,42 +102,11 @@ class SpaceFloor {
         // Do an http request to the SPACE api, and call handle_building_space_data() on arrival
         parent.get_floor_crate(parent);
 
+
         //--------------------------------------//
         //--------SET UP EVENT LISTENERS--------//
         //--------------------------------------//
-        //Set up event listener to RESET FLOORPLAN/HEATMAP
-        document.getElementById('reset_zoom').addEventListener('click', () => {
-            parent.manage_zoom.reset(parent);
-        })
-
-        //Set up slider to change sensor opacity
-        let slider = document.getElementById("sensor_opacity");
-        parent.sensor_opacity = slider.value; // Display the default slider value
-
-        // Update the current slider value (each time you drag the slider handle)
-        slider.oninput = function () {
-            let opacity_value = slider.value / 100;
-            parent.change_sensor_opacity(parent, opacity_value);
-        }
-
-        //TODO; move to SSD class;
-
-        //Set up a button listener to launch the SSD
-        document.getElementById('show_ssd').addEventListener('click', () => {
-
-            //check if the ssd is present then close it
-            //check if display is not none
-            //and change the button name to start
-
-            //else if display is none then initiate the viz
-            parent.ssd.init(parent.ssd, parent.sensor_metadata);
-            //and change the button name to close
-            //parent.ssd.close(parent.ssd)
-        })
-
-        //--------------------------------------//
-        //----------END EVENT LISTENERS---------//
-        //--------------------------------------//
+        parent.setup_buttons(parent);
     }
 
     //changes the url based on what we'd like to 
@@ -176,6 +141,30 @@ class SpaceFloor {
         }
     }
 
+    //event listeners for buttons
+    setup_buttons(parent) {
+        //--------------------------------------//
+        //--------SET UP EVENT LISTENERS--------//
+        //--------------------------------------//
+        //Set up event listener to RESET FLOORPLAN/HEATMAP
+        document.getElementById('reset_zoom').addEventListener('click', () => {
+            parent.manage_zoom.reset(parent);
+        })
+
+        //Set up slider to change sensor opacity
+        let slider = document.getElementById("sensor_opacity");
+        parent.sensor_opacity = slider.value; // Display the default slider value
+
+        // Update the current slider value (each time you drag the slider handle)
+        slider.oninput = function () {
+            let opacity_value = slider.value / 100;
+            parent.change_sensor_opacity(parent, opacity_value);
+        }
+
+        //--------------------------------------//
+        //----------END EVENT LISTENERS---------//
+        //--------------------------------------//
+    }
     // Use BIM api to get data for this floor
     get_floor_crate(parent) {
         var request = new XMLHttpRequest();
@@ -232,16 +221,13 @@ class SpaceFloor {
         console.log("handle_floor_svg() loaded floor SVG", space_info);
         let scale = 8.3; //DEBUG
 
+        //this bit doesn't work o n my end
         //let xmlStr = atob(space_info["svg_encoded"]); // decode the SVG string
-        // let xmlStr = space_info["svg_encoded"]; // decode the SVG string
-
+        //// let xmlStr = space_info["svg_encoded"]; // decode the SVG string
         // const parser = new DOMParser();
-
         // const xml = parser.parseFromString(xmlStr, "application/xml");
-
-        // console.log('xml', xml,xmlStr )
-
         let xml = space_info;
+        // console.log('xml', xml,xmlStr )  
 
         // Parent of the SVG polygons is <g id="bim_request"...>
         let bim_request = xml.getElementById('bim_request');
@@ -254,9 +240,6 @@ class SpaceFloor {
             //we still needto prepend the floors svg since it is required to determine heatmap's boundary space
             bim_request.prepend(el);
             d3.select(el).style('fill', 'none');
-            //d3.select(el).on('click',null);
-
-            //    d3.select(el).style('fill','none');
         });
 
         let buildings = xml.querySelectorAll('polygon[data-crate_type=building]');
@@ -295,20 +278,9 @@ class SpaceFloor {
         //set mouse events
         d3.select(parent.page_floor_svg).selectAll("polygon")
             .on("mouseover", function (d) {
-                d3.select("#" + this.id + "_tr").style("background-color", "#fec44f");
-
-                if (d3.select(this).classed("active"))
-                    return; //no need to change class when room is already selected
-
                 d3.select(this).attr("class", "hover");
-
             })
             .on("mouseout", function (d) {
-                d3.select("#" + this.id + "_tr").style("background-color", "whitesmoke");
-
-                if (d3.select(this).classed("active"))
-                    return; //no need to change class when room is already selected
-
                 d3.select(this).attr("class", function (d) {
                     // reset room color to quantize range
                     return parent.quantize_class(parent, parent.quantize(parent.rateById.get(this.id)))
@@ -326,9 +298,9 @@ class SpaceFloor {
             let svg_el = document.querySelector("#bim_request");
             rooms.forEach(function (room) {
                 let svgNS = "http://www.w3.org/2000/svg"; // sigh... thank you 1999
-                let box = parent.viz_tools.box(room);
-                let x = box.cx * parent.svg_scale + parent.svg_x;
-                let y = box.cy * parent.svg_scale + parent.svg_y;
+                let box = room.getBBox();
+                let x = (box.x + bbox.width / 2) * parent.svg_scale + parent.svg_x;
+                let y = (box.y + bbox.height / 2) * parent.svg_scale + parent.svg_y;
                 let text = document.createElementNS(svgNS, "text");
                 text.setAttribute('x', x);
                 text.setAttribute('y', y);
@@ -359,25 +331,7 @@ class SpaceFloor {
 
         //if we're in  floorspace page, we need to zoom in on a crate
         if (parent.floorspace) {
-            //check that we do not highlight the entire floor by accident
-            //let floor_id = document.querySelectorAll('polygon[data-crate_type=floor]')[0].id;
-            d3.select("#" + CRATE_ID).style("stroke", "#448844").attr("stroke-width", '0.5px').style('fill', '#3CB371');
-
-            function space_zoom() {
-                let bbox_room = d3.select('#' + CRATE_ID).node().getBBox();
-                let bbox_floor = document.querySelectorAll('polygon[data-crate_type=floor]')[0].getBBox();
-                let bbox_floor_offset = document.querySelectorAll('polygon[data-crate_type=floor]')[0].getCTM();//required for lockdown laband potentially others
-
-                // scale_new is the max number of times bounding box will fit into container, capped at 3 times 
-                let scale_new = Math.min(bbox_floor.width / bbox_room.width, bbox_floor.height / bbox_room.height, 3);
-
-                let tx = -bbox_room.x + (bbox_floor.width - bbox_room.width * scale_new) / (2 * scale_new);
-                let ty = -bbox_room.y + (bbox_floor.height - bbox_room.height * scale_new) / (2 * scale_new);
-
-                d3.select('#bim_request').transition().duration(500).attr('transform', 'scale(' + scale_new + ')translate(' + (tx * parent.svg_scale-bbox_floor_offset.e) + ',' + (ty * parent.svg_scale-bbox_floor_offset.f) + ')')
-
-            }
-            d3.select('#bim_request').call(space_zoom);
+            parent.setup_floorspace(parent);
         }
 
         //setup zooming parameters
@@ -416,7 +370,66 @@ class SpaceFloor {
         //enable resetting from an outside scope
         parent.manage_zoom.reset = reset;
 
+    }
 
+    //special 'onload' zooming function to zoom in on a preloaded CRATE_ID 
+    setup_floorspace(parent) {
+        //make all polygons white...
+        d3.selectAll('polygon').style('fill', '#ffffff')
+            .on("mouseover", function (d) {
+                //light orange
+                d3.select(this).style("fill", "rgb(241, 190, 72)");
+            })
+            .on("mouseout", function (d) {
+                if (this.id != CRATE_ID) {
+                    //return to white
+                    d3.select(this).style("fill", '#ffffff');
+                } else {
+                    //after hovering on CRATE ID crate, return it to normal
+                    d3.select("#" + CRATE_ID).style('fill', '#befabe'); //light green;
+                }
+            })
+
+        //and highlight the one in question
+        d3.select("#" + CRATE_ID).style("stroke", "#448844").attr("stroke-width", '0.5px').style('fill', '#3CB371');
+
+        function floorspace_zoom() {
+
+            //get the room bounding box
+            let bbox_room = d3.select('#' + CRATE_ID).node().getBBox();
+
+            //get the foor bounding box
+            let bbox_floor = document.querySelectorAll('polygon[data-crate_type=floor]')[0].getBBox();
+
+            //get the consolidated matrix for making the right offset (for more check the link below or in the heatmap class)
+            //https://stackoverflow.com/questions/19154631/how-to-get-coordinates-of-an-svg-element
+            let bbox_floor_offset = document.querySelectorAll('polygon[data-crate_type=floor]')[0].getCTM(); //required for lockdown laband potentially others
+
+            // scale_new is the max number of times bounding box will fit into container, capped at 3 times 
+            let scale_new = Math.min(bbox_floor.width / bbox_room.width, bbox_floor.height / bbox_room.height, 3);
+
+            //calculate the offset and combine it with the consolidated matrix data
+            let tx = -bbox_room.x + (bbox_floor.width - bbox_room.width * scale_new) / (2 * scale_new);
+            let ty = -bbox_room.y + (bbox_floor.height - bbox_room.height * scale_new) / (2 * scale_new);
+
+            let translate_x = tx * parent.svg_scale - bbox_floor_offset.e;
+            let translate_y = ty * parent.svg_scale - bbox_floor_offset.f;
+
+            //highlight the selected crate
+            d3.select('#bim_request').transition()
+                .duration(500)
+                .attr('transform', 'scale(' + scale_new + ')translate(' + translate_x + ',' + translate_y + ')')
+                .on('end', function () {
+                    d3.select("#" + CRATE_ID).transition()
+                        .duration(1000)
+                        .style("stroke", "#448844")
+                        .attr("stroke-width", '2px')
+                        .style('fill', '#befabe'); //light green
+                })
+
+        }
+        //zoom in on load
+        d3.select('#bim_request').call(floorspace_zoom);
     }
 
     // Append each floor to page SVG but keep invisible for now
@@ -519,7 +532,7 @@ class SpaceFloor {
         parent.attach_sensors(parent);
 
         //activate tooltips on hover
-        parent.viz_tools.tooltips();
+        parent.jb_tools.tooltips();
         //fill polygons based on # of sensors 
         parent.get_choropleth(parent);
     }
@@ -563,25 +576,41 @@ class SpaceFloor {
         //let rad = ; // radius of sensor icon in METERS (i.e. XYZF before transform)
 
         //iterate through results to extract data required to show sensors on the floorplan
-        //TODO change to jsonPath
         for (let sensor in recieved_sensor_metadata) {
+
+            let acp_id = recieved_sensor_metadata[sensor]['acp_id'];
+
+            // Skip sensors that don't have xyz coords
+            //DEBUG we *could* put them in some default position relative to crate
+            if (!recieved_sensor_metadata[acp_id].hasOwnProperty('acp_location_xyz')) {
+                console.log('skipping missing acp_location_xyz', acp_id);
+                continue;
+            }
             try {
-                let x_value = recieved_sensor_metadata[sensor]['acp_location_xyz']['x']
+                let x_value = recieved_sensor_metadata[acp_id]['acp_location_xyz']['x']
                 // Note y is NEGATIVE for XYZF (anti-clockwise) -> SVG (clockwise)
-                let y_value = -recieved_sensor_metadata[sensor]['acp_location_xyz']['y']
-                let floor_id = recieved_sensor_metadata[sensor]['acp_location_xyz']['f']
-                let sensor_id = recieved_sensor_metadata[sensor]['acp_id'];
+                let y_value = -recieved_sensor_metadata[acp_id]['acp_location_xyz']['y']
+                let floor_id = recieved_sensor_metadata[acp_id]['acp_location_xyz']['f']
+
+                let fill;
+
+                //add data_management functionality
+                if ((typeof ACP_ID !== 'undefined') && (acp_id == ACP_ID)) {
+                    fill = "#ff0000"; //highlight the sensor in question
+                } else {
+                    fill = parent.sensor_color;
+                }
 
                 //draw sensors on screen
                 d3.select("#bim_request").append("circle")
                     .attr("cx", x_value)
                     .attr("cy", y_value)
                     .attr("r", parent.sensor_radius)
-                    .attr("id", sensor_id + "_bim")
-                    .attr("data-acp_id", sensor_id)
+                    .attr("id", acp_id + "_bim")
+                    .attr("data-acp_id", acp_id)
                     .attr("class", 'non_heatmap_circle')
                     .style("opacity", parent.sensor_opacity)
-                    .style("fill", parent.sensor_color)
+                    .style("fill", fill)
                     .attr("transform", parent.svg_transform);
 
             } catch (error) {

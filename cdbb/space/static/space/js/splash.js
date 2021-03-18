@@ -14,7 +14,7 @@ class SplashMap {
         self.rt_con = new RTconnect(self);
 
         // Instantiate a jb2328 utility class e.g. for getBoundingBox()
-        self.viz_tools = new VizTools();
+        //self.viz_tools = new VizTools();
 
         //a set of useful d3 functions
         self.jb_tools = new VizTools2();

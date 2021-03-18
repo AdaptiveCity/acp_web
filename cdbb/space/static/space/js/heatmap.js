@@ -240,7 +240,7 @@ class HeatMap {
         parent.show_heatmap(parent);
 
         //update tooltips
-        parent.master.viz_tools.tooltips();
+        parent.master.jb_tools.tooltips();
     }
 
     //Main raindrop function for incoming data:
@@ -414,7 +414,7 @@ class HeatMap {
             //---generate and show the heatmap---//
             //-----------------------------------//
             parent.show_heatmap(parent);
-            parent.master.viz_tools.tooltips();
+            parent.master.jb_tools.tooltips();
         });
 
     }
@@ -752,9 +752,9 @@ class HeatMap {
         //and draws the heatmap overlayed over the floorplan
 
         //https://stackoverflow.com/questions/19154631/how-to-get-coordinates-of-an-svg-element
-        let scale = floor.transform.baseVal.consolidate().matrix.a;
-        let x_offset = floor.transform.baseVal.consolidate().matrix.e;
-        let y_offset = floor.transform.baseVal.consolidate().matrix.f;
+        let scale = floor.getCTM().a;//.transform.baseVal.consolidate().matrix.a;
+        let x_offset = floor.getCTM().e;//.transform.baseVal.consolidate().matrix.e;
+        let y_offset = floor.getCTM().f;//.transform.baseVal.consolidate().matrix.f;
 
         let consolidated_svg = {
             scale: scale,
@@ -824,10 +824,10 @@ class HeatMap {
                                 .attr('class', class_name)
 
                                 .attr("x", function (d) {
-                                    return loc.x
+                                    return loc.x.toFixed(0);//round to int 
                                 })
                                 .attr("y", function (d) {
-                                    return loc.y
+                                    return loc.y.toFixed(0);//round to int
                                 })
                                 .attr("width", parent.rect_size - offset)
                                 .attr("height", parent.rect_size - offset)
@@ -1282,7 +1282,7 @@ class HeatMap {
 
 
         //text showing range on left/right
-        //viz_tools.add_text(TARGET SVG, TXT VALUE, X LOC, Y LOC, FONT SIZE, TRANSLATE);
+        //jb_tools.add_text(TARGET SVG, TXT VALUE, X LOC, Y LOC, FONT SIZE, TRANSLATE);
         parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.max, (c_conf.width / 2) - 3, scale_inv(parent.min_max_range.max), "0.75em", "translate(0,0)") // 0 is the offset from the left
         parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.min, (c_conf.width / 2) - 3, scale_inv(parent.min_max_range.min) + 25, "0.75em", "translate(0,0)") // 0 is the offset from the left
 
