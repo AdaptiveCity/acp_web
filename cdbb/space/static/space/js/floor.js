@@ -360,8 +360,6 @@ class SpaceFloor {
         function zoomed({
             transform
         }) {
-
-            console.log('transform', transform)
             d3.select('#bim_request').attr("transform", transform);
             d3.select('#heatmap').attr("transform", transform);
             d3.select('#heatmap_sensors').attr("transform", transform);
@@ -369,7 +367,6 @@ class SpaceFloor {
 
         //resets the panned/zoomed svg to the initial transformation
         function reset() {
-
             d3.select('#drawing_svg').call(
                 zoom.transform,
                 d3.zoomIdentity,

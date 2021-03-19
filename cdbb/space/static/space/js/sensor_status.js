@@ -11,9 +11,6 @@ class SensorStatusDisplay {
         //make the main div (txt box+svg) invisible before instantiation
         document.getElementById("ssd_main").style.display = "none";
 
-        // Instantiate a jb2328 utility class e.g. for getBoundingBox()
-        self.viz_tools = new VizTools();
-
         //a set of useful d3 functions
         self.jb_tools = new VizTools2();
 
@@ -21,7 +18,7 @@ class SensorStatusDisplay {
         //e.g. [{'acp_id':zzzzzzz, 'tt':3},...]
         self.msg_history = {};
 
-        self.query_url = 'https://tfc-app9.cl.cam.ac.uk/api/sensors/list/?type_metadata=true'
+        self.query_url = 'https://cdbb.uk/api/sensors/list/?type_metadata=true'
 
         self.sensor_list = [];
         self.sub_list = [];
@@ -32,6 +29,8 @@ class SensorStatusDisplay {
         self.spacing = 25;
         self.margin = 25;
         self.rt_mon = new RTconnect();
+
+        parent.svg_canvas;
 
         //--------------------------------------//
         //--------SET UP EVENT LISTENERS--------//
@@ -94,7 +93,7 @@ class SensorStatusDisplay {
             //and change the button name to start
 
             //else if display is none then initiate the viz
-            parent.ssd.init(parent.ssd, parent.sensor_metadata);
+            parent.init(parent, parent.master.sensor_metadata);
             //and change the button name to close
             //parent.ssd.close(parent.ssd)
         })
@@ -233,8 +232,9 @@ class SensorStatusDisplay {
 
     // Main drawing function that displays sensors as circles with their ids written underneath
     draw_sensors(parent, sensor_list) {
-        var dataset = [],
-            counter = 0;
+        let dataset = [],
+            counter = 0,
+            sensor_circles = [];
 
         //generate the grid to display the sensors on
         for (let y = 0; y < 999; y++) {
@@ -245,9 +245,14 @@ class SensorStatusDisplay {
                 let sensor_object = {
                     'acp_id': sensor_list[counter],
                     'x': x * parent.scaling + parent.margin,
-                    'y': y * parent.scaling + parent.margin
+                    'y': y * parent.scaling + parent.margin,
+                    'r': parent.CIRCLE_RADIUS
                 }
+
                 dataset.push(sensor_object);
+                let sc = new SensorCircle(parent, sensor_object)
+                //sc.init();
+                sensor_circles.push(sc)
                 counter++;
             }
         }
@@ -256,39 +261,54 @@ class SensorStatusDisplay {
         let height = Math.ceil(sensor_list.length / parent.columns) * parent.scaling + 2 * parent.margin;
         let width = parent.scaling * parent.columns + 2 * parent.margin;
 
-        //create scg canvas
-        var sampleSVG = d3.select("#viz")
+        //create svg canvas
+        parent.svg_canvas = d3.select("#viz")
             .append("svg")
             .attr('id', 'main_canvas')
             .attr("width", width)
             .attr("height", height);
 
-        //draw sensors as circles
-        sampleSVG.selectAll(".sensors")
-            .data(dataset)
-            .enter().append('g').attr("class", "sensors")
-            .attr('id', function (d, i) {
-                return d.acp_id + '_parent'
-            })
-            .append("circle")
-            .style("stroke", "gray")
-            .style("stroke-width", 1)
-            .style("fill", "white")
-            .attr("class", "sensor_circles")
-            .attr('id', function (d, i) {
-                return d.acp_id + "_ssd"
-            })
-            .attr("data-acp_id", function (d, i) {
-                return d.acp_id;
-            })
-            .attr("r", parent.CIRCLE_RADIUS)
-            .attr("cx", function (d, i) {
-                return parent.spacing + d.x
-            })
-            .attr("cy", function (d, i) {
-                return parent.spacing + d.y
-            }).attr('z-index', -1)
-            .style('opacity', 0.85);
+        for (let i = 0; i < sensor_circles.length; i++) {
+            sensor_circles[i].make_circle(sensor_circles[i]);
+
+            sensor_circles[i].make_out_stroke(sensor_circles[i]);
+
+        }
+
+
+        console.log('list of sensors', sensor_circles)
+
+
+        //console.log(d3.selectAll('.sensors').node());
+        // //draw sensors as circles
+        // parent.svg_canvas.selectAll(".sensors")
+        //     .data(dataset)
+        //     .enter().append('g').attr("class", "sensors")
+        //     .attr('id', function (d, i) {
+        //         return d.acp_id + '_parent'
+        //     })
+        //     .append("circle")
+        //     .style("stroke", "gray")
+        //     .style("stroke-width", 1)
+        //     .style("fill", "white")
+        //     .attr("class", "sensor_circles")
+        //     .attr('id', function (d, i) {
+        //         return d.acp_id + "_ssd"
+        //     })
+        //     .attr("data-acp_id", function (d, i) {
+        //         return d.acp_id;
+        //     })
+        //     .attr("r", parent.CIRCLE_RADIUS)
+        //     .attr("cx", function (d, i) {
+        //         return parent.spacing + d.x
+        //     })
+        //     .attr("cy", function (d, i) {
+        //         return parent.spacing + d.y
+        //     }).attr('z-index', -1)
+        //     .style('opacity', 0.85);
+
+
+
 
         //set up mouse interaction
         d3.selectAll(".sensors")
@@ -346,70 +366,75 @@ class SensorStatusDisplay {
                 } catch (error) {
                     console.log('floorplan not present')
                 }
-            })
+            }) //add on mouseout
 
-        //append text tags for #of pinged + acp_ids underneath (only the nodes, text will follow)
-        sampleSVG.selectAll(".sensors")
-            .append('g')
-            .append("text")
-            .attr('id', function (d, i) {
-                return d.acp_id + '_pinged'
-            })
-            .attr("class", "sensor_txt")
-            .style('opacity', 1)
-            .style('fill', 'black')
-            // .attr('z-index', 999)
-            .attr("x", function (d, i) {
-                return 24 + d.x
-            })
-            .attr("y", function (d, i) {
-                return 28 + d.y
-            })
-            //makes sure that text is centered no matter how many digits are put inside the circle
-            .attr("text-anchor", "middle")
-            .style("font-size", "0.7em");
 
-        //prepare the nodes for acp_ids (this is a bit convoluted due to how d3 (doesn't) handle multiline text)
-        sampleSVG.selectAll(".sensors")
-            .append('g')
-            .attr('id', function (d, i) {
-                return d.acp_id + '_g'
-            })
-            .append("text")
-            .attr('id', function (d, i) {
-                return d.acp_id + '_txt'
-            })
-            .attr("class", "sensor_txt")
-            .style('opacity', 1)
-            .style('fill', 'black')
-            .attr('z-index', 999)
-            .style("text-anchor", "middle")
-            .style("font-size", "0.65em")
+        // let y_txt_offset = 28;
+        // let x_txt_offset = 24;
+        // //append text tags for #of pinged + acp_ids underneath (only the nodes, text will follow)
+        // parent.svg_canvas.selectAll(".sensors")
+        //     .append('g')
+        //     .append("text")
+        //     .attr('id', function (d, i) {
+        //         return this.dataset.acp_id + '_pinged'
+        //     })
+        //     .attr("class", "sensor_txt")
+        //     .style('opacity', 1)
+        //     .style('fill', 'black')
+        //     // .attr('z-index', 999)
+        //     .attr("x", function (d, i) {
 
-        //iterate through all the sensors and add acp_ids to their previously predefined node locations;
-        //this makes sure that sensor names have line breaks where '-' used to be, so that all text
-        //fits nicely; this took waaaay too long to do and stack overflow was useless.
-        d3.selectAll(".sensors").nodes().forEach(el => {
+        //         console.log('ERROR',d, i, this)
+        //         return x_txt_offset + this.dataset.x
+        //     })
+        //     .attr("y", function (d, i) {
+        //         return y_txt_offset + this.dataset.y
+        //     })
+        //     //makes sure that text is centered no matter how many digits are put inside the circle
+        //     .attr("text-anchor", "middle")
+        //     .style("font-size", "0.7em");
 
-            console.log('here is', el, d3.select(el))
+        // //prepare the nodes for acp_ids (this is a bit convoluted due to how d3 (doesn't) handle multiline text)
+        // parent.svg_canvas.selectAll(".sensors")
+        //     .append('g')
+        //     .attr('id', function (d, i) {
+        //         return this.dataset.acp_id + '_g'
+        //     })
+        //     .append("text")
+        //     .attr('id', function (d, i) {
+        //         return this.dataset.acp_id + '_txt'
+        //     })
+        //     .attr("class", "sensor_txt")
+        //     .style('opacity', 1)
+        //     .style('fill', 'black')
+        //     .attr('z-index', 999)
+        //     .style("text-anchor", "middle")
+        //     .style("font-size", "0.65em")
 
-            //extract acp_id from the dataset-acp_id property
-            let acp_id = d3.select(el).selectChild().node().dataset.acp_id;
-            let acp_id_array = acp_id.split("-");
+        // //iterate through all the sensors and add acp_ids to their previously predefined node locations;
+        // //this makes sure that sensor names have line breaks where '-' used to be, so that all text
+        // //fits nicely; this took waaaay too long to do and stack overflow was useless.
+        // d3.selectAll(".sensors").nodes().forEach(el => {
 
-            for (let u = 0; u < acp_id_array.length; u++) {
-                d3.select('#' + acp_id + '_txt').append('tspan').text(acp_id_array[u])
-                    .attr('x', function (d, i) {
-                        let x_offset = 25;
-                        return d.x + x_offset
-                    })
-                    .attr('y', function (d, i) {
-                        let line_height = 8 * (u + 1);
-                        let y_offset = 40;
-                        return d.y + y_offset + line_height
-                    })
-            }
-        })
+        //     console.log('here is', el, d3.select(el))
+
+        //     //extract acp_id from the dataset-acp_id property
+        //     let acp_id = d3.select(el).selectChild().node().dataset.acp_id;
+        //     let acp_id_array = acp_id.split("-");
+
+        //     for (let u = 0; u < acp_id_array.length; u++) {
+        //         d3.select('#' + acp_id + '_txt').append('tspan').text(acp_id_array[u])
+        //             .attr('x', function (d, i) {
+        //                 let x_offset = 25;
+        //                 return this.dataset.x + x_offset
+        //             })
+        //             .attr('y', function (d, i) {
+        //                 let line_height = 8 * (u + 1);
+        //                 let y_offset = 40;
+        //                 return this.dataset.y + y_offset + line_height
+        //             })
+        //     }
+        // })
     }
 
 
@@ -510,7 +535,7 @@ class SensorStatusDisplay {
         let txt_hist = document.getElementById('text_collector');
 
         //reformat the message (for time or date)
-        let recieved_time = self.viz_tools.make_time(msg.acp_ts) //alternatively use self.viz_tools.make_date(msg.acp_ts)
+        let recieved_time = self.jb_tools.make_time(msg.acp_ts) //alternatively use self.viz_tools.make_date(msg.acp_ts)
 
         //senf json object to the debug panel
         //*Important* only works with JSON.stringify(clean_msg_json)
@@ -669,8 +694,6 @@ class SensorStatusDisplay {
         self.update_viz(self, acp_id, msg_data)
     }
 
-
-
     //callback to update sensors (for faked sensor data)
     update_callback(parent) {
         parent.mock_data(parent);
@@ -687,26 +710,291 @@ class SensorStatusDisplay {
 
 }
 
-function wrap(text, width) {
-    text.each(function () {
-        var text = d3.select(this),
-            words = text.text().split(/\s+/).reverse(),
-            word,
-            line = [],
-            lineNumber = 0,
-            lineHeight = 1.1, // ems
-            y = text.attr("y"),
-            dy = parseFloat(text.attr("dy")),
-            tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
-        while (word = words.pop()) {
-            line.push(word);
-            tspan.text(line.join(" "));
-            if (tspan.node().getComputedTextLength() > width) {
-                line.pop();
-                tspan.text(line.join(" "));
-                line = [word];
-                tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
-            }
+// ----------------------------------------------------------------------------------
+
+class SensorCircle {
+
+    // Called to create instance in page : space_floorplan = SpaceFloorplan()
+    constructor(master, meta) {
+        let self = this;
+        self.master = master;
+
+        //declare coordinates for the sensor circle
+        self.x = meta.x;
+        self.y = meta.y;
+        self.acp_id = meta.acp_id;
+
+        self.counter = 0;
+        self.radius = master.CIRCLE_RADIUS;
+        self.path_width = 10;
+        self.stroke_width=0.5;
+
+        self.resolution = 1; //lower the better
+
+        self.timeout = 500; //steps in ms
+
+
+        self.percentage = 1; //1 is 100% aka full circle
+
+
+        self.color_A = "rgb(225, 65, 118)";
+        self.color_B = "rgb(108, 125, 255)";
+        self.color_C = "rgb(225, 65, 118)";
+
+        self.data;
+
+        self.svg_canvas = master.svg_canvas;;
+
+    }
+
+    
+    make_out_stroke(self) {
+        //let self = this;
+        let c = [self.x, self.y]; //[250, 250]; // center
+        let r = self.radius; // radius
+
+        let complete = 1//self.percentage; // percent
+
+        let circlePath = `
+M ${c[0]} ${c[1]-r} 
+a ${r},${r} 0 1,0 0, ${(r * 2)} 
+a ${r},${r} 0 1,0 0, -${(r * 2)}
+Z
+`;
+        let colorInterpolator = d3.interpolateRgbBasis([self.color_A, self.color_B, self.color_C]);
+
+
+        let colorHandler = (d, i, nodes) => {
+            let color = d3.color(colorInterpolator(d.t));
+            color.opacity = i / nodes.length > 1 - complete ? 1 : 0;
+            return color;
+        };
+
+        //let path = d3.select("path").attr("d", circlePath).remove();
+        let instantiate_path = d3.select('#main_canvas')
+            .append('path')
+            .attr('id',  self.acp_id + '_path')
+            .attr('fill', "rgba(255,0,0,0.25)")
+            .attr('stroke-width', 10);
+
+
+        let path = d3.select('#' + self.acp_id + '_path').attr("d", circlePath)//.remove();
+
+        console.time("[gradient stroke performance]");
+        console.log('PATH', path)
+        self.data = self.quads(self.samples(path.node(), self.resolution))
+
+        console.log('path data', self.data, self.data.length)
+
+        d3.select('#'+self.acp_id+'_path').selectAll("path")//.select('#main_canvas')
+            .data(self.data)
+            .enter().append("path")
+            .attr('id', function (d, i) {
+                return '#'+self.acp_id+'_path_' + (i)
+            })
+            .style("fill", colorHandler)
+            .style("stroke", colorHandler)
+            .style("stroke-width", self.stroke_width)
+            .style("stroke-linecap", (d, i, all) => i === 0 || i === all.length ? "round" : "round")
+            .attr("d", d => self.lineJoin(d[0], d[1], d[2], d[3], self.path_width));
+
+        console.timeEnd("[gradient stroke performance]");
+
+
+        //tick tock
+        self.advance_timer();
+    }
+
+    make_circle(self) {
+        //let self = this;
+        //draw sensors as circles
+        self.svg_canvas = self.master.svg_canvas;;
+        console.log(self.acp_id, self.x, self.y)
+        let a = d3.select('#main_canvas') //.selectAll(".sensors")
+            //.data(dataset)
+            //.enter()
+            .append('g')
+            .attr("class", "sensors")
+            .attr('id', function (d, i) {
+                return self.acp_id + '_parent'
+            })
+            .append("circle")
+            .style("stroke", "gray")
+            .style("stroke-width", 1)
+            .style("fill", "white")
+            .attr("class", "sensor_circles")
+            .attr('id', function (d, i) {
+                return self.acp_id + "_ssd"
+            })
+            .attr("data-acp_id", function (d, i) {
+                return self.acp_id;
+            })
+            .attr("r", self.master.CIRCLE_RADIUS)
+            .attr("cx", function (d, i) {
+                return self.master.spacing + self.x
+            })
+            .attr("cy", function (d, i) {
+                return self.master.spacing + self.y
+            }).attr('z-index', -1)
+            .style('opacity', 0.85);
+
+        console.log('new element', a)
+
+
+
+        let y_txt_offset = 28;
+        let x_txt_offset = 24;
+        //append text tags for #of pinged + acp_ids underneath (only the nodes, text will follow)
+        d3.select('#main_canvas').selectAll(".sensors")
+            .append('g')
+            .append("text")
+            .attr('id', function (d, i) {
+                return self.acp_id + '_pinged'
+            })
+            .attr("class", "sensor_txt")
+            .style('opacity', 1)
+            .style('fill', 'black')
+            // .attr('z-index', 999)
+            .attr("x", function (d, i) {
+                return x_txt_offset + self.x
+            })
+            .attr("y", function (d, i) {
+                return y_txt_offset + self.y
+            })
+            //makes sure that text is centered no matter how many digits are put inside the circle
+            .attr("text-anchor", "middle")
+            .style("font-size", "0.7em");
+
+        //prepare the nodes for acp_ids (this is a bit convoluted due to how d3 (doesn't) handle multiline text)
+        d3.select('#main_canvas').selectAll(".sensors")
+            .append('g')
+            .attr('id', function (d, i) {
+                return self.acp_id + '_g'
+            })
+            .append("text")
+            .attr('id', function (d, i) {
+                return self.acp_id + '_txt'
+            })
+            .attr("class", "sensor_txt")
+            .style('opacity', 1)
+            .style('fill', 'black')
+            .attr('z-index', 999)
+            .style("text-anchor", "middle")
+            .style("font-size", "0.65em")
+
+        //iterate through all the sensors and add acp_ids to their previously predefined node locations;
+        //this makes sure that sensor names have line breaks where '-' used to be, so that all text
+        //fits nicely; this took waaaay too long to do and stack overflow was useless.
+        //  d3.selectAll(".sensors").nodes().forEach(el => {
+
+        // console.log('here is', el, d3.select(el))
+
+        //extract acp_id from the dataset-acp_id property
+        // let acp_id = d3.select(el).selectChild().node().dataset.acp_id;
+        let acp_id_array = self.acp_id.split("-");
+
+        for (let u = 0; u < acp_id_array.length; u++) {
+            d3.select('#' + self.acp_id + '_txt').append('tspan').text(acp_id_array[u])
+                .attr('x', function (d, i) {
+                    let x_offset = 25;
+                    return self.x + x_offset
+                })
+                .attr('y', function (d, i) {
+                    let line_height = 8 * (u + 1);
+                    let y_offset = 40;
+                    return self.y + y_offset + line_height
+                })
         }
-    });
+        //  })
+    }
+
+
+    // Sample the SVG path uniformly with the specified precision.
+    samples(path, precision) {
+        let n = path.getTotalLength(),
+            t = [0],
+            i = 0,
+            dt = precision;
+        while ((i += dt) < n) t.push(i);
+        t.push(n);
+        return t.map(function (t) {
+            let p = path.getPointAtLength(t),
+                a = [p.x, p.y];
+            a.t = t / n;
+            return a;
+        });
+    }
+
+    // Compute quads of adjacent points [p0, p1, p2, p3].
+    quads(points) {
+        return d3.range(points.length - 1).map(function (i) {
+            let a = [points[i - 1], points[i], points[i + 1], points[i + 2]];
+            a.t = (points[i].t + points[i + 1].t) / 2;
+            return a;
+        });
+    }
+
+    // Compute stroke outline for segment p12.
+    lineJoin(p0, p1, p2, p3, width) {
+        let self = this;
+
+        let u12 = self.perp(p1, p2),
+            r = width / 2,
+            a = [p1[0] + u12[0] * r, p1[1] + u12[1] * r],
+            b = [p2[0] + u12[0] * r, p2[1] + u12[1] * r],
+            c = [p2[0] - u12[0] * r, p2[1] - u12[1] * r],
+            d = [p1[0] - u12[0] * r, p1[1] - u12[1] * r];
+
+        if (p0) { // clip ad and dc using average of u01 and u12
+            let u01 = self.perp(p0, p1),
+                e = [p1[0] + u01[0] + u12[0], p1[1] + u01[1] + u12[1]];
+            a = self.lineIntersect(p1, e, a, b);
+            d = self.lineIntersect(p1, e, d, c);
+        }
+
+        if (p3) { // clip ab and dc using average of u12 and u23
+            let u23 = self.perp(p2, p3),
+                e = [p2[0] + u23[0] + u12[0], p2[1] + u23[1] + u12[1]];
+            b = self.lineIntersect(p2, e, a, b);
+            c = self.lineIntersect(p2, e, d, c);
+        }
+
+        return "M" + a + "L" + b + " " + c + " " + d + "Z";
+    }
+
+    // Compute intersection of two infinite lines ab and cd.
+    lineIntersect(a, b, c, d) {
+        let x1 = c[0],
+            x3 = a[0],
+            x21 = d[0] - x1,
+            x43 = b[0] - x3,
+            y1 = c[1],
+            y3 = a[1],
+            y21 = d[1] - y1,
+            y43 = b[1] - y3,
+            ua = (x43 * (y1 - y3) - y43 * (x1 - x3)) / (y43 * x21 - x43 * y21);
+        return [x1 + ua * x21, y1 + ua * y21];
+    }
+
+    // Compute unit vector perpendicular to p01.
+    perp(p0, p1) {
+        let u01x = p0[1] - p1[1],
+            u01y = p1[0] - p0[0],
+            u01d = Math.sqrt(u01x * u01x + u01y * u01y);
+        return [u01x / u01d, u01y / u01d];
+    }
+
+    advance_timer() {
+
+        let self = this;
+        if (self.counter < self.data.length)
+
+            setTimeout(() => {
+                d3.select('#'+self.acp_id+'_path_' + self.counter).remove();
+                self.counter++;
+                console.log("deleting ", self.counter);
+                self.advance_timer()
+            }, self.timeout);
+    }
+
 }
