@@ -64,13 +64,17 @@ class HeatMap {
         parent.min_max_range = {};
 
         //resolution
-        parent.rect_size = DEFAULT_REZ;
+        parent.rect_size = HIGH_REZ;
 
         //declare the main colorscheme for the heatmap
         parent.color_scheme = d3.scaleSequential(d3.interpolateInferno)
 
         //total time to draw transitions between activating the heatmap
         parent.animation_dur = 350;
+
+        //separate aniamtion to see how long the 'raindrop' remains visible
+        parent.splash_dur = 400; //WAS 200
+        parent.ripple_dur = 4500;
 
         //the delay for drawing individual items during the animation
         parent.animation_delay = d3.scaleLinear().range([3000, 1000]);
@@ -247,6 +251,9 @@ class HeatMap {
     //selects a sensor and sets it to update on by creating a raindrop
     draw_splash(parent, acp_id, walk) {
 
+        //reverse walk (only temporary)
+        walk != walk;
+
         //get the data from the sensor data variable
         let sensor_data = parent.sensor_data[acp_id];
 
@@ -286,29 +293,37 @@ class HeatMap {
 
             let selected_node = d3.select(node);
 
+            
 
             //IMPORTANT TODO- ADD INTERUPT CASES TO END ANIMATIONS PREMATURELY
             selected_node
                 .style("fill", function (d) {
                     return color
                 })
+
+                //HERE BEGINS THE INITIAL SPLASH THAT IS JUST A BIG WHITE BLOB
+                //WE MAKE IT SHORT AT FIRST
                 .transition() // <------- TRANSITION STARTS HERE --------
-                .ease(d3.easeCubicIn)
+                .duration(parent.splash_dur) //250
+
+                .ease(d3.easeExpOut)
 
                 .delay(function (d, i) {
 
                     let delay = (((Math.cos(dist_delay / 20) + 1)) * 2);
 
-                    if (delay < 50) {
-                        delay = 0;
-                    }
+                    // if (delay < 50) {
+                    //     delay = 0;
+                    // }
                     // console.log('delay', delay, Math.cos(dist_delay), 'dist', dist_delay, loc, sensor_loc)
                     // console.log('delay', delay,dist_delay);
 
+                    if (delay > 1000) {
+                        delay = 1000;
+                    }
                     return delay
                 })
-                .duration(200) //250
-                .ease(d3.easeCubicIn)
+                // .ease(d3.easeCubicIn)
 
                 .style("fill", function (d) {
                     return color //'white'//'white' //color
@@ -330,65 +345,137 @@ class HeatMap {
                     return opacity
                 })
                 //setup interrupt cases when animationcan get suddenly cancelled by another
-                .on("interrupt", function () {
-                    selected_node.attr('opacity', parent.default_opacity);
-                    selected_node.attr('fill', color);
-                })
-                .on('end', function (d, i) {
+                // .on("interrupt", function () {
+                //     selected_node.attr('opacity', parent.default_opacity);
+                //     selected_node.attr('fill', color);
+                // })
+
+                .each('end',function (d, i) {
                     selected_node
+
+                        //HERE THE SECOND PART BEGINS WHERE WE SHOW THE RIPPLE
                         .transition() // <------- TRANSITION STARTS HERE --------
+                        .duration(function (d, i) {
+                            if (walk) {
+                                return parent.ripple_dur //TODO ADD A MULTIPLYER
+                            } else {
+                                return parent.ripple_dur / 2;
+                            }
+                        })
+                        .ease(d3.easeCubicOut)
+
                         .delay(function (d, i) {
 
                             let wave_len = 5;
                             let amplitude = 4000;
 
-                            if (walk) {
-                                wave_len = 2.5;
-                                amplitude = 1000;
-                            }
+                            // if (walk) {
+                            //     wave_len = 2.5;
+                            //     amplitude = 1000;
+                            // }
                             //dampening function
                             let warp_delay = (((Math.cos(dist_delay / wave_len) + 1)) * amplitude) / dist_delay;
 
+
+                            //THESE COMMMENTED OUT BITS HELP REDUCE THE WHITE CELLS 
+                            //THAT STAY AFTER THE RIPPLE, THIS IS THE TAIL END
+                            //OF THE MATHEMATICAL FUNCTION, SO WE WANT TO JUST CUT IT OFF
                             // console.log('warp delay', warp_delay)
                             //since the funciton follow 
-                            if (warp_delay > 200) {
-                                warp_delay = 200;
-                                if (walk) {
-                                    warp_delay = 75;
-                                }
-                            }
-                            if (warp_delay < 50) {
-                                warp_delay = 0;
+                            // if (warp_delay > 200) {
+                            //     warp_delay = 200;
+                            //     if (walk) {
+                            //         warp_delay = 75;
+                            //     }
+                            // }
+                            // if (warp_delay < 50) {
+                            //     warp_delay = 0;
 
+                            // }
+
+                            if (warp_delay > 1000) {
+                                warp_delay = 1000;
                             }
                             return warp_delay
 
                         })
+
+                        .style("fill", function (d) {
+                            return color //'red'
+                        })
+                        .style('opacity', parent.default_opacity)} )
+
+                .on('end', function (d, i) {
+                    selected_node
+
+                        //HERE THE SECOND PART BEGINS WHERE WE SHOW THE RIPPLE
+                        .transition() // <------- TRANSITION STARTS HERE --------
                         .duration(function (d, i) {
                             if (walk) {
-                                return 100
+                                return parent.ripple_dur //TODO ADD A MULTIPLYER
                             } else {
-                                return 200
+                                return parent.ripple_dur / 2;
                             }
                         })
-                        .ease(d3.easeLinear)
+                        .ease(d3.easeCubicOut)
+
+                        .delay(function (d, i) {
+
+                            let wave_len = 5;
+                            let amplitude = 4000;
+
+                            // if (walk) {
+                            //     wave_len = 2.5;
+                            //     amplitude = 1000;
+                            // }
+                            //dampening function
+                            let warp_delay = (((Math.cos(dist_delay / wave_len) + 1)) * amplitude) / dist_delay;
+
+
+                            //THESE COMMMENTED OUT BITS HELP REDUCE THE WHITE CELLS 
+                            //THAT STAY AFTER THE RIPPLE, THIS IS THE TAIL END
+                            //OF THE MATHEMATICAL FUNCTION, SO WE WANT TO JUST CUT IT OFF
+                            // console.log('warp delay', warp_delay)
+                            //since the funciton follow 
+                            // if (warp_delay > 200) {
+                            //     warp_delay = 200;
+                            //     if (walk) {
+                            //         warp_delay = 75;
+                            //     }
+                            // }
+                            // if (warp_delay < 50) {
+                            //     warp_delay = 0;
+
+                            // }
+
+                            if (warp_delay > 1000) {
+                                warp_delay = 1000;
+                            }
+                            return warp_delay
+
+                        })
+
                         .style("fill", function (d) {
                             return color //'red'
                         })
                         .style('opacity', parent.default_opacity)
 
-                        //setup interrupt cases when animationcan get suddenly cancelled by another
-                        .on("interrupt", function () {
-                            selected_node.attr('opacity', parent.default_opacity);
-                            selected_node.attr('fill', color);
-                        });
+                    //setup interrupt cases when animation can get suddenly cancelled by another
+                    // .on("interrupt", function () {
+
+
+                    //     selected_node.attr('opacity', parent.default_opacity);
+                    //     selected_node.attr('fill', color);
+                    // });
                 })
         });
 
+
+        //TODO - CAN UPDATE THE COLOR ON THE FLY?
         //  todo to do important
         //if WALK (or trigger) we DO NOT WANT TO UPDATE THE CRATE HEATMAP--> a lot of the time the msg only contains "motion":1 
         //change the crate's heatmap by recoloring the cells in based on the new readings
-        parent.update_crate_heatmap(parent, sensor_data.crate_id, acp_id);
+        //parent.update_crate_heatmap(parent, sensor_data.crate_id, acp_id);
     }
 
     //API requests to get sensors per crate
@@ -752,9 +839,9 @@ class HeatMap {
         //and draws the heatmap overlayed over the floorplan
 
         //https://stackoverflow.com/questions/19154631/how-to-get-coordinates-of-an-svg-element
-        let scale = floor.getCTM().a;//.transform.baseVal.consolidate().matrix.a;
-        let x_offset = floor.getCTM().e;//.transform.baseVal.consolidate().matrix.e;
-        let y_offset = floor.getCTM().f;//.transform.baseVal.consolidate().matrix.f;
+        let scale = floor.getCTM().a; //.transform.baseVal.consolidate().matrix.a;
+        let x_offset = floor.getCTM().e; //.transform.baseVal.consolidate().matrix.e;
+        let y_offset = floor.getCTM().f; //.transform.baseVal.consolidate().matrix.f;
 
         let consolidated_svg = {
             scale: scale,
@@ -824,10 +911,10 @@ class HeatMap {
                                 .attr('class', class_name)
 
                                 .attr("x", function (d) {
-                                    return loc.x.toFixed(0);//round to int 
+                                    return loc.x.toFixed(0); //round to int 
                                 })
                                 .attr("y", function (d) {
-                                    return loc.y.toFixed(0);//round to int
+                                    return loc.y.toFixed(0); //round to int
                                 })
                                 .attr("width", parent.rect_size - offset)
                                 .attr("height", parent.rect_size - offset)
@@ -880,204 +967,204 @@ class HeatMap {
     }
 
     //first get all rects on a floor, then reiterate for rooms
-    show_heatmap_alt(parent) {
-        console.log('start alt', Date.now())
+    // show_heatmap_alt(parent) {
+    //     console.log('start alt', Date.now())
 
-        let selected_feature = document.getElementById('features_list').value;
-        parent.get_min_max(parent, selected_feature);
+    //     let selected_feature = document.getElementById('features_list').value;
+    //     parent.get_min_max(parent, selected_feature);
 
-        d3.selectAll('polygon').attr('class', 'g0-9')
+    //     d3.selectAll('polygon').attr('class', 'g0-9')
 
-        let main_svg = d3.select('#drawing_svg').append('g').attr('id', 'heatmap'); //parent.page_floor_svg;
+    //     let main_svg = d3.select('#drawing_svg').append('g').attr('id', 'heatmap'); //parent.page_floor_svg;
 
-        let h = parent.master.page_floor_svg.clientHeight;
-        let w = parent.master.page_floor_svg.clientWidth;
+    //     let h = parent.master.page_floor_svg.clientHeight;
+    //     let w = parent.master.page_floor_svg.clientWidth;
 
-        let floor = document.querySelector("[data-crate_type='floor']");
+    //     let floor = document.querySelector("[data-crate_type='floor']");
 
-        console.log('floor', floor)
-        //https://stackoverflow.com/questions/19154631/how-to-get-coordinates-of-an-svg-element
-        var scale = floor.transform.baseVal.consolidate().matrix.a;
-        let transf_x = floor.transform.baseVal.consolidate().matrix.e;
-        let transf_y = floor.transform.baseVal.consolidate().matrix.f;
+    //     console.log('floor', floor)
+    //     //https://stackoverflow.com/questions/19154631/how-to-get-coordinates-of-an-svg-element
+    //     var scale = floor.transform.baseVal.consolidate().matrix.a;
+    //     let transf_x = floor.transform.baseVal.consolidate().matrix.e;
+    //     let transf_y = floor.transform.baseVal.consolidate().matrix.f;
 
-        let bbox = floor.getBBox();
+    //     let bbox = floor.getBBox();
 
-        let polygon_points = floor.points;
+    //     let polygon_points = floor.points;
 
-        let pol_h = bbox.height * scale;
-        let pol_w = bbox.width * scale;
-        let pol_top = bbox.y * scale;
-        let pol_left = bbox.x * scale;
+    //     let pol_h = bbox.height * scale;
+    //     let pol_w = bbox.width * scale;
+    //     let pol_top = bbox.y * scale;
+    //     let pol_left = bbox.x * scale;
 
-        let offset = 0;
+    //     let offset = 0;
 
-        //  let rect_count = 0;
-        for (let i = pol_left; i < pol_w + pol_left; i += parent.rect_size) {
-            for (let u = pol_top; u < pol_h + pol_top; u += parent.rect_size) {
+    //     //  let rect_count = 0;
+    //     for (let i = pol_left; i < pol_w + pol_left; i += parent.rect_size) {
+    //         for (let u = pol_top; u < pol_h + pol_top; u += parent.rect_size) {
 
-                //  rect_count++;
+    //             //  rect_count++;
 
-                let coords = {
-                    'x': i / scale,
-                    'y': u / scale,
-                    'height': h,
-                    'width': w
-                };
+    //             let coords = {
+    //                 'x': i / scale,
+    //                 'y': u / scale,
+    //                 'height': h,
+    //                 'width': w
+    //             };
 
-                //check if inside the floor polygon
-                if (parent.jb_tools.inside(coords, polygon_points)) {
+    //             //check if inside the floor polygon
+    //             if (parent.jb_tools.inside(coords, polygon_points)) {
 
-                    let selected_crate = floor.id;
-                    let loc = {
-                        x: i - parent.rect_size / 2,
-                        y: u - parent.rect_size / 2,
-                        scale: scale
-                    }
+    //                 let selected_crate = floor.id;
+    //                 let loc = {
+    //                     x: i - parent.rect_size / 2,
+    //                     y: u - parent.rect_size / 2,
+    //                     scale: scale
+    //                 }
 
-                    let cell_value = 1; //parent.get_cell_value(parent, selected_crate, loc);
-                    let color = 'black'; //parent.color_scheme(cell_value);
+    //                 let cell_value = 1; //parent.get_cell_value(parent, selected_crate, loc);
+    //                 let color = 'black'; //parent.color_scheme(cell_value);
 
-                    main_svg
-                        .append("rect")
-                        //.style('pointer-events', 'none')
-                        .attr('class', 'unassigned_rect')
+    //                 main_svg
+    //                     .append("rect")
+    //                     //.style('pointer-events', 'none')
+    //                     .attr('class', 'unassigned_rect')
 
-                        .attr("x", function (d) {
-                            return loc.x
-                        })
-                        .attr("y", function (d) {
-                            return loc.y
-                        })
-                        .attr("width", parent.rect_size - offset)
-                        .attr("height", parent.rect_size - offset)
-                        .style('stroke-opacity', 0)
-                        .attr('data-crate', selected_crate)
-                        .attr('data-loc', [loc.x, loc.y, loc.scale])
-                        .attr('data-coords', [coords.x, coords.y])
+    //                     .attr("x", function (d) {
+    //                         return loc.x
+    //                     })
+    //                     .attr("y", function (d) {
+    //                         return loc.y
+    //                     })
+    //                     .attr("width", parent.rect_size - offset)
+    //                     .attr("height", parent.rect_size - offset)
+    //                     .style('stroke-opacity', 0)
+    //                     .attr('data-crate', selected_crate)
+    //                     .attr('data-loc', [loc.x, loc.y, loc.scale])
+    //                     .attr('data-coords', [coords.x, coords.y])
 
-                        .style("fill", 'black')
-                        .style('opacity', 0.5);
-                }
-            }
-        }
+    //                     .style("fill", 'black')
+    //                     .style('opacity', 0.5);
+    //             }
+    //         }
+    //     }
 
-        let crates_with_sensors_list = Object.keys(parent.crates_with_sensors);
+    //     let crates_with_sensors_list = Object.keys(parent.crates_with_sensors);
 
-        //d3.selectAll('polygon').nodes().forEach(element => {
+    //     //d3.selectAll('polygon').nodes().forEach(element => {
 
-        let polygon_alpha = d3.selectAll('polygon').nodes();
-        let polygons = []
-        console.log('polygons_total', polygon_alpha.length);
+    //     let polygon_alpha = d3.selectAll('polygon').nodes();
+    //     let polygons = []
+    //     console.log('polygons_total', polygon_alpha.length);
 
-        polygon_alpha.forEach(function (d, i) {
-            //  console.log(index, 'space',object)
-            let has_sensors = crates_with_sensors_list.includes(d.id);
+    //     polygon_alpha.forEach(function (d, i) {
+    //         //  console.log(index, 'space',object)
+    //         let has_sensors = crates_with_sensors_list.includes(d.id);
 
-            if (d.dataset.crate_type != 'building' && d.dataset.crate_type != 'floor' && has_sensors) {
-                polygons.push(d)
-            }
+    //         if (d.dataset.crate_type != 'building' && d.dataset.crate_type != 'floor' && has_sensors) {
+    //             polygons.push(d)
+    //         }
 
-        });
+    //     });
 
-        console.log('polygons_total', polygons.length, polygons);
+    //     console.log('polygons_total', polygons.length, polygons);
 
-        // d3.selectAll('.unassigned_rect').nodes().forEach(rect => {
-        let rects = d3.selectAll('.unassigned_rect').nodes();
+    //     // d3.selectAll('.unassigned_rect').nodes().forEach(rect => {
+    //     let rects = d3.selectAll('.unassigned_rect').nodes();
 
-        console.log('items:', 'rects:', rects.length, 'polygons', polygons.length);
+    //     console.log('items:', 'rects:', rects.length, 'polygons', polygons.length);
 
-        //pick a rectangle on screen
-        for (let u = 0; u < rects.length; u++) {
-            let rect = rects[u];
+    //     //pick a rectangle on screen
+    //     for (let u = 0; u < rects.length; u++) {
+    //         let rect = rects[u];
 
-            let loc_raw = rect.dataset.loc.split(',');
+    //         let loc_raw = rect.dataset.loc.split(',');
 
-            let loc = {
-                x: rect.x.baseVal.value + parent.rect_size / 2,
-                y: rect.y.baseVal.value + parent.rect_size / 2,
-                scale: parseFloat(loc_raw[2])
-            }
-            //break;
-            //try to fit a polygon
-            for (let i = 0; i < polygons.length; i++) {
-                let element = polygons[i];
+    //         let loc = {
+    //             x: rect.x.baseVal.value + parent.rect_size / 2,
+    //             y: rect.y.baseVal.value + parent.rect_size / 2,
+    //             scale: parseFloat(loc_raw[2])
+    //         }
+    //         //break;
+    //         //try to fit a polygon
+    //         for (let i = 0; i < polygons.length; i++) {
+    //             let element = polygons[i];
 
-                // if (element.dataset.crate_type != 'building' && element.dataset.crate_type != 'floor' && has_sensors) {
+    //             // if (element.dataset.crate_type != 'building' && element.dataset.crate_type != 'floor' && has_sensors) {
 
-                let class_name = element.id + '_rect';
+    //             let class_name = element.id + '_rect';
 
-                let polygon_points2 = element.points;
+    //             let polygon_points2 = element.points;
 
-                let polygon_points_new = [];
+    //             let polygon_points_new = [];
 
-                for (let j = 0; j < polygon_points2.length; j++) {
-                    polygon_points_new[j] = {
-                        'x': null,
-                        'y': null
-                    };
-                    polygon_points_new[j].x = polygon_points2[j].x * scale
-                    polygon_points_new[j].y = polygon_points2[j].y * scale
-                }
+    //             for (let j = 0; j < polygon_points2.length; j++) {
+    //                 polygon_points_new[j] = {
+    //                     'x': null,
+    //                     'y': null
+    //                 };
+    //                 polygon_points_new[j].x = polygon_points2[j].x * scale
+    //                 polygon_points_new[j].y = polygon_points2[j].y * scale
+    //             }
 
-                console.log('checking ', element.id)
+    //             console.log('checking ', element.id)
 
-                if (parent.jb_tools.inside(loc, polygon_points_new)) {
+    //             if (parent.jb_tools.inside(loc, polygon_points_new)) {
 
-                    let selected_crate = element.id;
+    //                 let selected_crate = element.id;
 
-                    let cell_value = parent.get_cell_value(parent, selected_crate, loc);
-                    let color = parent.color_scheme(cell_value);
+    //                 let cell_value = parent.get_cell_value(parent, selected_crate, loc);
+    //                 let color = parent.color_scheme(cell_value);
 
-                    d3.select(rect)
-                        .attr('class', class_name)
-                        .style('opacity', 0)
-                        .style('stroke-opacity', 0)
-                        .attr('data-crate', selected_crate)
-                        .attr('data-value', cell_value)
+    //                 d3.select(rect)
+    //                     .attr('class', class_name)
+    //                     .style('opacity', 0)
+    //                     .style('stroke-opacity', 0)
+    //                     .attr('data-crate', selected_crate)
+    //                     .attr('data-value', cell_value)
 
-                        .on("mouseover", function (d) {
-                            parent.set_cbar_value(parent, cell_value)
-                        })
-                        .on("mouseout", function (d) {
-                            d3.select('#hover_val').remove();
-                        })
-                        //.call(parent.transition_value, duration)
-                        // .call(parent.transition_random, duration)
-                        // .call(parent.transition_sideways, duration)
+    //                     .on("mouseover", function (d) {
+    //                         parent.set_cbar_value(parent, cell_value)
+    //                     })
+    //                     .on("mouseout", function (d) {
+    //                         d3.select('#hover_val').remove();
+    //                     })
+    //                     //.call(parent.transition_value, duration)
+    //                     // .call(parent.transition_random, duration)
+    //                     // .call(parent.transition_sideways, duration)
 
-                        .transition() // <------- TRANSITION STARTS HERE --------
-                        .delay(function (d, i) {
+    //                     .transition() // <------- TRANSITION STARTS HERE --------
+    //                     .delay(function (d, i) {
 
-                            let delay = Math.random() * (2000 - 750) + 750;
-                            //let delay = parent.animation_delay(cell_value);
-                            return delay;
-                        })
-                        .duration(parent.animation_dur)
-                        .style("fill", function (d) {
-                            return color //'red'
-                        })
-                        .style('opacity', parent.default_opacity);
-                } else {
-                    console.log('no', 'next polygon');
-                    //break;
-                }
-            }
-        }
-        console.log('done polygons')
+    //                         let delay = Math.random() * (2000 - 750) + 750;
+    //                         //let delay = parent.animation_delay(cell_value);
+    //                         return delay;
+    //                     })
+    //                     .duration(parent.animation_dur)
+    //                     .style("fill", function (d) {
+    //                         return color //'red'
+    //                     })
+    //                     .style('opacity', parent.default_opacity);
+    //             } else {
+    //                 console.log('no', 'next polygon');
+    //                 //break;
+    //             }
+    //         }
+    //     }
+    //     console.log('done polygons')
 
-        //iterate through results to extract data required to show sensors on the floorplan
-        //change name from results to else
-        let results = parent.sensor_data;
-        parent.attach_sensors(parent, results, scale)
-        console.log(results)
+    //     //iterate through results to extract data required to show sensors on the floorplan
+    //     //change name from results to else
+    //     let results = parent.sensor_data;
+    //     parent.attach_sensors(parent, results, scale)
+    //     console.log(results)
 
-        //debug only, "parent" now working somehow
-        parent.set_colorbar(parent);
+    //     //debug only, "parent" now working somehow
+    //     parent.set_colorbar(parent);
 
-        console.log('done', Date.now())
+    //     console.log('done', Date.now())
 
-    }
+    // }
 
     hide_heatmap(parent) {
         d3.selectAll('#heatmap').remove();
@@ -1150,35 +1237,33 @@ class HeatMap {
         console.log(parent.sensor_data)
         for (let sensor in parent.sensor_data) {
             console.log('incoming update ', sensor)
-            let wildcard = Math.random() < 0.5;
-            window.setInterval(parent.update_callback, parent.jb_tools.random_int(20000, 20000 * 10), parent, sensor, wildcard);
+            let wildcard = false //Math.random() < 0.5;
+            window.setInterval(parent.update_callback, parent.jb_tools.random_int(1500, 1500 * 10), parent, sensor, wildcard);
         }
     }
 
-    //show fake path on wgb
+    //show fake path on LL
     fake_path(parent) {
         let sens_list = [
-            "elsys-fake-738bf2",
-            "elsys-fake-d6a9de",
-            "elsys-fake-372c9d",
-            "elsys-fake-290265",
-            "elsys-fake-9354d3",
-            "elsys-fake-f3b577",
-            "elsys-fake-ffdfb4",
-            "elsys-fake-c3e668",
-            "elsys-fake-6bf9d0",
-            "elsys-fake-1fd377",
-            "elsys-fake-c7cf58",
-            "elsys-fake-56f2e8",
-            "elsys-fake-8bae37",
-            "elsys-fake-2c9683"
+            "elsys-co2-0520ba",
+            "elsys-co2-0520bb",
+            "elsys-co2-0520bc",
+            "elsys-co2-0520bd",
+            "elsys-co2-0520be",
+            "elsys-co2-0520bf",
+            "elsys-co2-0520c0",
+            "elsys-co2-0520c1",
+            "elsys-co2-0520c2",
+            "elsys-co2-0520c3",
+            "elsys-ems-0503e0",
+            "elsys-eye-044504"
         ];
 
         let counter = 1;
         for (let i = 0; i < sens_list.length; i++) {
             let sensor = sens_list[i];
             console.log('incoming update ', sensor)
-            window.setTimeout(parent.update_callback, counter * 1000, parent, sensor, true);
+            window.setTimeout(parent.update_callback, counter * 1000, parent, sensor, false);
             counter++;
         }
     }

@@ -224,6 +224,8 @@ Z
         // let acp_id = d3.select(el).selectChild().node().dataset.acp_id;
         let acp_id_array = self.acp_id.split("-");
 
+
+        //TODO TEXT IS NOW UNDER THE CIRCLE  - FIX TO CHANGE THE Z-INDEX
         for (let u = 0; u < acp_id_array.length; u++) {
             d3.select('#' + self.acp_id + '_txt').append('tspan').text(acp_id_array[u])
                 .attr('x', function (d, i) {
