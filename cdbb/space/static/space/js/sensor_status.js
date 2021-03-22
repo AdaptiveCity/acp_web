@@ -271,7 +271,7 @@ class SensorStatusDisplay {
         for (let i = 0; i < sensor_circles.length; i++) {
             sensor_circles[i].make_circle(sensor_circles[i]);
 
-            sensor_circles[i].make_out_stroke(sensor_circles[i]);
+            sensor_circles[i].outside_stroke(sensor_circles[i]);
 
         }
 
@@ -726,12 +726,31 @@ class SensorCircle {
 
         self.counter = 0;
         self.radius = master.CIRCLE_RADIUS;
-        self.path_width = 10;
-        self.stroke_width=0.5;
+        self.path_width = 3;//the widht of the ticking circumferences
+        // self.stroke_width = 0.1;
 
-        self.resolution = 1; //lower the better
 
-        self.timeout = 500; //steps in ms
+
+        
+        //declare total round ticking time for 360 
+        self.round_time=5*60*1000;//in ms
+
+        //declare how many ricks we want to take to get around 360
+        self.clock_steps=60;//let's say 60 as in a clock
+
+        //calculate the circumference
+        self.circumference=2*Math.PI*self.radius;
+
+
+        self.resolution = self.circumference/self.clock_steps; //divides the circumference (2*pi*r) and get the number of circumference divisions
+        //total time is (circumf/resolution) * timeout
+
+        //        self.round_time=self.clock_steps*self.timeout;
+
+        self.timeout = self.round_time/self.clock_steps; //steps in ms
+
+
+        self.circle_opacity = 0.85;
 
 
         self.percentage = 1; //1 is 100% aka full circle
@@ -747,13 +766,15 @@ class SensorCircle {
 
     }
 
-    
-    make_out_stroke(self) {
-        //let self = this;
-        let c = [self.x, self.y]; //[250, 250]; // center
-        let r = self.radius; // radius
 
-        let complete = 1//self.percentage; // percent
+    outside_stroke(self) {
+        //let self = this;
+        let c = [self.master.spacing + self.x, self.master.spacing + self.y]; //[250, 250]; // center
+        let r = self.radius // radius
+
+
+        console.log('pos', c)
+        let complete = self.percentage; // percent
 
         let circlePath = `
 M ${c[0]} ${c[1]-r} 
@@ -772,34 +793,35 @@ Z
 
         //let path = d3.select("path").attr("d", circlePath).remove();
         let instantiate_path = d3.select('#main_canvas')
+            .append('g')
+            .attr('id', self.acp_id + '_path_container')
             .append('path')
-            .attr('id',  self.acp_id + '_path')
-            .attr('fill', "rgba(255,0,0,0.25)")
-            .attr('stroke-width', 10);
+            .attr('id', self.acp_id + '_path')
+            .attr('fill', 'none')
+        // .attr('stroke-width', 10);
 
 
-        let path = d3.select('#' + self.acp_id + '_path').attr("d", circlePath)//.remove();
+        let path = d3.select('#' + self.acp_id + '_path').attr("d", circlePath).remove();
 
         console.time("[gradient stroke performance]");
         console.log('PATH', path)
         self.data = self.quads(self.samples(path.node(), self.resolution))
 
-        console.log('path data', self.data, self.data.length)
-
-        d3.select('#'+self.acp_id+'_path').selectAll("path")//.select('#main_canvas')
+        let instantiate_ticker = d3.select('#' + self.acp_id + '_path_container').selectAll("path") //.select('#main_canvas')
             .data(self.data)
             .enter().append("path")
             .attr('id', function (d, i) {
-                return '#'+self.acp_id+'_path_' + (i)
+                return '#' + self.acp_id + '_path_' + (i)
             })
             .style("fill", colorHandler)
             .style("stroke", colorHandler)
-            .style("stroke-width", self.stroke_width)
+            // .style("stroke-width", self.stroke_width)
             .style("stroke-linecap", (d, i, all) => i === 0 || i === all.length ? "round" : "round")
             .attr("d", d => self.lineJoin(d[0], d[1], d[2], d[3], self.path_width));
 
         console.timeEnd("[gradient stroke performance]");
 
+        console.time('[TOTAL TIMER '+ self.acp_id+']');
 
         //tick tock
         self.advance_timer();
@@ -836,7 +858,7 @@ Z
             .attr("cy", function (d, i) {
                 return self.master.spacing + self.y
             }).attr('z-index', -1)
-            .style('opacity', 0.85);
+            .style('opacity', self.circle_opacity);
 
         console.log('new element', a)
 
@@ -987,14 +1009,33 @@ Z
     advance_timer() {
 
         let self = this;
-        if (self.counter < self.data.length)
+        if (self.counter < self.data.length){
 
             setTimeout(() => {
-                d3.select('#'+self.acp_id+'_path_' + self.counter).remove();
+                try {
+                    let element = d3.select('#' + self.acp_id + '_path_' + self.counter.toString())
+                //    console.log('#' + self.acp_id + '_path_' + self.counter)
+                //    console.log("deleting ", element.node());
+                //    console.log('del', self.counter)
+                    document.getElementById('#' + self.acp_id + '_path_' + self.counter.toString()).remove();
+
+                } catch (error) {
+                   // console.log('fail', error)
+                }
                 self.counter++;
-                console.log("deleting ", self.counter);
+
                 self.advance_timer()
+
+
             }, self.timeout);
+            
+        }
+else{
+
+    console.timeEnd('[TOTAL TIMER '+ self.acp_id+']');
+
+}
+            
     }
 
 }
