@@ -86,18 +86,23 @@ class SensorStatusDisplay {
     }
     setup_buttons(parent) {
 
-        //Set up a button listener to launch the SSD
-        document.getElementById('show_ssd').addEventListener('click', () => {
+        try {
+            //Set up a button listener to launch the SSD
+            document.getElementById('show_ssd').addEventListener('click', () => {
 
-            //check if the ssd is present then close it
-            //check if display is not none
-            //and change the button name to start
+                //check if the ssd is present then close it
+                //check if display is not none
+                //and change the button name to start
 
-            //else if display is none then initiate the viz
-            parent.init(parent, parent.master.sensor_metadata);
-            //and change the button name to close
-            //parent.ssd.close(parent.ssd)
-        })
+                //else if display is none then initiate the viz
+                parent.init(parent, parent.master.sensor_metadata);
+                //and change the button name to close
+                //parent.ssd.close(parent.ssd)
+            })
+        } catch (error) {
+            console.log('no buttons present', error)
+        }
+
     }
 
     setup_controls(parent) {
@@ -349,18 +354,18 @@ class SensorStatusDisplay {
 
     update_viz(self, acp_id, msg_data) {
 
+        //update the class of the circle to make sure its active
+        d3.select('#' + acp_id + '_ssd').attr('class', 'sensor_circles')
+
         //if(state=='both')update all, else...only txt or only sensors
         self.append_text(self, acp_id, msg_data)
         self.set_colorbar(self)
 
         self.draw_ripples(self, acp_id);
-        // self.reset_animations(self)
 
         //restart timers
         //TODO fix this Object.keys/values mess
         let updated_sensor = Object.values(self.sensor_circles.find(el => Object.keys(el) == acp_id))[0]
-
-        console.log('ssd object', updated_sensor, acp_id, self.sensor_circles)
 
         updated_sensor.restart_timer(updated_sensor);
     }
@@ -479,38 +484,16 @@ class SensorStatusDisplay {
         let parent = self;
         parent.get_min_max(parent)
 
-        //avoid havinf a colorbar with identical top and lower values
+        //avoid having a colorbar with identical top and lower values
         if (self.min_max_range.max == self.min_max_range.min) {
             return
         }
 
         //recolor if changed min_max
-        d3.selectAll('.sensor_circles').transition().duration(1000).style('fill', function (d, i) {
-            let acp_id = this.dataset.acp_id;
-            let pinged;
-            let color;
-
-            try {
-                pinged = self.msg_history[acp_id].pinged;
-                color = self.color_scheme(pinged);
-
-                /* Create the text for each block */
-                d3.select('#' + acp_id + '_pinged')
-                    // .attr("dx", function (d) {
-                    //     return -20
-                    // })
-                    .text(function (d) {
-                        return pinged
-                    })
-
-            } catch (error) {
-                color = 'white';
-            }
-
-            return color
-        });
+        parent.update_sensor_colors(self);
 
         d3.select("#legend_svg").remove();
+        
         //d3.selectAll('.non_heatmap_circle').style('opacity', 0);
         let legend_svg_parent = d3.select('#legend_container');
 
@@ -557,7 +540,33 @@ class SensorStatusDisplay {
 
     }
 
+    //iterates through all active sensors and updates their colors to match the colorbar
+    update_sensor_colors(self) {
 
+        //get all active sensors and change their fill
+        d3.selectAll('.sensor_circles').transition().duration(1000).style('fill', function (d, i) {
+            let acp_id = this.dataset.acp_id;
+            let pinged;
+            let color;
+
+            try {
+                pinged = self.msg_history[acp_id].pinged;
+                color = self.color_scheme(pinged);
+
+                /* Create the text for each block */
+                d3.select('#' + acp_id + '_pinged')
+                    .text(function (d) {
+                        return pinged
+                    })
+
+            } catch (error) {
+                color = 'white';
+            }
+
+            return color
+        })
+
+    }
     //calculates value ranges for temp/co2/humidity and other during runtime;
     //recalculations are made whenever a new heatmap is selected
     get_min_max(parent) {

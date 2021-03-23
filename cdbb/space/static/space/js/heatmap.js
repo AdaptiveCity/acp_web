@@ -345,65 +345,10 @@ class HeatMap {
                     return opacity
                 })
                 //setup interrupt cases when animationcan get suddenly cancelled by another
-                // .on("interrupt", function () {
-                //     selected_node.attr('opacity', parent.default_opacity);
-                //     selected_node.attr('fill', color);
-                // })
-
-                .each('end',function (d, i) {
-                    selected_node
-
-                        //HERE THE SECOND PART BEGINS WHERE WE SHOW THE RIPPLE
-                        .transition() // <------- TRANSITION STARTS HERE --------
-                        .duration(function (d, i) {
-                            if (walk) {
-                                return parent.ripple_dur //TODO ADD A MULTIPLYER
-                            } else {
-                                return parent.ripple_dur / 2;
-                            }
-                        })
-                        .ease(d3.easeCubicOut)
-
-                        .delay(function (d, i) {
-
-                            let wave_len = 5;
-                            let amplitude = 4000;
-
-                            // if (walk) {
-                            //     wave_len = 2.5;
-                            //     amplitude = 1000;
-                            // }
-                            //dampening function
-                            let warp_delay = (((Math.cos(dist_delay / wave_len) + 1)) * amplitude) / dist_delay;
-
-
-                            //THESE COMMMENTED OUT BITS HELP REDUCE THE WHITE CELLS 
-                            //THAT STAY AFTER THE RIPPLE, THIS IS THE TAIL END
-                            //OF THE MATHEMATICAL FUNCTION, SO WE WANT TO JUST CUT IT OFF
-                            // console.log('warp delay', warp_delay)
-                            //since the funciton follow 
-                            // if (warp_delay > 200) {
-                            //     warp_delay = 200;
-                            //     if (walk) {
-                            //         warp_delay = 75;
-                            //     }
-                            // }
-                            // if (warp_delay < 50) {
-                            //     warp_delay = 0;
-
-                            // }
-
-                            if (warp_delay > 1000) {
-                                warp_delay = 1000;
-                            }
-                            return warp_delay
-
-                        })
-
-                        .style("fill", function (d) {
-                            return color //'red'
-                        })
-                        .style('opacity', parent.default_opacity)} )
+                .on("interrupt", function () {
+                    selected_node.attr('opacity', parent.default_opacity);
+                    selected_node.attr('fill', color);
+                })
 
                 .on('end', function (d, i) {
                     selected_node
@@ -461,12 +406,12 @@ class HeatMap {
                         .style('opacity', parent.default_opacity)
 
                     //setup interrupt cases when animation can get suddenly cancelled by another
-                    // .on("interrupt", function () {
+                    .on("interrupt", function () {
 
 
-                    //     selected_node.attr('opacity', parent.default_opacity);
-                    //     selected_node.attr('fill', color);
-                    // });
+                        selected_node.attr('opacity', parent.default_opacity);
+                        selected_node.attr('fill', color);
+                    });
                 })
         });
 
