@@ -30,10 +30,10 @@
 
 
 <!-- Rain class  -->
-<script type='text/javascript' src="{% static 'space/js/heatmap.js' %}"></script>
+<!-- <script type='text/javascript' src="{% static 'space/js/heatmap.js' %}"></script> -->
 
 <!-- Splash class  -->
-<!-- <script type='text/javascript' src="{% static 'space/js/splash.js' %}"></script> -->
+<script type='text/javascript' src="{% static 'space/js/splash.js' %}"></script>
 
 <!-- RTMonitor tests -->
 <script type='text/javascript' src="{% static 'space/js/RTconnect.js' %}"></script>
@@ -55,7 +55,7 @@
 {% endblock %}
 
 {% block header_title %}
-Spatial Building and Sensor Data: Rain app
+Spatial Building and Sensor Data: Splash app
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -101,88 +101,22 @@ Spatial Building and Sensor Data: Rain app
         <!-- close LEGEND AND BUTTONS -->
     </div>
 
-    
     <div id="mySidenav" class="sidenav">
         <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
 
         <!-- OUTERMOST WRAPPER FOR ALL BUTTONS -->
         <div class='all_buttons'>
 
-            <!-- MAIN RAIN ACTIVATION -->
+
+            <!-- MAIN SPLASH ACTIVATION -->
             <div class="button_wrapper">
                 <!-- <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button> -->
-                <a id="show_rain" class="button1">Start Rain</a>
+                <a id="show_splash" class="button1">Stop Splash</a>
             </div>
 
+            <div id='splash_control' class='rt_status'><span id='splash_rt_state'
+                    class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='splash_rt'>RtM not connected</span></div>
             <br>
-
-            <!-- RAIN CONFIGURATION/HIDE SETTINGS -->
-            <div class='hidden_divs'>
-
-                <!-- FEATURE SELECT -->
-                <div class="button_wrapper" id='heatmap_activation'>
-
-                    <!-- Real Time Subscription for Rain -->
-                    <div class="button_wrapper" id='heatmap_rt_con'>
-                        <a id="rain_rt_connect" class="button1">RT Disconnect</a>
-                    </div>
-                    <div id='rain_control' class='rt_status'><span id='rain_rt_state'
-                            class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='rain_rt'>RtM not connected</span>
-                    </div>
-
-                    <!-- I know the following should not be hardcoded, this is just for debug -->
-                    <form id="feature_form">
-                        <label class='form_label' for="features">Feature:</label>
-                        <br>
-                        <select name="features" id="features_list">
-                            <option value="co2">CO2</option>
-                            <option value="temperature" selected="selected">Temperature</option>
-                            <option value="humidity">Humidity</option>
-                            <option value="vdd">Battery</option>
-                        </select>
-                        <br>
-                    </form>
-
-                </div>
-
-                <!-- CHANGE RESOLUTION -->
-                <div class="button_wrapper" id='heatmap_activation'>
-
-                    <!-- I know the following should not be hardcoded, this is just for debug -->
-                    <form id="resolution_form">
-                        <label class='form_label' for="resolution">Resolution:</label>
-                        <br>
-                        <select name="resolution" id="resolution_list">
-                            <option value="low">Low</option>
-                            <option value="regular" selected="selected">Regular</option>
-                            <option value="high">High</option>
-                        </select>
-                        <br>
-                    </form>
-
-                </div>
-
-                <br>
-
-                <!-- change sensor opacity slider -->
-                <div class="button_wrapper">
-                    <div class="slidecontainer">
-                        <label for="opacity_slider">Sensor Opacity:</label>
-                        <br>
-                        <input type="range" min="0" max="100" value="50" name='opacity_slider' class="slider"
-                            id="sensor_opacity">
-                    </div>
-                </div>
-
-                <br>
-
-                <!-- HIDE HEATMAP -->
-                <div class="button_wrapper" id='heatmap_activation'>
-                    <a id="reset" class="button1">Hide Heatmap</a>
-                </div>
-                <br>
-
-            </div>
 
             <!-- reset zoom -->
             <div class="button_wrapper" id='reset_zoom_wrapper'>
@@ -225,9 +159,10 @@ Spatial Building and Sensor Data: Rain app
     space_floor.init();
 
 
-    let rt_heatmap = new HeatMap(space_floor);
-
-    document.getElementById("drawing_svg").addEventListener("load", () => rt_heatmap.init(rt_heatmap));
+    let rt_splash = new SplashMap(space_floor);
+    //TODO: fix the loading problems where the sublist from the the space_floor object has not been generated yet
+    //only works like half the time
+    document.getElementById("drawing_svg").addEventListener("load", () => rt_splash.init(rt_splash));
 
     // function on_load() {
     //     rt_heatmap.init(rt_heatmap);

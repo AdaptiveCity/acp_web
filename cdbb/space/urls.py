@@ -9,7 +9,7 @@ urlpatterns = [
     path('floor/<crate_id>/', FloorView.as_view(), name='space_floor'),
     path('floorspace/<crate_id>/', FloorspaceView.as_view(), name='space_floorspace'),
     path('floor_rain/<crate_id>/', RainView.as_view(), name='space_rain'),
-    path('floor_splash/<crate_id>/', SplashView.as_view(), name='space_splash').
+    path('floor_splash/<crate_id>/', SplashView.as_view(), name='space_splash'),
     path('floor_debug/<crate_id>/', FloordebugView.as_view(), name='space_debug')
 
 ]

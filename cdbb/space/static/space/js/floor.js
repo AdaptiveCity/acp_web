@@ -15,9 +15,6 @@ class SpaceFloor {
         // Instantiate a jb2328 utility class e.g. for getBoundingBox()
         this.jb_tools = new VizTools2();
 
-        //check if any apps available
-        this.preload_apps(this);
-
         this.svg_scale;
 
         // Transform parameters to scale SVG to screen
@@ -113,32 +110,6 @@ class SpaceFloor {
     //show on the page following the initial load
     manage_url() {
 
-    }
-
-    //check if any of the created apps are embedded in the template + available to initiate
-    preload_apps(parent) {
-        //check for APP availablity
-        try {
-            // Instantiate a Heatmap class object
-          //  parent.heatmap = new HeatMap(parent); //initiated at the end of init so we can preload data
-            console.log('Rain preloaded')
-        } catch (error) {
-            console.log('Rain not available', error)
-        }
-        try {
-            // Instantiate a Splah class object
-          //  parent.splash = new SplashMap(parent);
-            console.log('Splash preloaded')
-        } catch (error) {
-            console.log('Splash not available', error)
-        }
-        try {
-            // Instantiate an SensorStatusDisplay object
-           parent.ssd = new SensorStatusDisplay(parent);
-            console.log('SSD preloaded')
-        } catch (error) {
-            console.log('SSD not available', error)
-        }
     }
 
     //event listeners for buttons
@@ -582,6 +553,9 @@ class SpaceFloor {
         parent.sensor_radius = parent.radius_scaling / parent.svg_scale;
         //let rad = ; // radius of sensor icon in METERS (i.e. XYZF before transform)
 
+        //create a div to have all of the sensor circles
+        let sensor_div = d3.select("#bim_request").append('g').attr('id', 'sensor_request');
+
         //iterate through results to extract data required to show sensors on the floorplan
         for (let sensor in recieved_sensor_metadata) {
 
@@ -609,7 +583,8 @@ class SpaceFloor {
                 }
 
                 //draw sensors on screen
-                d3.select("#bim_request").append("circle")
+                d3.select('#sensor_request')
+                    .append("circle")
                     .attr("cx", x_value)
                     .attr("cy", y_value)
                     .attr("r", parent.sensor_radius)

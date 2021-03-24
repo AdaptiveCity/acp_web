@@ -38,7 +38,7 @@ class SplashMap {
 
     // init() called when page loaded
     init(parent) {
-
+        console.log('loading',parent.master,parent.master['sensor_data'], parent.master.sensor_data)
         //get a list of all sensors rendered on screen
         parent.sub_list = Object.keys(parent.master.sensor_data);
         console.log('sensors', parent.sub_list)

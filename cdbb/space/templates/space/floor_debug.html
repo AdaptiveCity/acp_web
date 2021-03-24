@@ -282,17 +282,14 @@ Spatial Building and Sensor Data: FLOOR VIEW
 {% block lazy_script %}
 <script>
     console.log('lazy_script');
-    var space_floor = new SpaceFloor();
+    let space_floor = new SpaceFloor();
     space_floor.init();
 
+    let heatmap = new HeatMap(space_floor); //initiated at the end of init so we can preload data
+    let splash = new SplashMap(space_floor);
+    let ssd = new SensorStatusDisplay(space_floor);
 
-    let rt_heatmap = new HeatMap(space_floor);
 
-    document.getElementById("drawing_svg").addEventListener("load", () => rt_heatmap.init(rt_heatmap));
-
-    // function on_load() {
-    //     rt_heatmap.init(rt_heatmap);
-    // }
 </script>
 {% endblock %}
 <!-- lazy_script -->

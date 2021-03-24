@@ -63,7 +63,7 @@ class FloorspaceView(LoginRequiredMixin, TemplateView):
 #Heatmap view aka Rain
 class RainView(LoginRequiredMixin, TemplateView):
     # Template from "acp_web/cdbb/space/templates/space/"
-    template_name = 'space/floor_apps.html'
+    template_name = 'space/floor_rain.html'
 
     # We override get_context_data to return the vars to embed in the template
     def get_context_data(self, **kwargs):
@@ -78,7 +78,7 @@ class RainView(LoginRequiredMixin, TemplateView):
 
 class SplashView(LoginRequiredMixin, TemplateView):
     # Template from "acp_web/cdbb/space/templates/space/"
-    template_name = 'space/floor_apps.html'
+    template_name = 'space/floor_splash.html'
 
     # We override get_context_data to return the vars to embed in the template
     def get_context_data(self, **kwargs):
@@ -94,7 +94,7 @@ class SplashView(LoginRequiredMixin, TemplateView):
 
 class FloordebugView(LoginRequiredMixin, TemplateView):
     # Template from "acp_web/cdbb/space/templates/space/"
-    template_name = 'space/floor_apps.html'
+    template_name = 'space/floor_debug.html'
 
     # We override get_context_data to return the vars to embed in the template
     def get_context_data(self, **kwargs):
