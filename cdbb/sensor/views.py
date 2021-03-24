@@ -104,3 +104,25 @@ class SensorTypesView(TemplateView):
                 print("SensorTypesView no feature",kwargs)
 
             return context
+
+class SensorStatusView(LoginRequiredMixin, TemplateView):
+    # Template from "acp_web/cdbb/space/templates/space/"
+    template_name = 'sensor/sensorstatus.html'
+
+    # We override get_context_data to return the vars to embed in the template
+    def get_context_data(self, **kwargs):
+        # currently leaving these all in since now sure what I might need
+            context = super().get_context_data(**kwargs)
+            context['API_BIM'] = settings.API_BIM
+            context['API_SENSORS'] = settings.API_SENSORS
+            context['API_READINGS'] = settings.API_READINGS
+            context['API_SPACE'] = settings.API_SPACE
+            context['CRATE_IDS'] = settings.CRATE_IDS
+            #check if url parameter provided
+            try:
+                #url parameter present, load all sensors for a crate
+                context['CRATE_ID'] = self.kwargs['crate_id']
+            except:
+                #nothing provided, load all sensors
+                context['CRATE_ID'] = None
+            return context
