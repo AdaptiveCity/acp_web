@@ -112,6 +112,7 @@ class SensorStatusView(LoginRequiredMixin, TemplateView):
     # We override get_context_data to return the vars to embed in the template
     def get_context_data(self, **kwargs):
         # currently leaving these all in since now sure what I might need
+        #TODO: delete unnecessary ones
             context = super().get_context_data(**kwargs)
             context['API_BIM'] = settings.API_BIM
             context['API_SENSORS'] = settings.API_SENSORS

@@ -30,6 +30,7 @@ class RTconnect {
         this.parent_callback;
 
         this.last_msg_received; //will save the ts from the last msg received
+        this.periodic_timer;
 
         this.periodic_check = 1000 * 60 * 15; //every fifteen mins
         this.last_msg_timeout = 1000 * 60 * 5; //5mins after last message
@@ -77,6 +78,14 @@ class RTconnect {
             console.log('open');
             self.socket.send(JSON.stringify(self.connect_msg));
         };
+
+        //-------------------------------//
+        //------------on_close------------//
+        //-------------------------------//
+        self.socket.onclose = function () {
+            self.on_close(self)
+        };
+
 
         //-------------------------------//
         //------on_message received------//
@@ -129,6 +138,10 @@ class RTconnect {
     do_disconnect(self) {
         console.log("Disconnecting");
         self.socket.close();
+        //clear timers
+        clearTimeout(self.last_msg_received);
+        clearTimeout(self.periodic_timer);
+
     }
 
     on_error(event) {
@@ -136,10 +149,12 @@ class RTconnect {
         console.log("Error occurred - see browser console for details");
     }
 
-    on_close(event) {
-        console.log("Socket closed, clean = " + event.wasClean +
-            ", code = " + event.code + " (" + closeCodeToString(event.code) + ")" +
-            ", reason = " + event.reason);
+    on_close(self) {
+        console.log('CLOSING')
+        //get the state confirming closing
+        let socket_state = self.socket.readyState;
+        //print out the state
+        console.log('connection state is', self.state_dict[socket_state], '(' + socket_state + ')');
     }
 
     check_periodic(self) {
@@ -162,7 +177,7 @@ class RTconnect {
         //else we continue as usual 
 
         //set a periodic timer to check the state every 15mins
-        setTimeout(function () {
+        self.periodic_timer = setTimeout(function () {
 
             console.log('checking connection status', new Date())
             self.check_periodic(self);

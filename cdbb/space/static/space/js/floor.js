@@ -120,21 +120,21 @@ class SpaceFloor {
         //check for APP availablity
         try {
             // Instantiate a Heatmap class object
-            parent.heatmap = new HeatMap(parent); //initiated at the end of init so we can preload data
+          //  parent.heatmap = new HeatMap(parent); //initiated at the end of init so we can preload data
             console.log('Rain preloaded')
         } catch (error) {
             console.log('Rain not available', error)
         }
         try {
             // Instantiate a Splah class object
-            parent.splash = new SplashMap(parent);
+          //  parent.splash = new SplashMap(parent);
             console.log('Splash preloaded')
         } catch (error) {
             console.log('Splash not available', error)
         }
         try {
             // Instantiate an SensorStatusDisplay object
-            parent.ssd = new SensorStatusDisplay(parent);
+           parent.ssd = new SensorStatusDisplay(parent);
             console.log('SSD preloaded')
         } catch (error) {
             console.log('SSD not available', error)
@@ -322,7 +322,7 @@ class SpaceFloor {
         parent.get_sensors_metadata(parent);
 
         //declare zooming/panning function
-        parent.manage_zoom(parent)
+        parent.manage_zoom(parent);
     }
 
     //TODO-modify for real vs fake sensors

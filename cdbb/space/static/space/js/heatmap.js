@@ -64,7 +64,7 @@ class HeatMap {
         parent.min_max_range = {};
 
         //resolution
-        parent.rect_size = HIGH_REZ;
+        parent.rect_size = DEFAULT_REZ;
 
         //declare the main colorscheme for the heatmap
         parent.color_scheme = d3.scaleSequential(d3.interpolateInferno)
@@ -98,12 +98,9 @@ class HeatMap {
         //--------SET UP EVENT LISTENERS-2------//
         //--------------------------------------//
 
+        //connect to rt monitor
         document.getElementById('rain_rt_connect').addEventListener('click', () => {
-            //get a list of all sensors rendered on screen
-            parent.sub_list = Object.keys(parent.master.sensor_data);
-            console.log('sensors', parent.sub_list)
-            //do rtmonitor connect, telling which sensors to subscribe to
-            parent.rt_con.connect(parent.check_status.bind(parent), parent.sub_list);
+            parent.disconnect_rt(parent)
         });
 
         //Set up event listener to hide the HEATMAP
@@ -123,6 +120,28 @@ class HeatMap {
             parent.update_resolution(parent, this.value);
         });
 
+    }
+    //connects to the rt monitor via websockets
+    connect_rt(parent) {
+        //get a list of all sensors rendered on screen
+        parent.sub_list = Object.keys(parent.master.sensor_data);
+        console.log('sensors', parent.sub_list)
+        //do rtmonitor connect, telling which sensors to subscribe to
+        parent.rt_con.connect(parent.check_status.bind(parent), parent.sub_list);
+    }
+
+    //disconnects rt monitor to stop splashes
+    disconnect_rt(parent) {
+        //disconnect the socket:
+        parent.rt_con.do_disconnect(parent.rt_con);
+
+        //change button colors/innerHTML
+        document.getElementById(parent.txt_div_id).innerHTML = 'RTm disconnected';
+        document.getElementById(parent.status_div_id).style.backgroundColor = 'rgb(255, 50, 50)';
+
+        //clear all timers
+        clearTimeout(parent.timer_short);
+        clearTimeout(parent.timer_long);
     }
 
     //updates the rtmonitor status icon on the page
@@ -250,8 +269,8 @@ class HeatMap {
     //Main raindrop function for incoming data:
     //selects a sensor and sets it to update on by creating a raindrop
     draw_splash(parent, acp_id, walk) {
-
-        //reverse walk (only temporary)
+        //walks is a bollean parameter that makes a distinction between drawing a big splash or a small one
+        //reverse walk (only temporary) //TODO:fix this
         walk != walk;
 
         //get the data from the sensor data variable
@@ -293,7 +312,6 @@ class HeatMap {
 
             let selected_node = d3.select(node);
 
-            
 
             //IMPORTANT TODO- ADD INTERUPT CASES TO END ANIMATIONS PREMATURELY
             selected_node
@@ -405,13 +423,13 @@ class HeatMap {
                         })
                         .style('opacity', parent.default_opacity)
 
-                    //setup interrupt cases when animation can get suddenly cancelled by another
-                    .on("interrupt", function () {
+                        //setup interrupt cases when animation can get suddenly cancelled by another
+                        .on("interrupt", function () {
 
 
-                        selected_node.attr('opacity', parent.default_opacity);
-                        selected_node.attr('fill', color);
-                    });
+                            selected_node.attr('opacity', parent.default_opacity);
+                            selected_node.attr('fill', color);
+                        });
                 })
         });
 
@@ -420,7 +438,7 @@ class HeatMap {
         //  todo to do important
         //if WALK (or trigger) we DO NOT WANT TO UPDATE THE CRATE HEATMAP--> a lot of the time the msg only contains "motion":1 
         //change the crate's heatmap by recoloring the cells in based on the new readings
-        //parent.update_crate_heatmap(parent, sensor_data.crate_id, acp_id);
+        parent.update_crate_heatmap(parent, sensor_data.crate_id, acp_id);
     }
 
     //API requests to get sensors per crate
@@ -447,6 +465,10 @@ class HeatMap {
             //-----------------------------------//
             parent.show_heatmap(parent);
             parent.master.jb_tools.tooltips();
+
+            //connect rt_monitor automatically
+            parent.connect_rt(parent)
+
         });
 
     }
