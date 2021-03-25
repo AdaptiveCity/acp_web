@@ -1,7 +1,7 @@
 "use strict"
 
-const DEFAULT_REZ = 6;
-const HIGH_REZ = 4;
+const DEFAULT_REZ = 5;
+const HIGH_REZ = 3;
 const LOW_REZ = 10;
 
 class HeatMap {

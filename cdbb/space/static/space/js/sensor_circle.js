@@ -168,7 +168,7 @@ Z
                 .transition()
                 .duration(1000)
                 .attr('class', 'sensor_circles_inactive')
-                .style('fill', 'rgba(0,0,0,0)');
+                .style('fill', self.master.color_recent_hour);
         }
 
     }
@@ -202,38 +202,39 @@ Z
             })
             .attr("cy", function (d, i) {
                 return self.master.spacing + self.y
-            }).attr('z-index', -999)
+            })
+            .attr('z-index', -999)
             .style('opacity', self.circle_opacity);
 
-        let y_txt_offset = 28;
-        let x_txt_offset = 24;
-        //append text tags for #of pinged + acp_ids underneath (only the nodes, text will follow)
+        // let y_txt_offset = 28;
+        // let x_txt_offset = 24;
+        // //append text tags for #of pinged + acp_ids underneath (only the nodes, text will follow)
 
-        self.svg_canvas.select('#' + self.acp_id + '_parent')
-            .append('g')
-            .append("text")
-            .attr('id', function (d, i) {
-                return self.acp_id + '_pinged'
-            })
-            .attr("class", "sensor_txt")
-            .style('opacity', 1)
-            .style('fill', 'black')
-            // .attr('z-index', 999)
-            .attr("x", function (d, i) {
-                return x_txt_offset + self.x
-            })
-            .attr("y", function (d, i) {
-                return y_txt_offset + self.y
-            })
-            //makes sure that text is centered no matter how many digits are put inside the circle
-            .attr("text-anchor", "middle")
-            .style("font-size", "0.7em");
+        // self.svg_canvas.select('#' + self.acp_id + '_parent')
+        //     .append('g')
+        //     .append("text")
+        //     .attr('id', function (d, i) {
+        //         return self.acp_id + '_pinged'
+        //     })
+        //     .attr("class", "sensor_txt")
+        //     .style('opacity', 1)
+        //     .style('fill', 'black')
+        //     // .attr('z-index', 999)
+        //     .attr("x", function (d, i) {
+        //         return x_txt_offset + self.x
+        //     })
+        //     .attr("y", function (d, i) {
+        //         return y_txt_offset + self.y
+        //     })
+        //     //makes sure that text is centered no matter how many digits are put inside the circle
+        //     .attr("text-anchor", "middle")
+        //     .style("font-size", "0.7em");
 
         //prepare the nodes for acp_ids (this is a bit convoluted due to how d3 (doesn't) handle multiline text)
         self.svg_canvas.select('#' + self.acp_id + '_parent')
             .append('g')
             .attr('id', function (d, i) {
-                return self.acp_id + '_g'
+                return self.acp_id + '_txt_parent'
             })
             .append("text")
             .attr('id', function (d, i) {
@@ -258,10 +259,47 @@ Z
                 })
                 .attr('y', function (d, i) {
                     let line_height = 8 * (u + 1);
-                    let y_offset = 40;
+                    let y_offset = 42;
                     return self.y + y_offset + line_height
                 })
         }
+
+        //an additional circle in the top right corner to show activity
+        self.make_subcircle(self);
+    }
+    //----------------------------------------//
+    //-------ACTIVITY CIRCLE FUNCTIONS--------//
+    //----------------------------------------//
+
+    //INDICATES HOW ACTIVE A SENSOR IS
+    make_subcircle(self) {
+        let sub_circle_y = 12;
+        let sub_circle_x = 43;
+        let sub_circle_r = 3;
+        let sub_circle_opacity = 0.75;
+        self.svg_canvas.select('#' + self.acp_id + '_parent')
+            // .append('g')
+            // .attr('id', function (d, i) {
+            //     return self.acp_id + '_subcircle'
+            // })
+            .append('circle')
+            .attr('id', function (d, i) {
+                return self.acp_id + '_activity'
+            })
+            .attr("class", "sensor_activity")
+            .attr("data-acp_id", function (d, i) {
+                return self.acp_id;
+            })
+
+            .attr("r", sub_circle_r)
+            .attr("cx", function (d, i) {
+                return self.x + sub_circle_x;
+            })
+            .attr("cy", function (d, i) {
+                return self.y + sub_circle_y;
+            })
+            .style('opacity', sub_circle_opacity)
+            .style('fill', 'none')
     }
 
     //--------------------------------------------------//

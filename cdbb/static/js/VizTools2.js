@@ -225,8 +225,9 @@ class VizTools2 {
                         });
 
                     //if return msg is an object (or not a string), then we have full readings - generate d3 canvas and draw elements
-                    if (typeof (reading_obj) != 'string') {
+                    if ((typeof (reading_obj) != 'string')&&(reading_obj!=undefined)) {
 
+                        console.log('error?', reading_obj)
                         //attach a timestamp
                         //convert to string and slice off the unnecessary bits (GMT etc)
                         let reading_ts = self.make_date(reading_obj['acp_ts']).toString().slice(0, 25);

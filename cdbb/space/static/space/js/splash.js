@@ -34,11 +34,10 @@ class SplashMap {
 
     }
 
-
-
     // init() called when page loaded
     init(parent) {
-        console.log('loading',parent.master,parent.master['sensor_data'], parent.master.sensor_data)
+        console.log('loading',JSON.stringify(parent.master),parent.master['sensor_data'], parent.master.sensor_data)
+        
         //get a list of all sensors rendered on screen
         parent.sub_list = Object.keys(parent.master.sensor_data);
         console.log('sensors', parent.sub_list)
@@ -52,8 +51,6 @@ class SplashMap {
         //get the contextual scaling for ripples
         parent.circle_radius = parent.master.sensor_radius;
         parent.svg_scale = parent.master.svg_scale;
-
-
     }
 
     //updates the rtmonitor status icon on the page

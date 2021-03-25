@@ -18,7 +18,7 @@ class SensorStatusDisplay {
         //e.g. [{'acp_id':zzzzzzz, 'tt':3},...]
         self.msg_history = {};
 
-        self.query_url = 'https://cdbb.uk/api/sensors/list/?type_metadata=true'
+        self.query_url = API_SENSORS + '/list/?type_metadata=true'
 
         self.sensor_list = [];
         self.sub_list = [];
@@ -32,6 +32,15 @@ class SensorStatusDisplay {
 
         self.sensor_circles = [];
         self.svg_canvas;
+
+
+        //COLORS AND SIGNS
+        self.color_recent_hour = 'rgb(115,195,120)'; //green (active for most recent hour)
+        self.color_recent_day = 'rgb(207, 85, 58)'; //red (inactive>24h but <week)
+        self.color_recent_week = 'rgb(255,255,255)'; //white (inactive > week)
+
+        self.symbol_inactive='?'; //inactive for 1 or 2 hours
+        self.symbol_dead='X'; //inactive for more than 24 hours
 
         //--------------------------------------//
         //--------SET UP EVENT LISTENERS--------//
@@ -55,7 +64,7 @@ class SensorStatusDisplay {
         }
 
         //declare the main colorscheme for the heatmap
-        parent.color_scheme = d3.scaleSequential(d3.interpolateTurbo)
+        parent.color_scheme = d3.scaleSequential(d3.interpolateGreens)
 
         //total time to draw transitions between activating the heatmap
         parent.animation_dur = 350;
@@ -280,7 +289,7 @@ class SensorStatusDisplay {
 
             //Object.values returns an array so we need the 0th element
             let sensor_circle = Object.values(parent.sensor_circles[i])[0]
-            console.log('val', sensor_circle.acp_id, sensor_circle)
+            // console.log('val', sensor_circle.acp_id, sensor_circle)
             sensor_circle.make_circle(sensor_circle);
             sensor_circle.start_timer(sensor_circle);
 
@@ -319,6 +328,7 @@ class SensorStatusDisplay {
                     });
 
                 //try highlighting the sensor on the floorplan in case it's loaded
+                //this is optional and for debug purposes
                 try {
                     //get sensor attributes on the floorplan
                     let sensor_on_floor = d3.select('#' + selected_sensor.node().dataset.acp_id + '_bim');
@@ -344,7 +354,7 @@ class SensorStatusDisplay {
                                 .style("fill", sensor_fill);
                         });
                 } catch (error) {
-                    console.log('floorplan not present')
+                    //console.log('floorplan not present')
                 }
             }) //add on mouseout
 
@@ -359,7 +369,11 @@ class SensorStatusDisplay {
 
         //if(state=='both')update all, else...only txt or only sensors
         self.append_text(self, acp_id, msg_data)
-        self.set_colorbar(self)
+        //self.set_colorbar(self)
+        self.get_min_max(self)
+
+        //recolor if changed min_max
+        self.update_sensor_colors(self);
 
         self.draw_ripples(self, acp_id);
 
@@ -408,7 +422,7 @@ class SensorStatusDisplay {
     draw_splash(self, acp_id) {
         //let multiplier = 1.1; //10% increaseCIRCLE_RADIUS
         let sensor_circle = d3.select('#' + acp_id + "_ssd");
-        let new_color = self.color_scheme(self.msg_history[acp_id].pinged);
+
         sensor_circle
             .transition().duration(700)
             .attr('r', self.CIRCLE_RADIUS / 3)
@@ -418,12 +432,12 @@ class SensorStatusDisplay {
             //in case a new animation starts before the this one has finished, we want to finish the original ASAP 
             .on("interrupt", function () {
                 sensor_circle.attr('r', self.CIRCLE_RADIUS);
-                sensor_circle.attr('fill', new_color);
+                sensor_circle.attr('fill', self.color_recent_hour);
             })
             .on('end', function (d) {
                 sensor_circle
                     //fill the circle with the new color
-                    .style('fill', new_color)
+                    .style('fill', self.color_recent_hour)
                     .transition().duration(450)
                     //overshoot the easing to add a little wiggle effect, brings some life to circles
                     .ease(d3.easeBackInOut.overshoot(3.5))
@@ -431,7 +445,7 @@ class SensorStatusDisplay {
                     //in case a new animation starts before the this one has finished, we want to finish the original ASAP 
                     .on("interrupt", function () {
                         sensor_circle.attr('r', self.CIRCLE_RADIUS);
-                        sensor_circle.attr('fill', new_color);
+                        sensor_circle.attr('fill', self.color_recent_hour);
                     });
             });
     }
@@ -480,87 +494,30 @@ class SensorStatusDisplay {
         // txt_hist.innerHTML += JSON.stringify(clean_msg)+'\n';
     }
 
-    set_colorbar(self) {
-        let parent = self;
-        parent.get_min_max(parent)
-
-        //avoid having a colorbar with identical top and lower values
-        if (self.min_max_range.max == self.min_max_range.min) {
-            return
-        }
-
-        //recolor if changed min_max
-        parent.update_sensor_colors(self);
-
-        d3.select("#legend_svg").remove();
-        
-        //d3.selectAll('.non_heatmap_circle').style('opacity', 0);
-        let legend_svg_parent = d3.select('#legend_container');
-
-        //configure canvas size and margins, returns and object
-        //(width, height,top, right, bottom, left)
-        let c_conf = parent.jb_tools.canvas_conf(38, 320, 0, 0, 37, 0);
-
-        legend_svg_parent
-            .append("svg")
-            .attr("width", c_conf.width + c_conf.left + c_conf.right)
-            .attr("height", c_conf.height + c_conf.top + c_conf.bottom)
-            .attr('id', "legend_svg");
-        let legend_svg = d3.select('#legend_svg');
-
-        var scale = d3.scaleLinear().domain([c_conf.height, 0]).range([parent.min_max_range.min, parent.min_max_range.max]);
-        var scale_inv = d3.scaleLinear().domain([parent.min_max_range.min, parent.min_max_range.max]).range([c_conf.height, 0]);
-
-        //create a series of bars comprised of small rects to create a gradient illusion
-        let bar = legend_svg.selectAll(".bars")
-            .data(d3.range(0, c_conf.height), function (d) {
-                return d;
-            })
-            .enter().append("rect")
-            .attr("class", "bars")
-            .attr("y", function (i) {
-                return 20 + i;
-            })
-            .attr("x", c_conf.width / 3)
-            .attr("height", 1)
-            .attr("width", c_conf.width / 4)
-            .style("fill", function (d, i) {
-                return parent.color_scheme(scale(d));
-            });
 
 
-        //text showing range on left/right
-        //viz_tools.add_text(TARGET SVG, TXT VALUE, X LOC, Y LOC, FONT SIZE, TRANSLATE, NODE_ID);
-        parent.jb_tools.add_text(legend_svg, parent.min_max_range.max, (c_conf.width / 2) - 3, scale_inv(parent.min_max_range.max), "0.75em", "translate(0,0)") // 0 is the offset from the left
-        parent.jb_tools.add_text(legend_svg, parent.min_max_range.min, (c_conf.width / 2) - 3, scale_inv(parent.min_max_range.min) + 25, "0.75em", "translate(0,0)") // 0 is the offset from the left
-
-        parent.jb_tools.add_text(legend_svg, 'pinged', (c_conf.width / 2) - 180, scale_inv(parent.min_max_range.min) - 262, "0.85em", "rotate(-90)", 'pinged_bar') // 0 is the offset from the left
-        //quick fix so that 
-        // d3.select('#pinged_bar').selectChild().attr('x', -170)
-
-    }
-
-    //iterates through all active sensors and updates their colors to match the colorbar
+    //iterates through all active sensors and updates their colors to match the colorsheme
     update_sensor_colors(self) {
 
         //get all active sensors and change their fill
-        d3.selectAll('.sensor_circles').transition().duration(1000).style('fill', function (d, i) {
+        d3.selectAll('.sensor_activity').transition().duration(1000).style('fill', function (d, i) {
             let acp_id = this.dataset.acp_id;
+            // let new_color = self.color_scheme(self.msg_history[acp_id].pinged);
             let pinged;
             let color;
 
             try {
                 pinged = self.msg_history[acp_id].pinged;
-                color = self.color_scheme(pinged);
 
-                /* Create the text for each block */
-                d3.select('#' + acp_id + '_pinged')
-                    .text(function (d) {
-                        return pinged
-                    })
+                if (pinged == 0) {
+                    color = 'none'
+                } else {
+                    color = self.color_scheme(pinged);
+                }
 
             } catch (error) {
-                color = 'white';
+                console.log('error', error)
+                color = 'none';
             }
 
             return color
@@ -598,7 +555,7 @@ class SensorStatusDisplay {
         parent.color_scheme.domain([parent.min_max_range.min, parent.min_max_range.max]);
         //parent.animation_delay.domain([parent.min_max_range.min, parent.min_max_range.max]);
 
-        console.log('minmax', min, max)
+        //console.log('minmax', min, max)
 
     }
 

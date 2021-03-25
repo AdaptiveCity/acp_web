@@ -101,7 +101,7 @@ Spatial Building and Sensor Data: Rain app
         <!-- close LEGEND AND BUTTONS -->
     </div>
 
-    
+
     <div id="mySidenav" class="sidenav">
         <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
 
@@ -221,17 +221,16 @@ Spatial Building and Sensor Data: Rain app
 {% block lazy_script %}
 <script>
     console.log('lazy_script');
-    var space_floor = new SpaceFloor();
+    let space_floor = new SpaceFloor();
     space_floor.init();
-
 
     let rt_heatmap = new HeatMap(space_floor);
 
-    document.getElementById("drawing_svg").addEventListener("load", () => rt_heatmap.init(rt_heatmap));
+    //wait for the page to load
+    space_floor.loaded.then(function () {
+        rt_heatmap.init(rt_heatmap)
+    })
 
-    // function on_load() {
-    //     rt_heatmap.init(rt_heatmap);
-    // }
 </script>
 {% endblock %}
 <!-- lazy_script -->

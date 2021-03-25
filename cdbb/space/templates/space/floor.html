@@ -101,32 +101,6 @@ Spatial Building and Sensor Data: FLOOR VIEW
         <!-- close LEGEND AND BUTTONS -->
     </div>
 
-    <div id='ssd_main'>
-        <div id='viz_header'>
-
-            <h4 id='start_time' class='header_time_text'>Started: </h4>
-
-            <h5 id='recent_update' class='header_time_text'>Most Recent: <span id='most_recent'></span></h5>
-
-            <!-- <div id='ssd_control' class='rt_status'><span id='ssd_rt_state'
-                    class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='ssd_rt'>RtM not connected</span>
-            </div> -->
-        </div>
-
-
-        <!-- MAIN D3 VIZ DIV FOR SENSOR CIRCLES -->
-        <div id='viz'>
-            <div id="legend_container">
-                <div id="legend_svg"></div>
-            </div>
-        </div>
-
-        <!-- TEXT BOX FOR MOST RECENT MESSAGES -->
-        <div id='text_collector' style='display: block;'>
-        </div>
-
-    </div>
-
     <div id="mySidenav" class="sidenav">
         <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
 
@@ -282,7 +256,7 @@ Spatial Building and Sensor Data: FLOOR VIEW
 {% block lazy_script %}
 <script>
     console.log('lazy_script');
-    var space_floor = new SpaceFloor();
+    let space_floor = new SpaceFloor();
     space_floor.init();
 </script>
 {% endblock %}
