@@ -89,8 +89,10 @@ class HeatMap {
         parent.timer_short; //the socket has been unactive for a while -- color yellow
         parent.timer_long; //assume the socket connection was lost -- color red
 
-        //Use get_floor_sensors for the API calls, get_local_sensors for faked offline data
+        parent.startup = true;
+        parent.sensor_rect_dist = {}
 
+        //Use get_floor_sensors for the API calls, get_local_sensors for faked offline data
         parent.get_floor_sensors(parent);
         //parent.get_local_sensors(parent);
 
@@ -125,7 +127,7 @@ class HeatMap {
     connect_rt(parent) {
         //get a list of all sensors rendered on screen
         parent.sub_list = Object.keys(parent.master.sensor_data);
-        console.log('sensors', parent.sub_list)
+        //console.log('sensors', parent.sub_list)
         //do rtmonitor connect, telling which sensors to subscribe to
         parent.rt_con.connect(parent.check_status.bind(parent), parent.sub_list);
     }
@@ -264,6 +266,235 @@ class HeatMap {
 
         //update tooltips
         parent.master.jb_tools.tooltips();
+    }
+
+    draw_splash_alt(parent, acp_id, walk) {
+        //walks is a bollean parameter that makes a distinction between drawing a big splash or a small one
+        //reverse walk (only temporary) //TODO:fix this
+        walk != walk;
+
+        //get the data from the sensor data variable
+        let sensor_data = parent.sensor_data[acp_id];
+
+        //get drawn sensors' location on screen
+        let sensor_loc = {
+            x: parseFloat(document.getElementById(acp_id + "_hm").getAttribute("cx")),
+            y: parseFloat(document.getElementById(acp_id + "_hm").getAttribute("cy"))
+        }
+
+        //debug location
+        //  console.log('sensorloc:', sensor_loc, acp_id, sensor_data)
+
+        //rects in polygons are classed by the crate they're in
+        //TODO: change rect to cell
+        let rect_class = sensor_data.crate_id + "_rect"; //change to crate_id
+
+        //let cell_metadata = names.split(',');
+
+        // let crate_cells = document.getElementsByClassName(rect_class).nodes();
+        // let cloned_cells = crate_cells.cloneNode(true);
+        //var x = document.getElementById("myDIV").childElementCount;
+
+        try {
+            d3.select('#'+acp_id + '_temporary').remove();
+        } catch (error) {
+            
+        }
+        let cloned_cells = d3.select('#' + sensor_data.crate_id + '_heatmap').clone(true).attr('id', acp_id + '_temporary').attr('class', 'temp_event_layer').selectAll('rect').style('fill', 'white').style('opacity', 0).attr('class', acp_id + '_rect')
+        // console.log('clone', cloned_cells)
+
+        //let iterator = 0;
+        let iterator_delay = 0;
+        let dist_value = parent.sensor_rect_dist[sensor_data.crate_id][acp_id];
+
+        let interval_duration = 3000;
+        let interval_count = 10;
+        let int_count = interval_count + 2;
+        let interval_step = interval_duration / interval_count;
+
+
+        let interval_timer = setInterval(function () {
+            if (interval_count < 1) {
+                clearInterval(interval_timer);
+                console.log('finished')
+                d3.select('#'+acp_id + '_temporary').transition().duration(interval_step-10).style('opacity', 0).on('end', function () {
+                    d3.select('#'+acp_id + '_temporary').remove();
+                })
+                return
+            }
+            let iterator = 0;
+
+            //  console.log('updating', interval_count)
+
+            d3.selectAll('.' + acp_id + '_rect').nodes().forEach(cell => {
+                let selected_cell = d3.select(cell);
+
+                //   let opac = (((Math.cos(dist_value[iterator] /16-interval_count) + 1)));
+
+                let wave_len = 5;
+                let amplitude = 5;
+
+                // let warp_delay = (((Math.cos(dist_value[iterator] / wave_len) + 1)) * amplitude) / dist_value[iterator];
+
+                //put this function in get_cell_value
+                // let warp_delay = ((((Math.cos(dist_value[iterator] / (int_count - interval_count)) + 1)) * amplitude) / dist_value[iterator]);
+
+                selected_cell.transition().duration(interval_step - 10).style('opacity', warp_delay);
+
+                iterator++
+                // console.log('iterator', iterator)
+            });
+            interval_count--;
+
+            //alert("Hello");
+
+        }, interval_step);
+
+        //   d3.selectAll('.' + acp_id + '_rect').nodes().forEach(node => {
+
+        //   let selected_node = d3.select(node);
+
+        // console.log('rc',sensor_data.crate_id, acp_id)
+
+
+
+        //IMPORTANT TODO- ADD INTERUPT CASES TO END ANIMATIONS PREMATURELY
+        //     selected_node
+        //         .transition() // <------- TRANSITION STARTS HERE --------
+        //          .duration(4000) //250
+
+        //.ease(d3.easeExpOut)
+        //     .style("opacity", function (d) {
+        //  console.log(iterator, dist_value,Math.cos(dist_value[iterator]) )
+
+        //         let opac = (((Math.cos(dist_value[iterator] / 10) + 1))); //((Math.sin(dist_value[iterator] / 5) + 1));
+        //          console.log(opac)
+        //        return opac
+
+        // let wave_len = 5;
+        // let amplitude = 4000;
+
+        // let warp_delay = (((Math.cos(dist_value[iterator] / wave_len) + 1)) * amplitude) / dist_value[iterator];
+        // return warp_delay
+
+        //   })
+
+        // .delay(function (d, i) {
+
+        //     let delay = (((Math.cos(dist_value[iterator] / 20) + 1)));
+
+        //     // if (delay > 1000) {
+        //     //     delay = 1000;
+        //     // }#
+        //     iterator_delay = i;
+        //     return delay
+        // })
+
+        //    console.log('iterator_delay', iterator, iterator_delay)
+        //   iterator++;
+
+
+        //IMPORTANT TODO- ADD INTERUPT CASES TO END ANIMATIONS PREMATURELY
+        // selected_node
+        //     .transition() // <------- TRANSITION STARTS HERE --------
+        //     .duration(1000) //250
+
+        //     .ease(d3.easeExpOut)
+
+        //     .delay(function (d, i) {
+
+        //         let delay = (((Math.cos(dist_delay / 20) + 1)) * 2);
+
+        //         if (delay > 1000) {
+        //             delay = 1000;
+        //         }
+        //         return delay
+        //     })
+
+        //         .delay(function (d, i) {
+
+        //             let wave_len = 5;
+        //             let amplitude = 4000;
+
+        //             let warp_delay = (((Math.cos(dist_delay / wave_len) + 1)) * amplitude) / dist_delay;
+
+        //             if (warp_delay > 1000) {
+        //                 warp_delay = 1000;
+        //             }
+        //             return warp_delay
+
+        //         })
+
+        // .ease(d3.easeCubicIn)
+        // .style('opacity', function (d, i) {
+        //     //let opacity = (((Math.sin(dist_delay / 5) + 1)));
+
+        //     let opacity = dist_delay / 100;
+
+        //     if (walk) {
+        //         opacity = dist_delay / 25
+        //     }
+
+        //     if (opacity > parent.default_opacity) {
+        //         opacity = parent.default_opacity;
+        //     }
+        //     return opacity
+        // })
+        // //setup interrupt cases when animationcan get suddenly cancelled by another
+        // .on("interrupt", function () {
+        //     selected_node.attr('opacity', parent.default_opacity);
+        //     //  selected_node.attr('fill', color);
+        // })
+
+        // .on('end', function (d, i) {
+        //     selected_node
+
+        //         //HERE THE SECOND PART BEGINS WHERE WE SHOW THE RIPPLE
+        //         .transition() // <------- TRANSITION STARTS HERE --------
+        //         .duration(function (d, i) {
+        //             return 3000;
+        //             //  if (walk) {
+        //             //      return parent.ripple_dur //TODO ADD A MULTIPLYER
+        //             //  } else {
+        //             // return parent.ripple_dur / 2;
+        //             //}
+        //         })
+        //         .ease(d3.easeCubicOut)
+
+        //         .delay(function (d, i) {
+
+        //             let wave_len = 5;
+        //             let amplitude = 4000;
+
+        //             let warp_delay = (((Math.cos(dist_delay / wave_len) + 1)) * amplitude) / dist_delay;
+
+        //             if (warp_delay > 1000) {
+        //                 warp_delay = 1000;
+        //             }
+        //             return warp_delay
+
+        //         })
+        //         .style('opacity', parent.default_opacity)
+        //         //setup interrupt cases when animation can get suddenly cancelled by another
+        //         .on("interrupt", function () {
+        //             selected_node.attr('opacity', parent.default_opacity);
+        //         });
+        // })
+
+
+
+        //  });
+
+
+
+
+
+        //TODO - CAN UPDATE THE COLOR ON THE FLY?
+        //  todo to do important
+        //if WALK (or trigger) we DO NOT WANT TO UPDATE THE CRATE HEATMAP--> a lot of the time the msg only contains "motion":1 
+        //change the crate's heatmap by recoloring the cells in based on the new readings
+        parent.update_crate_heatmap(parent, sensor_data.crate_id, acp_id);
+
     }
 
     //Main raindrop function for incoming data:
@@ -483,7 +714,7 @@ class HeatMap {
         //iterate through results to extract data required to show sensors on the floorplan
         for (let sensor in results['sensors']) {
 
-            console.log('sensor', sensor, results['sensors'][sensor])
+            //console.log('sensor', sensor, results['sensors'][sensor])
             // Note jsonPath always returns a list of result, or false if path not found.
             //let path_val = jsonPath(d, feature['jsonpath']); //d.payload_cooked.temperature;
             //TODO USE JSONPATH
@@ -515,7 +746,7 @@ class HeatMap {
 
 
             } catch (error) {
-                console.log('sensor not found:', error)
+                console.log('sensor not found:', sensor, '\n', error)
             }
         }
         console.log('crates w sensors', parent.crates_with_sensors)
@@ -683,6 +914,7 @@ class HeatMap {
     get_cell_value(parent, crate, coords) {
 
         //select on of the features (co2, temperature, humidity etc)
+        //TODO:user URL
         let feature = document.getElementById('features_list').value;
 
         //get cell's coordinates and scale
@@ -727,6 +959,21 @@ class HeatMap {
                 'value': sensor.payload[feature],
                 'dist': dist
             });
+
+            if (parent.startup) {
+                //test for splashes
+                //console.log('undefined',parent.sensor_rect_dist[crate])
+                if (parent.sensor_rect_dist[crate] == undefined) {
+                    parent.sensor_rect_dist[crate] = {}
+                }
+                if (parent.sensor_rect_dist[crate][sensor.acp_id] == undefined) {
+                    parent.sensor_rect_dist[crate][sensor.acp_id] = []
+                }
+
+                //let warp_delay = ((((Math.cos(dist_value[iterator] / (int_count - interval_count)) + 1)) * amplitude) / dist_value[iterator]);
+
+                parent.sensor_rect_dist[crate][sensor.acp_id].push(dist)
+            }
 
             //add the distance from the cell to the sensor to the cumulative distance  variable
             //(keeps track of the total distance from the cell to all sensors)
@@ -842,6 +1089,9 @@ class HeatMap {
 
                 let offset = 0;
 
+                //create a parent div for all crate lvl heatmaps
+                let crate_div = main_svg.append('g').attr('id', element.id + '_heatmap').attr('class', 'heatmap_crates')
+
                 counter++;
                 //iterate throught rows and columns and fill in the selected polygon with rectangles representing heatmap cells
                 for (let i = pol_left; i < pol_w + pol_left; i += parent.rect_size) {
@@ -862,26 +1112,26 @@ class HeatMap {
 
                             //get the location data + an offset so that the reactangle's coords are in the middle
                             let loc = {
-                                x: (i - parent.rect_size / 2) + x_offset,
-                                y: (u - parent.rect_size / 2) + y_offset,
+                                x: ((i - parent.rect_size / 2) + x_offset).toFixed(1), //round
+                                y: ((u - parent.rect_size / 2) + y_offset).toFixed(1), //round
                                 cons_svg: consolidated_svg,
-                                scale: scale
+                                scale: scale.toFixed(1) //round 
                             }
 
-                            let cell_value = parent.get_cell_value(parent, selected_crate, loc);
+                            let cell_value = parent.get_cell_value(parent, selected_crate, loc).toFixed(2); //round to 2dec places ;
                             let color = parent.color_scheme(cell_value);
 
                             //draw the cells (rects) on screen 
-                            main_svg
+                            crate_div
                                 .append("rect")
                                 //.style('pointer-events', 'none')
                                 .attr('class', class_name)
-
+                                //.attr('id', element.id+'_'+loc.x+'_'+loc.y)
                                 .attr("x", function (d) {
-                                    return loc.x.toFixed(0); //round to int 
+                                    return loc.x;
                                 })
                                 .attr("y", function (d) {
-                                    return loc.y.toFixed(0); //round to int
+                                    return loc.y;
                                 })
                                 .attr("width", parent.rect_size - offset)
                                 .attr("height", parent.rect_size - offset)
@@ -931,207 +1181,9 @@ class HeatMap {
         parent.set_colorbar(parent);
 
         console.log('done', Date.now())
+        parent.startup = false;
     }
 
-    //first get all rects on a floor, then reiterate for rooms
-    // show_heatmap_alt(parent) {
-    //     console.log('start alt', Date.now())
-
-    //     let selected_feature = document.getElementById('features_list').value;
-    //     parent.get_min_max(parent, selected_feature);
-
-    //     d3.selectAll('polygon').attr('class', 'g0-9')
-
-    //     let main_svg = d3.select('#drawing_svg').append('g').attr('id', 'heatmap'); //parent.page_floor_svg;
-
-    //     let h = parent.master.page_floor_svg.clientHeight;
-    //     let w = parent.master.page_floor_svg.clientWidth;
-
-    //     let floor = document.querySelector("[data-crate_type='floor']");
-
-    //     console.log('floor', floor)
-    //     //https://stackoverflow.com/questions/19154631/how-to-get-coordinates-of-an-svg-element
-    //     var scale = floor.transform.baseVal.consolidate().matrix.a;
-    //     let transf_x = floor.transform.baseVal.consolidate().matrix.e;
-    //     let transf_y = floor.transform.baseVal.consolidate().matrix.f;
-
-    //     let bbox = floor.getBBox();
-
-    //     let polygon_points = floor.points;
-
-    //     let pol_h = bbox.height * scale;
-    //     let pol_w = bbox.width * scale;
-    //     let pol_top = bbox.y * scale;
-    //     let pol_left = bbox.x * scale;
-
-    //     let offset = 0;
-
-    //     //  let rect_count = 0;
-    //     for (let i = pol_left; i < pol_w + pol_left; i += parent.rect_size) {
-    //         for (let u = pol_top; u < pol_h + pol_top; u += parent.rect_size) {
-
-    //             //  rect_count++;
-
-    //             let coords = {
-    //                 'x': i / scale,
-    //                 'y': u / scale,
-    //                 'height': h,
-    //                 'width': w
-    //             };
-
-    //             //check if inside the floor polygon
-    //             if (parent.jb_tools.inside(coords, polygon_points)) {
-
-    //                 let selected_crate = floor.id;
-    //                 let loc = {
-    //                     x: i - parent.rect_size / 2,
-    //                     y: u - parent.rect_size / 2,
-    //                     scale: scale
-    //                 }
-
-    //                 let cell_value = 1; //parent.get_cell_value(parent, selected_crate, loc);
-    //                 let color = 'black'; //parent.color_scheme(cell_value);
-
-    //                 main_svg
-    //                     .append("rect")
-    //                     //.style('pointer-events', 'none')
-    //                     .attr('class', 'unassigned_rect')
-
-    //                     .attr("x", function (d) {
-    //                         return loc.x
-    //                     })
-    //                     .attr("y", function (d) {
-    //                         return loc.y
-    //                     })
-    //                     .attr("width", parent.rect_size - offset)
-    //                     .attr("height", parent.rect_size - offset)
-    //                     .style('stroke-opacity', 0)
-    //                     .attr('data-crate', selected_crate)
-    //                     .attr('data-loc', [loc.x, loc.y, loc.scale])
-    //                     .attr('data-coords', [coords.x, coords.y])
-
-    //                     .style("fill", 'black')
-    //                     .style('opacity', 0.5);
-    //             }
-    //         }
-    //     }
-
-    //     let crates_with_sensors_list = Object.keys(parent.crates_with_sensors);
-
-    //     //d3.selectAll('polygon').nodes().forEach(element => {
-
-    //     let polygon_alpha = d3.selectAll('polygon').nodes();
-    //     let polygons = []
-    //     console.log('polygons_total', polygon_alpha.length);
-
-    //     polygon_alpha.forEach(function (d, i) {
-    //         //  console.log(index, 'space',object)
-    //         let has_sensors = crates_with_sensors_list.includes(d.id);
-
-    //         if (d.dataset.crate_type != 'building' && d.dataset.crate_type != 'floor' && has_sensors) {
-    //             polygons.push(d)
-    //         }
-
-    //     });
-
-    //     console.log('polygons_total', polygons.length, polygons);
-
-    //     // d3.selectAll('.unassigned_rect').nodes().forEach(rect => {
-    //     let rects = d3.selectAll('.unassigned_rect').nodes();
-
-    //     console.log('items:', 'rects:', rects.length, 'polygons', polygons.length);
-
-    //     //pick a rectangle on screen
-    //     for (let u = 0; u < rects.length; u++) {
-    //         let rect = rects[u];
-
-    //         let loc_raw = rect.dataset.loc.split(',');
-
-    //         let loc = {
-    //             x: rect.x.baseVal.value + parent.rect_size / 2,
-    //             y: rect.y.baseVal.value + parent.rect_size / 2,
-    //             scale: parseFloat(loc_raw[2])
-    //         }
-    //         //break;
-    //         //try to fit a polygon
-    //         for (let i = 0; i < polygons.length; i++) {
-    //             let element = polygons[i];
-
-    //             // if (element.dataset.crate_type != 'building' && element.dataset.crate_type != 'floor' && has_sensors) {
-
-    //             let class_name = element.id + '_rect';
-
-    //             let polygon_points2 = element.points;
-
-    //             let polygon_points_new = [];
-
-    //             for (let j = 0; j < polygon_points2.length; j++) {
-    //                 polygon_points_new[j] = {
-    //                     'x': null,
-    //                     'y': null
-    //                 };
-    //                 polygon_points_new[j].x = polygon_points2[j].x * scale
-    //                 polygon_points_new[j].y = polygon_points2[j].y * scale
-    //             }
-
-    //             console.log('checking ', element.id)
-
-    //             if (parent.jb_tools.inside(loc, polygon_points_new)) {
-
-    //                 let selected_crate = element.id;
-
-    //                 let cell_value = parent.get_cell_value(parent, selected_crate, loc);
-    //                 let color = parent.color_scheme(cell_value);
-
-    //                 d3.select(rect)
-    //                     .attr('class', class_name)
-    //                     .style('opacity', 0)
-    //                     .style('stroke-opacity', 0)
-    //                     .attr('data-crate', selected_crate)
-    //                     .attr('data-value', cell_value)
-
-    //                     .on("mouseover", function (d) {
-    //                         parent.set_cbar_value(parent, cell_value)
-    //                     })
-    //                     .on("mouseout", function (d) {
-    //                         d3.select('#hover_val').remove();
-    //                     })
-    //                     //.call(parent.transition_value, duration)
-    //                     // .call(parent.transition_random, duration)
-    //                     // .call(parent.transition_sideways, duration)
-
-    //                     .transition() // <------- TRANSITION STARTS HERE --------
-    //                     .delay(function (d, i) {
-
-    //                         let delay = Math.random() * (2000 - 750) + 750;
-    //                         //let delay = parent.animation_delay(cell_value);
-    //                         return delay;
-    //                     })
-    //                     .duration(parent.animation_dur)
-    //                     .style("fill", function (d) {
-    //                         return color //'red'
-    //                     })
-    //                     .style('opacity', parent.default_opacity);
-    //             } else {
-    //                 console.log('no', 'next polygon');
-    //                 //break;
-    //             }
-    //         }
-    //     }
-    //     console.log('done polygons')
-
-    //     //iterate through results to extract data required to show sensors on the floorplan
-    //     //change name from results to else
-    //     let results = parent.sensor_data;
-    //     parent.attach_sensors(parent, results, scale)
-    //     console.log(results)
-
-    //     //debug only, "parent" now working somehow
-    //     parent.set_colorbar(parent);
-
-    //     console.log('done', Date.now())
-
-    // }
 
     hide_heatmap(parent) {
         d3.selectAll('#heatmap').remove();
@@ -1195,7 +1247,7 @@ class HeatMap {
 
     //callback to update sensors (for faked sensor data)
     update_callback(parent, acp_id, walk) {
-        parent.draw_splash(parent, acp_id, walk);
+        parent.draw_splash_alt(parent, acp_id, walk);
     }
 
     //async update for faked sensor data - updates all;
@@ -1205,7 +1257,7 @@ class HeatMap {
         for (let sensor in parent.sensor_data) {
             console.log('incoming update ', sensor)
             let wildcard = false //Math.random() < 0.5;
-            window.setInterval(parent.update_callback, parent.jb_tools.random_int(1500, 1500 * 10), parent, sensor, wildcard);
+            window.setInterval(parent.update_callback, parent.jb_tools.random_int(5000, 5000 * 10), parent, sensor, wildcard);
         }
     }
 
