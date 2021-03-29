@@ -160,8 +160,8 @@ Spatial Building and Sensor Data: Splash app
 
 
     let rt_splash = new SplashMap(space_floor);
-    //TODO: fix the loading problems where the sublist from the the space_floor object has not been generated yet
-    //only works like half the time
+ 
+    //wait for the page to load
     space_floor.loaded.then(function () {
         rt_splash.init(rt_splash)
     })
