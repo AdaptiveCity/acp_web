@@ -23,6 +23,10 @@ const quantile = (arr, q) => {
         return sorted[base];
     }
 };
+const q05 = arr => quantile(arr, .05);
+
+const q95 = arr => quantile(arr, .95);
+
 const q10 = arr => quantile(arr, .10);
 
 const q90 = arr => quantile(arr, .90);

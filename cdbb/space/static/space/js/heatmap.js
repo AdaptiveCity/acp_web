@@ -76,6 +76,10 @@ class HeatMap {
         parent.splash_dur = 400; //WAS 200
         parent.ripple_dur = 4500;
 
+        //make a global c_conf reference from the parent class
+        //CREATES A COLORBAR
+        parent.c_conf = parent.jb_tools.canvas_conf(110, 320, 10, 10, 10, 10); //(110, 320, 10, 5, 10, 5);
+
         //the delay for drawing individual items during the animation
         parent.animation_delay = d3.scaleLinear().range([3000, 1000]);
 
@@ -268,6 +272,10 @@ class HeatMap {
         parent.master.jb_tools.tooltips();
     }
 
+    make_sublayers(parent) {
+
+    }
+
     draw_splash_alt(parent, acp_id, walk) {
         //walks is a bollean parameter that makes a distinction between drawing a big splash or a small one
         //reverse walk (only temporary) //TODO:fix this
@@ -296,11 +304,18 @@ class HeatMap {
         //var x = document.getElementById("myDIV").childElementCount;
 
         try {
-            d3.select('#'+acp_id + '_temporary').remove();
+            d3.select('#' + acp_id + '_temporary').remove();
         } catch (error) {
-            
+
         }
-        let cloned_cells = d3.select('#' + sensor_data.crate_id + '_heatmap').clone(true).attr('id', acp_id + '_temporary').attr('class', 'temp_event_layer').selectAll('rect').style('fill', 'white').style('opacity', 0).attr('class', acp_id + '_rect')
+        let cloned_cells = d3.select('#' + sensor_data.crate_id + '_heatmap')
+            .clone(true)
+            .attr('id', acp_id + '_temporary')
+            .attr('class', 'temp_event_layer')
+            .selectAll('rect')
+            .style('fill', 'white')
+            .style('opacity', 0)
+            .attr('class', acp_id + '_rect')
         // console.log('clone', cloned_cells)
 
         //let iterator = 0;
@@ -317,8 +332,8 @@ class HeatMap {
             if (interval_count < 1) {
                 clearInterval(interval_timer);
                 console.log('finished')
-                d3.select('#'+acp_id + '_temporary').transition().duration(interval_step-10).style('opacity', 0).on('end', function () {
-                    d3.select('#'+acp_id + '_temporary').remove();
+                d3.select('#' + acp_id + '_temporary').transition().duration(interval_step - 10).style('opacity', 0).on('end', function () {
+                    d3.select('#' + acp_id + '_temporary').remove();
                 })
                 return
             }
@@ -960,8 +975,8 @@ class HeatMap {
                 'dist': dist
             });
 
+            //test for splashes
             if (parent.startup) {
-                //test for splashes
                 //console.log('undefined',parent.sensor_rect_dist[crate])
                 if (parent.sensor_rect_dist[crate] == undefined) {
                     parent.sensor_rect_dist[crate] = {}
@@ -1320,27 +1335,33 @@ class HeatMap {
 
     //draws the horizontal line over the colobar bar when hovering over the heatmap
     set_cbar_value(parent, value) {
-        //make a global c_conf reference from the parent class
-        let c_conf = parent.jb_tools.canvas_conf(38, 200, 0, 0, 37, 0); //(110, 320, 10, 5, 10, 5);
 
-        var scale_inv = d3.scaleLinear().domain([parent.min_max_range.min, parent.min_max_range.max]).range([c_conf.height + c_conf.bottom / 2, c_conf.bottom / 2]); //TODO adjust for top offset as well
+        var scale_inv = d3.scaleLinear().domain([parent.min_max_range.min, parent.min_max_range.max]).range([parent.c_conf.height + parent.c_conf.bottom, parent.c_conf.bottom]); //TODO adjust for top offset as well
         let target_svg = d3.select("#legend_svg");
 
         target_svg.append('g')
             .attr('id', 'hover_val')
             .append('rect')
             .attr("y", function (d) {
+
+                //adjust values
+                if (value > parent.min_max_range.max) {
+                    value = parent.min_max_range.max
+                }
+                if (value < parent.min_max_range.min) {
+                    value = parent.min_max_range.min
+                }
+
                 return scale_inv(value)
             })
-            .attr("x", c_conf.width / 3)
-            .attr("width", c_conf.width / 4)
+            .attr("x", parent.c_conf.width / 3)
+            .attr("width", parent.c_conf.width / 4)
             .attr("height", 2.5)
             .style("fill", 'lime');
 
-        let rounded_val = Math.round(value * 100 + Number.EPSILON) / 100
-
         //TODO: CHECK WHY FONT SIZE (4PX) DOESN'T WORK
-        parent.jb_tools.add_text(d3.select("#hover_val"), rounded_val, (c_conf.width / 3) + 15, scale_inv(value), "4px", "translate(0,0)") // 0 is the offset from the left
+        parent.jb_tools.add_text(d3.select("#hover_val"), parseFloat(value).toFixed(2), (parent.c_conf.width / 3)-15, scale_inv(value), '0.75em', "translate(0,0)").attr("font-size", '0.75em')
+        // 0 is the offset from the left
 
     }
 
@@ -1350,35 +1371,31 @@ class HeatMap {
         d3.select("#legend_svg").remove();
         d3.selectAll('.non_heatmap_circle').style('opacity', 0);
 
-        //configure canvas size and margins, returns and object
-        //(width, height,top, right, bottom, left)
-        let c_conf = parent.jb_tools.canvas_conf(38, 200, 0, 0, 37, 0); //canvas_conf(110, 320, 20, 5, 20, 5);
-
         parent.master.legend_svg = d3.select('#legend_container')
             .append("svg")
-            .attr("width", c_conf.width + c_conf.left + c_conf.right)
-            .attr("height", c_conf.height + c_conf.top + c_conf.bottom)
+            .attr("width", parent.c_conf.width + parent.c_conf.left + parent.c_conf.right)
+            .attr("height", parent.c_conf.height + parent.c_conf.top + parent.c_conf.bottom)
             .attr('id', "legend_svg");
 
         //set the scale 
-        let scale = d3.scaleLinear().domain([c_conf.height, 0]).range([parent.min_max_range.min, parent.min_max_range.max]);
+        let scale = d3.scaleLinear().domain([parent.c_conf.height, 0]).range([parent.min_max_range.min_abs, parent.min_max_range.max_abs]);
         //set the inverse scale 
-        let scale_inv = d3.scaleLinear().domain([parent.min_max_range.min, parent.min_max_range.max]).range([c_conf.height, 0]);
+        let scale_inv = d3.scaleLinear().domain([parent.min_max_range.min, parent.min_max_range.max]).range([parent.c_conf.height, 0]);
 
         //create a series of bars comprised of small rects to create a gradient illusion
         let bar = parent.master.legend_svg.selectAll(".bars")
-            .data(d3.range(0, c_conf.height), function (d) {
+            .data(d3.range(0, parent.c_conf.height), function (d,i) {
                 return d;
             })
             .enter().append("rect")
             .attr("class", "bars")
             .attr("y", function (i) {
-                return 20 + i;
+                return parent.c_conf.bottom + i;
             })
-            .attr("x", c_conf.width / 3)
+            .attr("x", parent.c_conf.width / 3)
 
             .attr("height", 1)
-            .attr("width", c_conf.width / 4)
+            .attr("width", parent.c_conf.width / 4)
 
             .style("fill", function (d, i) {
                 return parent.color_scheme(scale(d));
@@ -1386,12 +1403,13 @@ class HeatMap {
 
 
         //text showing range on left/right
-        //jb_tools.add_text(TARGET SVG, TXT VALUE, X LOC, Y LOC, FONT SIZE, TRANSLATE);
-        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.max, (c_conf.width / 2) - 3, scale_inv(parent.min_max_range.max), "0.75em", "translate(0,0)") // 0 is the offset from the left
-        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.min, (c_conf.width / 2) - 3, scale_inv(parent.min_max_range.min) + 25, "0.75em", "translate(0,0)") // 0 is the offset from the left
+        //jb_tools.add_text(TARGET SVG, TXT VALUE, X LOC, Y LOC, dy, TRANSLATE);
+        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.max, (parent.c_conf.width / 2) - 3, scale_inv(parent.min_max_range.max), "0.75em", "translate(0,0)").attr("font-size", '0.75em') // 0 is the offset from the left
+        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.min, (parent.c_conf.width / 2) - 3, scale_inv(parent.min_max_range.min)+parent.c_conf.bottom , "0.75em", "translate(0,0)").attr("font-size", '0.75em') // 0 is the offset from the left
 
         //TODO: CHECK WHY FONT SIZE (4PX) DOESN'T WORK
-        parent.jb_tools.add_text(parent.master.legend_svg, document.getElementById('features_list').value, (c_conf.width / 2) - 180, scale_inv(parent.min_max_range.min) - 262, "4px", "rotate(-90)") // 0 is the offset from the left
+        //Adds the feature on the right side
+        parent.jb_tools.add_text(parent.master.legend_svg, document.getElementById('features_list').value, (parent.c_conf.width / 2) - 160, scale_inv(parent.min_max_range.min) - 235, "3.5px", "rotate(-90)") // 0 is the offset from the left
 
     }
 
@@ -1424,10 +1442,10 @@ class HeatMap {
 
         //reset the main variable
         parent.min_max_range = {
-            max: q90(value_array), //max or the 90th percentile value to reduce outliers
-            min: q10(value_array), //min or the 10th percentile value to reduce outliers
-            max_abs: Math.max(...value_array), //absolute max
-            min_abs: Math.min(...value_array) //absolute min
+            max: q95(value_array).toFixed(2), //max or the 90th percentile value to reduce outliers
+            min: q05(value_array).toFixed(2), //min or the 10th percentile value to reduce outliers
+            max_abs: Math.max(...value_array).toFixed(2), //absolute max
+            min_abs: Math.min(...value_array).toFixed(2) //absolute min
         };
 
         //reset min_max values for scaling
