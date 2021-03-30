@@ -365,6 +365,7 @@ class SpaceFloor {
         }) {
             d3.select('#bim_request').attr("transform", transform);
             d3.select('#heatmap').attr("transform", transform);
+            d3.select('#heatmap_splashes').attr("transform", transform);
             d3.select('#heatmap_sensors').attr("transform", transform);
         }
 
