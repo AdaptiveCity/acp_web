@@ -398,7 +398,7 @@ class HeatMap {
                     }
                     //and then draw the ripples
                     else {
-                        let amplitude = 7; //how bright the splash is
+                        let amplitude = 6; //how bright the splash is
 
                         warp_delay = ((((Math.cos(actual_dist / element.run_state) + 1)) * amplitude) / (dampening));
                         //let warp_delay = ((((Math.cos(actual_dist / (run_state + 2)) + 1)) * amplitude) / dampening);
@@ -406,10 +406,10 @@ class HeatMap {
 
                     //TODO:decrease amplitude or increase dampening in the last 20 percent of the animation
                     //final opacity for the cell is its previous value +new value multiplied by coefficients
-                    final_opacity = (current_opacity * 0.4 + warp_delay * 0.6) /// 2;
+                    final_opacity = (current_opacity * 0.6 + warp_delay * 0.4) /// 2;
 
                     //limit the total opacity to 90%
-                    final_opacity = final_opacity > 0.9 ? 0.9 : final_opacity
+                   // final_opacity = final_opacity > 0.9 ? 0.9 : final_opacity
 
                     //add the calculated opacity to the cell
                     selected_cell.style('opacity', +final_opacity.toFixed(3));
@@ -1227,7 +1227,7 @@ class HeatMap {
         for (let sensor in parent.sensor_data) {
             console.log('incoming update ', sensor)
             let wildcard = false //Math.random() < 0.5;
-            window.setInterval(parent.update_callback, parent.jb_tools.random_int(5000, 5000 * 10), parent, sensor, wildcard);
+            window.setInterval(parent.update_callback, parent.jb_tools.random_int(7000, 7000 * 10), parent, sensor, wildcard);
         }
     }
 
