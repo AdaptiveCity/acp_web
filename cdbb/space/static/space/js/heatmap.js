@@ -299,10 +299,10 @@ class HeatMap {
     }
 
     animation_ticker(parent) {
-        let interval_step = 200;
+        let interval_step = 100;
         let total_duration = 4000;
         let final_step = total_duration / interval_step;
-        console.log('finale step', final_step)
+
         parent.interval_timer = setInterval(function () {
 
             if (parent.msg_queue.length < 1) {
@@ -311,24 +311,47 @@ class HeatMap {
             for (let i = 0; i < parent.msg_queue.length; i++) {
 
                 let element = parent.msg_queue[i];
-
-
-                let element_state = element.state; //the third array element
-                let runner=1;
-                let run_state = element.run_state; //add runstate reset as with element_state
                 let heatmap_crate_id = element.crate_id;
                 let acp_id = element.acp_id;
 
 
+                //run the final animation frame routine
                 if (final_step - element.state <= 1) {
 
+                    //remove the message from the queue
                     parent.msg_queue.splice(i, 1);
+
+                    //print the number of animations currently running
                     console.log('current_backstack ', parent.msg_queue.length)
-                    d3.select('#' + heatmap_crate_id + '_heatmap_splash').selectAll('rect').style('opacity', 0)
+
+                    //check that no messages queued for the crate first
+                    let msg_left = parent.msg_queue.find(
+                        el => {
+                            if (el.crate_id == heatmap_crate_id) {
+                                return true
+                            }
+                            return false
+                        }
+                    )
+
+                    //if no messages left in a crate, we can slowly fade out the splash layer
+                    if (!msg_left) {
+                        console.log('empty queue for ', heatmap_crate_id)
+                        d3.select('#' + heatmap_crate_id + '_heatmap_splash')
+                            .selectAll('rect')
+                            .transition()
+                            .duration(500)
+                            .style('opacity', 0)
+                            .on('interrupt', function () {
+                                d3.select(this).attr('opacity', 0);
+                            })
+                    }
+                    //skip to the next loop iteration
                     continue
                 }
+                //else run the regular frame routine
 
-                let iterator = 0;
+                let iterator = 0;//check the c
 
                 let dist_value;
                 try {
@@ -342,68 +365,60 @@ class HeatMap {
                     continue
                 }
 
-                let crate_cells = d3.selectAll('.' + heatmap_crate_id + '_rect_splash').nodes();
+
+                //track the animation progres
                 let current_state = element.state / final_step;
 
-              //  console.log(current_state, element.run_state)
+                //get all cells in a crate we want to update
+                let crate_cells = d3.selectAll('.' + heatmap_crate_id + '_rect_splash').nodes();
 
-                crate_cells.forEach(cell => {
+                //iterate over the cells in crate
+                crate_cells.forEach(function (cell, index) {
 
+                    //select a cell
                     let selected_cell = d3.select(cell);
+
+                    //get its current opacity
                     let current_opacity = parseFloat(selected_cell.style("opacity"));
 
-                    //   let opac = (((Math.cos(dist_value[iterator] /16-interval_count) + 1)));
-
-                    let amplitude = 5; //how bright the splash is
-                    // let warp_delay = (((Math.cos(dist_value[iterator] / wave_len) + 1)) * amplitude) / dist_value[iterator];
-
-                    let actual_dist = dist_value[iterator] //< 20 ? 20 : dist_value[iterator];
-
+                    //get the distance from the sensor
+                    let actual_dist = dist_value[index] < 20 ? 20 : dist_value[index];
                     let dampening = actual_dist > 30 ? 30 : actual_dist;
-                    // console.log(dist_iterator)
 
-                   // if (current_state < 50) {}
-                    // if ((current_state > 0.5) && (current_state < 0.60)) {
-                    //     amplitude = 3;
-                    // }
+                    let final_opacity;
+                    let warp_delay;
 
-                    // if ((current_state > 0.60) && (current_state < 0.70)) {
-                    //     amplitude = 2;
+                    //in the first 10% of animation we draw a splash
+                    if (current_state < 0.1) {
+                        let splash_dampening = dist_value[index] / 5; //>1.5?1.5:dist_value[index];
 
-                    // }
+                        warp_delay = (((Math.cos(actual_dist / (element.run_state)) + 1))) / splash_dampening;
+                        //warp_delay = (((Math.cos(actual_dist / (final_step - element.run_state)) + 1))) / splash_dampening;
 
-                    // if ((current_state > 0.70) && (current_state < 0.80)) {
-                    //     amplitude = 1;
+                    }
+                    //and then draw the ripples
+                    else {
+                        let amplitude = 7; //how bright the splash is
 
-                    // }
+                        warp_delay = ((((Math.cos(actual_dist / element.run_state) + 1)) * amplitude) / (dampening));
+                        //let warp_delay = ((((Math.cos(actual_dist / (run_state + 2)) + 1)) * amplitude) / dampening);
+                    }
 
-                    // if ((current_state > 0.90) && (current_state < 1)) {
-                    //     amplitude = 0;
-                    // }
+                    //TODO:decrease amplitude or increase dampening in the last 20 percent of the animation
+                    //final opacity for the cell is its previous value +new value multiplied by coefficients
+                    final_opacity = (current_opacity * 0.4 + warp_delay * 0.6) /// 2;
 
-                    //element_state+2
-                    //put this function in get_cell_value
-                    let warp_delay = ((((Math.cos(actual_dist / element.run_state) + 1)) * amplitude) / dampening);
-                    //let warp_delay = ((((Math.cos(actual_dist / (run_state + 2)) + 1)) * amplitude) / dampening);
+                    //limit the total opacity to 90%
+                    final_opacity = final_opacity > 0.9 ? 0.9 : final_opacity
 
-
-                    // warp_delay=warp_delay>1?1:warp_delay
-                    let final_opacity = (current_opacity + warp_delay) / 2;
-
-                    //TODO stop the calculation above if reached the final stage of animation
-                    // if (current_state > 0.5) {
-                    //     //final_opacity=1-current_state
-                    //     final_opacity-=current_state
-
-                    // }
-                    //>1?(current_opacity + warp_delay)/2: (current_opacity + warp_delay);
-                    // console.log(current_opacity, warp_delay, final_opacity)
+                    //add the calculated opacity to the cell
                     selected_cell.style('opacity', +final_opacity.toFixed(3));
 
-                    iterator++
+                    //iterator++
                 });
                 element.state++;
-                element.run_state+=0.9;
+
+                element.run_state += 0.65;
             }
 
         }, interval_step);
@@ -414,112 +429,38 @@ class HeatMap {
             parent.msg_queue.find(el => {
                 if (el.acp_id == acp_id) {
                     el.state = 0;
-                    el.run_state=1.5;
+                    el.run_state = 1.5;
                     return true
                 }
                 return false
             })
-
         }
         let progress_state = in_progress(acp_id)
-        console.log('msg', acp_id, progress_state)
+        // console.log('msg', acp_id, progress_state)
 
         if (!progress_state) {
-            parent.msg_queue.push({
-                'acp_id': acp_id,
-                'crate_id': parent.sensor_data[acp_id].crate_id,
-                'state': 0,
-                'run_state': 1.5
-            }) //id and animation step
-            // parent.draw_splash_alt(parent, acp_id, 1)
-        }
-
-    }
-
-    draw_splash_alt(parent, acp_id, walk) {
-
-
-        //walks is a bollean parameter that makes a distinction between drawing a big splash or a small one
-        //reverse walk (only temporary) //TODO:fix this
-        walk != walk;
-
-        //get the data from the sensor data variable
-        let sensor_data = parent.sensor_data[acp_id];
-
-        console.log(sensor_data)
-        let heatmap_crate_id = sensor_data.crate_id;
-
-        //get drawn sensors' location on screen
-        let sensor_loc = {
-            x: parseFloat(document.getElementById(acp_id + "_hm").getAttribute("cx")),
-            y: parseFloat(document.getElementById(acp_id + "_hm").getAttribute("cy"))
-        }
-
-        //debug location
-        //  console.log('sensorloc:', sensor_loc, acp_id, sensor_data)
-
-        //rects in polygons are classed by the crate they're in
-        //TODO: change rect to cell
-        let rect_class = heatmap_crate_id + "_rect"; //change to crate_id
-
-
-        //let iterator = 0;
-        let iterator_delay = 0;
-        let dist_value = parent.sensor_rect_dist[heatmap_crate_id][acp_id];
-
-        let interval_duration = 3000;
-        let interval_count = 10;
-        let int_count = interval_count + 2;
-        let interval_step = interval_duration / interval_count;
-
-
-        let interval_timer = setInterval(function () {
-            if (interval_count < 2) {
-                console.log('finished', '.' + heatmap_crate_id + '_rect_splash')
-                //d3.selectAll('.' + heatmap_crate_id + '_rect_splash').selectAll('rect').style('opacity', 0);
-                d3.select('#' + heatmap_crate_id + '_heatmap_splash').selectAll('rect').style('opacity', 0);
-
-                clearInterval(interval_timer);
-                return
+            try {
+                parent.msg_queue.push({
+                    'acp_id': acp_id,
+                    'crate_id': parent.sensor_data[acp_id].crate_id,
+                    'state': 0,
+                    'run_state': 1.5
+                }) //id and animation step
+                // parent.draw_splash_alt(parent, acp_id, 1) 
+            } catch (error) {
+                
             }
-            let iterator = 0;
-
-            console.log('targetting', '.' + heatmap_crate_id + '_rect_splash')
-
-            d3.selectAll('.' + heatmap_crate_id + '_rect_splash').nodes().forEach(cell => {
-                let selected_cell = d3.select(cell);
-                let current_opacity = parseFloat(selected_cell.style("opacity"));
-
-                //   let opac = (((Math.cos(dist_value[iterator] /16-interval_count) + 1)));
-
-                let wave_len = 5;
-                let amplitude = 5;
-                // let warp_delay = (((Math.cos(dist_value[iterator] / wave_len) + 1)) * amplitude) / dist_value[iterator];
-
-                //put this function in get_cell_value
-                let warp_delay = ((((Math.cos(dist_value[iterator] / (int_count - interval_count)) + 1)) * amplitude) / dist_value[iterator]);
-
-                let final_opacity = (current_opacity + warp_delay) / 2
-                //console.log(current_opacity, warp_delay, final_opacity)
-                selected_cell.style('opacity', final_opacity);
-
-                iterator++
-            });
-
-            interval_count--;
-            console.log(interval_count)
-            //alert("Hello");
-
-        }, interval_step);
-
+          
+        }
 
         //TODO - CAN UPDATE THE COLOR ON THE FLY?
         //  todo to do important
         //if WALK (or trigger) we DO NOT WANT TO UPDATE THE CRATE HEATMAP--> a lot of the time the msg only contains "motion":1 
         //change the crate's heatmap by recoloring the cells in based on the new readings
-        parent.update_crate_heatmap(parent, sensor_data.crate_id, acp_id);
+        // parent.update_crate_heatmap(parent, sensor_data.crate_id, acp_id);
 
     }
+
 
     //Main raindrop function for incoming data:
     //selects a sensor and sets it to update on by creating a raindrop
@@ -1215,6 +1156,7 @@ class HeatMap {
     hide_heatmap(parent) {
         d3.selectAll('#heatmap').remove();
         d3.selectAll('#heatmap_sensors').remove();
+        d3.select('#heatmap_splashes').remove();
 
         d3.selectAll('.non_heatmap_circle').style('opacity', 0.65);
 
@@ -1291,30 +1233,53 @@ class HeatMap {
 
     //show fake path on LL
     fake_path(parent) {
-        // let sens_list = [
-        //     "elsys-co2-0520ba",
-        //     "elsys-ems-0503e0",
-        //     "elsys-eye-044504",
-        //     "elsys-co2-0520bb",
-        //     "elsys-co2-0520bc",
-        //     "elsys-co2-0520bd",
-        //     "elsys-co2-0520be",
-        //     "elsys-co2-0520bf",
-        //     "elsys-co2-0520c0",
-        //     "elsys-co2-0520c1",
-        //     "elsys-co2-0520c2",
-        //     "elsys-co2-0520c3"
-        // ];
-        let sens_list = ["elsys-ems-050368",
-            "elsys-co2-055872",
-            "elsys-eye-04d243",
-            "elsys-eye-04d241",
-            "elsys-eye-04d23c",
-            "elsys-eye-04d245",
-            "elsys-co2-0559fa",
-            "elsys-eye-04d23e",
-            "elsys-co2-05586f"
-        ];
+        let sens_list;
+        switch (CRATE_ID) {
+            case 'GF':
+                sens_list = [
+                    "elsys-ers-04f006",
+                    "elsys-ers-04f007",
+                    "elsys-snd-04bb60",
+                    "elsys-ers-04f005",
+                    "elsys-co2-0558bb",
+                    "elsys-co2-0558b2",
+                    "elsys-co2-0558b5",
+                    "elsys-co2-0559f5",
+                    "elsys-co2-0559f4",
+                    "elsys-co2-0559f7",
+                ]
+                break;
+            case 'FF':
+                sens_list = ["elsys-ems-050368",
+                    "elsys-co2-055872",
+                    "elsys-eye-04d243",
+                    "elsys-eye-04d241",
+                    "elsys-eye-04d23c",
+                    "elsys-eye-04d245",
+                    "elsys-co2-0559fa",
+                    "elsys-eye-04d23e",
+                    "elsys-co2-05586f"
+                ];
+                break;
+            case 'll_0':
+                sens_list = [
+                    "elsys-co2-0520ba",
+                    "elsys-ems-0503e0",
+                    "elsys-eye-044504",
+                    "elsys-co2-0520bb",
+                    "elsys-co2-0520bc",
+                    "elsys-co2-0520bd",
+                    "elsys-co2-0520be",
+                    "elsys-co2-0520bf",
+                    "elsys-co2-0520c0",
+                    "elsys-co2-0520c1",
+                    "elsys-co2-0520c2",
+                    "elsys-co2-0520c3"
+                ];
+                break;
+        }
+
+
 
         let counter = 1;
         for (let i = 0; i < sens_list.length; i++) {
