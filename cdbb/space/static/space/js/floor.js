@@ -80,12 +80,12 @@ class SpaceFloor {
         //-------------------------------------------//
 
         //----set parametrs for drawn sensors on the floorplan----//
-        parent.sensor_opacity = 0.5;
-        parent.radius_scaling = 6; // a parameters that helps calculates the sensor radius in response to svg scale
+        parent.sensor_opacity = 0.4;
         // radius is calculated wrt scale so we have consistent sensor radius across all spacefloors
+        parent.radius_scaling = 1.75; // a parameters that helps calculates the sensor radius in response to svg scale
         //calculated in handle_sensors_metadata()
         parent.sensor_radius;
-        parent.sensor_color = "purple";
+        parent.sensor_color = "orange"; //cambs yellow
         //--------------------------------------------------------//
 
         parent.previous_circle_radius = 0; // set on mouse over, used to remember radius for reset on mouse out.
@@ -108,13 +108,10 @@ class SpaceFloor {
         //--------------------------------------//
         parent.setup_buttons(parent);
 
-        // Usage!
-        console.log('TEST', 'WAITING TO LOAD ASYNC')
-
         parent.loaded.then(function () {
-            console.log('TEST', 'finito')
+            console.log('promise resolved; data finished loading')
         }, function () {
-            console.log('TEST', 'failed')
+            console.log('someting went wrong')
         })
     }
 
@@ -139,7 +136,7 @@ class SpaceFloor {
 
             //Set up slider to change sensor opacity
             let slider = document.getElementById("sensor_opacity");
-            parent.sensor_opacity = slider.value; // Display the default slider value
+            slider.value = parent.sensor_opacity * 100;
 
             // Update the current slider value (each time you drag the slider handle)
             slider.oninput = function () {
@@ -322,21 +319,18 @@ class SpaceFloor {
         // call SENSORS api to get the metadata for sensors on this floor
         parent.get_sensors_metadata(parent);
 
-         //add a sublayer for future apps
-         d3.select('#drawing_svg').append('g').attr('id', "app_overlay")
-         
+        //add a sublayer for future apps
+        d3.select('#drawing_svg').append('g').attr('id', "app_overlay")
+
         //declare zooming/panning function
         parent.manage_zoom(parent);
     }
 
-    //TODO-modify for real vs fake sensors
     //changes sensor opacity
     change_sensor_opacity(parent, new_opacity) {
         //set new opacity
-        // d3.selectAll('.non_heatmap_circle').style('opacity', new_opacity);
-        //console.log("changing sensor opacity", new_opacity)
-        //if debug set the fake data sensor called sensor nodes
-        d3.selectAll('.sensor_node').style('opacity', new_opacity);
+        parent.sensor_opacity = new_opacity;
+        d3.selectAll('.sensor_node').style('opacity', parent.sensor_opacity);
     }
 
     //allows to scroll into the floorplan/heatmap
@@ -585,8 +579,11 @@ class SpaceFloor {
 
         let recieved_sensor_metadata = parent.sensor_metadata;
         //declare circle properties - radius
-        //TODO: perhaps worth looking into changing radius based on parent.page_floor_svg.clientWidth;
-        parent.sensor_radius = parent.radius_scaling / parent.svg_scale;
+        //calculate the sensor radius based on the svg scale; use the log to 'normalise' different scale values;
+        parent.sensor_radius = parent.radius_scaling / Math.log(parent.svg_scale)
+
+        let stroke_width = 1 / parent.svg_scale;
+
         //let rad = ; // radius of sensor icon in METERS (i.e. XYZF before transform)
 
         //create a div to have all of the sensor circles
@@ -626,8 +623,10 @@ class SpaceFloor {
                     .attr("r", parent.sensor_radius)
                     .attr("id", acp_id + "_bim")
                     .attr("data-acp_id", acp_id)
-                    .attr("class", 'non_heatmap_circle')
+                    .attr("class", 'sensor_node')
                     .style("opacity", parent.sensor_opacity)
+                    .attr('stroke-width', stroke_width)
+                    .style('stroke', 'black')
                     .style("fill", fill)
                     .attr("transform", parent.svg_transform);
 
@@ -707,7 +706,7 @@ class SpaceFloor {
     get_choropleth(parent) {
 
         //make drawn floorplan polygons interactive
-        d3.selectAll('polygon').attr('pointer-events', 'all');
+        d3.select(parent.page_floor_svg).selectAll('polygon').attr('pointer-events', 'all');
 
         parent.sensors_in_crates = parent.obtain_sensors_in_crates(parent);
 
@@ -717,7 +716,7 @@ class SpaceFloor {
         });
 
         //quantize polygons again according to sensors in them
-        d3.selectAll("polygon")
+        d3.select(parent.page_floor_svg).selectAll("polygon")
             .attr("class", function (d) {
                 return parent.quantize_class(parent, parent.quantize(parent.rateById.get(this.id)));
             })
@@ -752,11 +751,11 @@ class SpaceFloor {
             .append("svg")
             .attr("id", "legend_svg")
             .style("width", 100)
-            .style("height", 200);
+            .style("height", 225);
 
         /* Thanks to http://stackoverflow.com/users/3128209/ameliabr for tips on creating a quantized legend */
         parent.legend = parent.legend_svg.selectAll('g.legendEntry')
-            .data(this.quantize.range())
+            .data(parent.quantize.range())
             .enter()
             .append('g').attr('class', 'legendEntry');
 
@@ -785,20 +784,25 @@ class SpaceFloor {
                 d3.select(this).style("stroke", "black");
             })
             .on("click", function (d) {
+                console.log('ddd', this.className.baseVal)
                 // Highlights selected rooms
-                d3.select(floorplan)
-                    .selectAll('.' + d)
+                d3.select('#bim_request')
+                    .selectAll('.' + this.className.baseVal)
                     .transition()
                     .duration(1000)
-                    .attr("class", "highlight")
-                    .on('end', function () {
-                        //reclass to previous colors
-                        d3.selectAll("polygon")
-                            .attr("class", function (d) {
-                                return quantize_class(parent, parent.quantize(parent.rateById.get(this.id)));
-                            });
-                    });
+                    .attr('class', 'active')
 
+                    .on('end',
+                        function () {
+                            //quantize polygons again according to sensors in them
+                            d3.selectAll('.' + this.className.baseVal)
+                                .transition()
+                                .duration(1000)
+                                .attr("class", function (d) {
+                                    return parent.quantize_class(parent, parent.quantize(parent.rateById.get(this.id)));
+                                })
+                        }
+                    )
             });
 
         //Adds text to legend to show the extent
@@ -811,8 +815,16 @@ class SpaceFloor {
             .attr("dy", "0.8em") //place text one line *below* the x,y point
             .text(function (d, i) {
                 var extent = parent.quantize.invertExtent(d);
-                //extent will be a two-element array, format it however you want:
-                return (extent[0] == 1 ? (extent[0] + ' sensor') : (extent[0] + ' sensors')) //+ " - " + extent[1]
+
+                if(extent[0] == 1){
+                    return (' '+extent[0] + ' sensor')
+                }
+                else if((extent[0]<8)){
+                    return  (' '+extent[0] + ' sensors')
+                }
+                else{
+                   return ('> ' + extent[0] + ' sensors')
+                }
             })
             .style("font-family", "sans-serif")
             .style("font-size", "10px");
