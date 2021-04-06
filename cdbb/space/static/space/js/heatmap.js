@@ -1,6 +1,6 @@
 "use strict"
 
-const DEFAULT_REZ = 5;
+const MEDIUM_REZ = 5;
 const HIGH_REZ = 3;
 const LOW_REZ = 8;
 
@@ -47,7 +47,6 @@ class HeatMap {
         } catch (error) {
             console.log(error, 'no button present - heatmap not available')
         }
-
     }
 
     // init() called when page loaded
@@ -76,7 +75,7 @@ class HeatMap {
 
         //make a global c_conf reference from the parent class
         //CREATES A COLORBAR
-        parent.c_conf = parent.jb_tools.canvas_conf(110, 320, 10, 10, 10, 10); //(110, 320, 10, 5, 10, 5);
+        parent.c_conf = parent.jb_tools.canvas_conf(70, 240, 15, 10, 15, 20); //(110, 320, 10, 5, 10, 5);
 
         //the delay for drawing individual items during the animation
         parent.animation_delay = d3.scaleLinear().range([3000, 1000]);
@@ -105,8 +104,8 @@ class HeatMap {
         //--------------------------------------//
 
         //resolution (to be changed by the URL)
-        parent.rect_size = DEFAULT_REZ;
-
+        parent.rect_size = MEDIUM_REZ;
+        parent.resolution = 'medium';
         //feature (to be changed by the URL)
         parent.feature = 'temperature'; //set temperature as the default for this page
 
@@ -277,7 +276,6 @@ class HeatMap {
     //show on the page following the initial load
     read_url(parent) {
         const queryString = window.location.search;
-        console.log(queryString);
         const urlParams = new URLSearchParams(queryString);
 
         const feature_exists = urlParams.has('feature');
@@ -293,7 +291,7 @@ class HeatMap {
         //change the resolution if available
         if (resolution_exists) {
             const resolution = urlParams.get('resolution')
-            parent.resolution=resolution;
+            parent.resolution = resolution;
             document.getElementById('resolution_list').value = parent.resolution;
 
             //select the resolution from low, medium and high
@@ -303,7 +301,7 @@ class HeatMap {
                     break;
 
                 case 'medium':
-                    parent.rect_size = DEFAULT_REZ;
+                    parent.rect_size = MEDIUM_REZ;
                     break;
 
                 case 'high':
@@ -311,43 +309,17 @@ class HeatMap {
                     break;
 
                 default:
-                    parent.rect_size = DEFAULT_REZ;
+                    parent.rect_size = MEDIUM_REZ;
                     break;
             }
         }
 
+        //if no paramters present, simply update the defaults
+        else {
+            parent.update_url('feature', parent.feature)
+            parent.update_url('resolution', parent.resolution)
+        }
 
-
-
-        //--------Iterate over keys --------//
-        // const
-        //     keys = urlParams.keys(),
-        //     values = urlParams.values(),
-        //     entries = urlParams.entries();
-
-        // for (const key of keys) console.log(key);
-        // // product, color, newuser, size
-
-        // for (const value of values) console.log(value);
-        // // shirt, blue, , m
-
-        // for (const entry of entries) {
-        //     console.log(`${entry[0]}: ${entry[1]}`);
-        // }
-        // product: shirt
-        // color: blue
-        // newuser:
-        // size: m
-
-        //-----------ADD NEW STUFF------//
-        //     console.log(urlParams.getAll('size'));
-        // [ 'm' ]
-
-        //Programmatically add a second size parameter.
-        //    urlParams.append('size', 'xl');
-
-        // console.log(urlParams.getAll('size'));
-        // [ 'm', 'xl' ]
     }
 
 
@@ -377,8 +349,8 @@ class HeatMap {
 
         //change the resolution
         switch (rez_value) {
-            case 'regular':
-                parent.rect_size = DEFAULT_REZ;
+            case 'medium':
+                parent.rect_size = MEDIUM_REZ;
                 break;
             case 'high':
                 parent.rect_size = HIGH_REZ;
@@ -387,7 +359,7 @@ class HeatMap {
                 parent.rect_size = LOW_REZ;
                 break;
             default:
-                parent.rect_size = DEFAULT_REZ;
+                parent.rect_size = MEDIUM_REZ;
                 break;
         }
 
@@ -404,19 +376,17 @@ class HeatMap {
     make_masks(parent) {
 
         //"id", "mask_" + crate.dataset.crate
-console.log('making masks')
+        console.log('making masks')
         //runs once
         const splash_canvas = d3.select("#app_overlay")
             .append("g")
             .attr('id', 'heatmap_splash_layer')
-        // .attr("width", 300)
-        // .attr("height", 300)
 
         const defs = splash_canvas.append("defs")
 
         //add a mask for every crate 
         d3.selectAll('polygon').nodes().forEach(crate => {
-            console.log('crate', crate.id)
+
             let mask = defs.append("mask")
                 .attr('pointer-events', 'none')
                 .attr("id", "mask_" + crate.id);
@@ -425,7 +395,6 @@ console.log('making masks')
             let polygon_transform = crate.attributes.transform.value;
             //the last element is an empty string, so we remove it
             polygon_points.pop();
-            console.log('crate points', polygon_points);
 
             let crate_polygon =
                 splash_canvas.append("polygon")
@@ -456,7 +425,7 @@ console.log('making masks')
         for (let splash_index = 1; splash_index < 4; ++splash_index) {
 
             //calculate the stroke for the splash's circle
-            let stroke_start = 4 / (parent.svg_scale * splash_index);
+            let stroke_start = 3.5 / (parent.svg_scale * splash_index);
 
             let stroke_finish = 1 / (parent.svg_scale * splash_index);
 
@@ -1020,15 +989,16 @@ console.log('making masks')
     hide_heatmap(parent) {
         d3.select('#heatmap').remove();
         d3.select('#heatmap_sensors').remove();
-        d3.select('#heatmap_splashes').remove();
+        d3.select('#heatmap_splash_layer').remove();
         console.log('no error')
-        d3.selectAll('.non_heatmap_circle').style('opacity', 0.65);
-        console.log('error?')
+        d3.select('#sensor_request').style('opacity', 1);
+
+        //d3.selectAll('.sensor_node_off').attr('class','sensor_node').style('opacity', 0.65);
 
         console.log('parent.master', parent.master)
         //make sure to pass the master object rather than the "heatmap parent" itself
-        // parent.master.get_choropleth(parent.master);
-        // parent.master.set_legend(parent.master)
+         parent.master.get_choropleth(parent.master);
+         parent.master.set_legend(parent.master)
     }
 
     //----------------------------------------------------------------//
@@ -1193,11 +1163,12 @@ console.log('making masks')
         var scale_inv = d3.scaleLinear().domain([parent.min_max_range.min, parent.min_max_range.max]).range([parent.c_conf.height + parent.c_conf.bottom, parent.c_conf.bottom]); //TODO adjust for top offset as well
         let target_svg = d3.select("#legend_svg");
 
+        let element_width=parent.c_conf.width-parent.c_conf.left-parent.c_conf.right;
+        let lime_offset=parent.c_conf.right;
         target_svg.append('g')
             .attr('id', 'hover_val')
             .append('rect')
             .attr("y", function (d) {
-
                 //adjust values
                 if (value > parent.min_max_range.max) {
                     value = parent.min_max_range.max
@@ -1208,13 +1179,12 @@ console.log('making masks')
 
                 return scale_inv(value)
             })
-            .attr("x", parent.c_conf.width / 3)
-            .attr("width", parent.c_conf.width / 4)
+            .attr("x", parent.c_conf.left+parent.c_conf.width/2)
+            .attr("width", element_width)
             .attr("height", 2.5)
             .style("fill", 'lime');
 
-        //TODO: CHECK WHY FONT SIZE (4PX) DOESN'T WORK
-        parent.jb_tools.add_text(d3.select("#hover_val"), parseFloat(value).toFixed(2), (parent.c_conf.width / 3) - 15, scale_inv(value), '0.75em', "translate(0,0)").attr("font-size", '0.75em')
+        parent.jb_tools.add_text(d3.select("#hover_val"), parseFloat(value).toFixed(1),element_width+lime_offset, scale_inv(value), '0.5em', "translate(0,0)").attr("font-size", '0.75em')
         // 0 is the offset from the left
 
     }
@@ -1223,7 +1193,7 @@ console.log('making masks')
     //creates a colobar element that displays the range of sensor readings on screen
     set_colorbar(parent) {
         d3.select("#legend_svg").remove();
-        d3.selectAll('.non_heatmap_circle').style('opacity', 0);
+        d3.select('#sensor_request').style('opacity', 0);
 
         parent.master.legend_svg = d3.select('#legend_container')
             .append("svg")
@@ -1232,7 +1202,7 @@ console.log('making masks')
             .attr('id', "legend_svg");
 
         //set the scale 
-        let scale = d3.scaleLinear().domain([parent.c_conf.height, 0]).range([parent.min_max_range.min_abs, parent.min_max_range.max_abs]);
+        let scale = d3.scaleLinear().domain([parent.c_conf.height, 0]).range([parent.min_max_range.min_abs, parent.min_max_range.max_abs]);//abs
         //set the inverse scale 
         let scale_inv = d3.scaleLinear().domain([parent.min_max_range.min, parent.min_max_range.max]).range([parent.c_conf.height, 0]);
 
@@ -1246,10 +1216,10 @@ console.log('making masks')
             .attr("y", function (i) {
                 return parent.c_conf.bottom + i;
             })
-            .attr("x", parent.c_conf.width / 3)
+            .attr("x",  parent.c_conf.left+parent.c_conf.width/2)
 
             .attr("height", 1)
-            .attr("width", parent.c_conf.width / 4)
+            .attr("width", parent.c_conf.width-parent.c_conf.left-parent.c_conf.right)
 
             .style("fill", function (d, i) {
                 return parent.color_scheme(scale(d));
@@ -1258,12 +1228,11 @@ console.log('making masks')
 
         //text showing range on left/right
         //jb_tools.add_text(TARGET SVG, TXT VALUE, X LOC, Y LOC, dy, TRANSLATE);
-        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.max, (parent.c_conf.width / 2) - 3, scale_inv(parent.min_max_range.max), "0.75em", "translate(0,0)").attr("font-size", '0.75em') // 0 is the offset from the left
-        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.min, (parent.c_conf.width / 2) - 3, scale_inv(parent.min_max_range.min) + parent.c_conf.bottom, "0.75em", "translate(0,0)").attr("font-size", '0.75em') // 0 is the offset from the left
+        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.max, parent.c_conf.left+parent.c_conf.width/2,0, "0.75em", "translate(0,0)").attr("font-size", '0.75em') // 0 is the offset from the left
+        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.min,parent.c_conf.left+parent.c_conf.width/2,parent.c_conf.height+parent.c_conf.top+parent.c_conf.bottom, "0em", "translate(0,0)").attr("font-size", '0.75em') // 0 is the offset from the left
 
-        //TODO: CHECK WHY FONT SIZE (4PX) DOESN'T WORK
         //Adds the feature on the right side
-        parent.jb_tools.add_text(parent.master.legend_svg, document.getElementById('features_list').value, (parent.c_conf.width / 2) - 160, scale_inv(parent.min_max_range.min) - 235, "3.5px", "rotate(-90)") // 0 is the offset from the left
+        parent.jb_tools.add_text(parent.master.legend_svg, document.getElementById('features_list').value, -parent.c_conf.height/2,parent.c_conf.left+parent.c_conf.width, "3.5px", "rotate(-90)") // 0 is the offset from the left
 
     }
 
@@ -1303,7 +1272,7 @@ console.log('making masks')
         };
 
         //reset min_max values for scaling
-        parent.color_scheme.domain([parent.min_max_range.min_abs, parent.min_max_range.max_abs]);
+        parent.color_scheme.domain([parent.min_max_range.min_abs, parent.min_max_range.max_abs]);//abs
         parent.animation_delay.domain([parent.min_max_range.min_abs, parent.min_max_range.max_abs]);
 
         console.log('new minmax:', parent.min_max_range, 'feature:', feature);
