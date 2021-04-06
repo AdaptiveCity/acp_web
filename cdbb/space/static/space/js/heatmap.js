@@ -95,8 +95,14 @@ class HeatMap {
         parent.timer_short; //the socket has been unactive for a while -- color yellow
         parent.timer_long; //assume the socket connection was lost -- color red
 
+        //adding debug globals
+        //TODO:remove unnecessary
         parent.startup = true;
         parent.sensor_rect_dist = {}
+
+        //get the contextual scaling for ripples
+        parent.circle_radius = parent.master.sensor_radius;
+        parent.svg_scale = parent.master.svg_scale;
 
         //Use get_floor_sensors for the API calls, get_local_sensors for faked offline data
         parent.get_floor_sensors(parent);
@@ -274,6 +280,71 @@ class HeatMap {
         parent.master.jb_tools.tooltips();
     }
 
+    make_masks(parent) {
+
+        //"id", "mask_" + crate.dataset.crate
+
+        //runs once
+        const splash_canvas = d3.select("#drawing_svg")
+            .append("g")
+            .attr('id', 'heatmap_splash_layer')
+        // .attr("width", 300)
+        // .attr("height", 300)
+
+        const defs = splash_canvas.append("defs")
+
+        //add a mask for every crate 
+        d3.selectAll('polygon').nodes().forEach(crate => {
+            console.log('crate', crate.id)
+            let mask = defs.append("mask")
+                .attr('pointer-events', 'none')
+                .attr("id", "mask_" + crate.id);
+
+            let polygon_points = crate.attributes.points.value.split(' ');
+            let polygon_transform = crate.attributes.transform.value;
+            //the last element is an empty string, so we remove it
+            polygon_points.pop();
+            console.log('crate points', polygon_points);
+
+            let crate_polygon =
+                splash_canvas.append("polygon")
+                .attr("points", polygon_points)
+                .attr("transform", polygon_transform)
+                .attr('pointer-events', 'none')
+                .attr('stroke-width', 0.01)
+                .attr("stroke", "black")
+                .attr("mask", "url(#mask_" + crate.id + ")")
+                .attr("fill", "white")
+
+        })
+
+        // mask.append("circle")
+        //     .attr("cx", 20)
+        //     .attr("cy", 20)
+        //     .attr("r", 150)
+        //     .attr("fill", "white")
+
+        // mask.append("circle")
+        //     .attr("cx", 20)
+        //     .attr("cy", 20)
+        //     .attr("r", 120)
+
+        // mask.append("circle")
+        //     .attr("cx", 250)
+        //     .attr("cy", 250)
+        //     .attr("r", 150)
+        //     .attr("fill", "white")
+        // mask.append("circle")
+        //     .attr("cx", 250)
+        //     .attr("cy", 250)
+        //     .attr("r", 120)
+
+
+
+    }
+
+    //copies the heatmap rectangles on top for an invisible lauer which 
+    //will have the splashes
     make_sublayers() {
         let cloned_layer = d3.select('#heatmap')
             .clone(true)
@@ -350,9 +421,6 @@ class HeatMap {
                     continue
                 }
                 //else run the regular frame routine
-
-                let iterator = 0;//check the c
-
                 let dist_value;
                 try {
                     dist_value = parent.sensor_rect_dist[heatmap_crate_id][acp_id];
@@ -409,7 +477,7 @@ class HeatMap {
                     final_opacity = (current_opacity * 0.6 + warp_delay * 0.4) /// 2;
 
                     //limit the total opacity to 90%
-                   // final_opacity = final_opacity > 0.9 ? 0.9 : final_opacity
+                    // final_opacity = final_opacity > 0.9 ? 0.9 : final_opacity
 
                     //add the calculated opacity to the cell
                     selected_cell.style('opacity', +final_opacity.toFixed(3));
@@ -424,6 +492,46 @@ class HeatMap {
         }, interval_step);
     }
 
+    do_animation_alt(parent, acp_id) {
+        let crate_id = parent.sensor_data[acp_id].crate_id;
+
+        let position = {
+            'x': d3.select('#' + acp_id + "_bim").attr('cx'),
+            'y': d3.select('#' + acp_id + "_bim").attr('cy'),
+            'transf': d3.select('#' + acp_id + "_bim").attr("transform")
+        }
+
+        for (let splash_index = 1; splash_index < 4; ++splash_index) {
+
+            //calculate the stroke for the splash's circle
+            let stroke = 4 / (parent.svg_scale * splash_index);
+            //stroke should be a function og time
+
+            //console.log(position, stroke,parent.circle_radius)
+            // let circle = 
+            d3.select("#mask_" + crate_id).append("circle")
+                .attr("cx", position.x)
+                .attr("cy", position.y)
+                // .attr('transform', position.transf)
+                .attr("r", 0)
+                .style("stroke-width", stroke)
+                .style("fill", 'none')
+                .style('stroke', 'white')
+                .transition()
+                .delay(Math.pow(splash_index, 2) * 100)
+                .duration(3000)
+                .ease(d3.easeSin)
+                .attr("r", parent.circle_radius * 10) //radius for waves
+                .style("stroke-opacity", 0)
+                //.style("stroke-width", stroke)
+                .on("interrupt", function () {
+                    d3.select(this).remove();
+                })
+                .on("end", function () {
+                    d3.select(this).remove(); //remove ripples
+                });
+        }
+    }
     do_animation(parent, acp_id) {
         function in_progress(acp_id) {
             parent.msg_queue.find(el => {
@@ -448,9 +556,9 @@ class HeatMap {
                 }) //id and animation step
                 // parent.draw_splash_alt(parent, acp_id, 1) 
             } catch (error) {
-                
+
             }
-          
+
         }
 
         //TODO - CAN UPDATE THE COLOR ON THE FLY?
@@ -1150,19 +1258,23 @@ class HeatMap {
         //adding another mask layer on top
         parent.make_sublayers();
         parent.animation_ticker(parent);
+        // parent.make_masks(parent);
+        // parent.animation_ticker_alt(parent);
     }
 
 
     hide_heatmap(parent) {
-        d3.selectAll('#heatmap').remove();
-        d3.selectAll('#heatmap_sensors').remove();
+        d3.select('#heatmap').remove();
+        d3.select('#heatmap_sensors').remove();
         d3.select('#heatmap_splashes').remove();
-
+        console.log('no error')
         d3.selectAll('.non_heatmap_circle').style('opacity', 0.65);
+        console.log('error?')
 
+        console.log('parent.master', parent.master)
         //make sure to pass the master object rather than the "heatmap parent" itself
-        parent.master.get_choropleth(parent.master);
-        parent.master.set_legend(parent.master)
+        // parent.master.get_choropleth(parent.master);
+        // parent.master.set_legend(parent.master)
     }
 
     //----------------------------------------------------------------//
@@ -1216,7 +1328,11 @@ class HeatMap {
 
     //callback to update sensors (for faked sensor data)
     update_callback(parent, acp_id, walk) {
-        parent.do_animation(parent, acp_id)
+         parent.do_animation(parent, acp_id)
+
+        //parent.do_animation_alt(parent, acp_id)
+
+        //console.log('appended')
         // parent.draw_splash_alt(parent, acp_id, walk);
     }
 
@@ -1227,7 +1343,7 @@ class HeatMap {
         for (let sensor in parent.sensor_data) {
             console.log('incoming update ', sensor)
             let wildcard = false //Math.random() < 0.5;
-            window.setInterval(parent.update_callback, parent.jb_tools.random_int(7000, 7000 * 10), parent, sensor, wildcard);
+            window.setInterval(parent.update_callback, parent.jb_tools.random_int(8000, 8000 * 10), parent, sensor, wildcard);
         }
     }
 

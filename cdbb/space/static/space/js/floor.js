@@ -28,7 +28,7 @@ class SpaceFloor {
     }
 
     // init() called when page loaded
-     init() {
+    init() {
 
         if (typeof CRATE_ID == "undefined") {
             let message_el = document.getElementById("message");
@@ -366,6 +366,7 @@ class SpaceFloor {
             d3.select('#bim_request').attr("transform", transform);
             d3.select('#heatmap').attr("transform", transform);
             d3.select('#heatmap_splashes').attr("transform", transform);
+            d3.select('#heatmap_splash_layer').attr("transform", transform);
             d3.select('#heatmap_sensors').attr("transform", transform);
         }
 
