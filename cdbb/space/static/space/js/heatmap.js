@@ -26,6 +26,8 @@ class HeatMap {
         //--------------------------------------//
         //--------SET UP EVENT LISTENERS--------//
         //--------------------------------------//
+
+        //TODO: remove this since we will be on a separete page
         self.setup_buttons(self);
 
     }
@@ -63,18 +65,14 @@ class HeatMap {
         //declare the min max range of values for temp/co2/humidity - will change during runtime
         parent.min_max_range = {};
 
-        //resolution
-        parent.rect_size = DEFAULT_REZ;
-
         //declare the main colorscheme for the heatmap
         parent.color_scheme = d3.scaleSequential(d3.interpolateInferno)
 
-        //total time to draw transitions between activating the heatmap
-        parent.animation_dur = 350;
+        //total time to draw transitions when changing the active feature (temperature, humidity etc)
+        parent.crate_fill_duration = 500;
 
-        //separate aniamtion to see how long the 'raindrop' remains visible
-        parent.splash_dur = 400; //WAS 200
-        parent.ripple_dur = 4500;
+        //separate animation to see how long the 'raindrop' or 'splash' remains visible
+        parent.ripple_duration = 4000;
 
         //make a global c_conf reference from the parent class
         //CREATES A COLORBAR
@@ -82,8 +80,6 @@ class HeatMap {
 
         //the delay for drawing individual items during the animation
         parent.animation_delay = d3.scaleLinear().range([3000, 1000]);
-
-        parent.msg_queue = [];
 
         //heatmap opacity
         parent.default_opacity = 0.75;
@@ -104,6 +100,22 @@ class HeatMap {
         parent.circle_radius = parent.master.sensor_radius;
         parent.svg_scale = parent.master.svg_scale;
 
+        //--------------------------------------//
+        //--------LOOKUP THE URL FOR ARGS-------//
+        //--------------------------------------//
+
+        //resolution (to be changed by the URL)
+        parent.rect_size = DEFAULT_REZ;
+
+        //feature (to be changed by the URL)
+        parent.feature = 'temperature'; //set temperature as the default for this page
+
+        parent.read_url(parent);
+
+        //--------------------------------------//
+        //------FETCH THE DATA FOR SENSORS------//
+        //--------------------------------------//
+
         //Use get_floor_sensors for the API calls, get_local_sensors for faked offline data
         parent.get_floor_sensors(parent);
         //parent.get_local_sensors(parent);
@@ -111,6 +123,11 @@ class HeatMap {
         //--------------------------------------//
         //--------SET UP EVENT LISTENERS-2------//
         //--------------------------------------//
+        parent.setup_controls(parent);
+
+    }
+
+    setup_controls(parent) {
 
         //connect to rt monitor
         document.getElementById('rain_rt_connect').addEventListener('click', () => {
@@ -125,16 +142,40 @@ class HeatMap {
         //attach an event listener to the list of properties
         document.getElementById('features_list').addEventListener('change', function () {
             console.log('You selected: ', this.value);
-            parent.redraw_heatmap(parent, this.value)
+            parent.feature = this.value;
+            parent.update_url('feature', parent.feature)
+            parent.redraw_heatmap(parent, parent.feature)
         });
 
         //attach an event listener to change the heatmap resolution
         document.getElementById('resolution_list').addEventListener('change', function () {
             console.log('You selected: ', this.value);
-            parent.update_resolution(parent, this.value);
+            parent.resolution = this.value;
+            parent.update_url('resolution', parent.resolution)
+            parent.update_resolution(parent, parent.resolution);
         });
-
     }
+
+    update_url(param, value) {
+        let url = new URL(window.location.href);
+        let search_params = url.searchParams;
+
+        // new value of "param" is set to "value"
+        search_params.set(param, value)
+
+        // change the search property of the main url
+        url.search = search_params.toString();
+
+        // the new url string
+        let new_url = url.toString();
+
+        // output : .../space/floor_rain/FF/?feature=nope&resolution=high
+        console.log(new_url);
+
+        let newRelativePathQuery = window.location.pathname + '?' + search_params.toString();
+        window.history.pushState(null, '', newRelativePathQuery);
+    }
+
     //connects to the rt monitor via websockets
     connect_rt(parent) {
         //get a list of all sensors rendered on screen
@@ -185,14 +226,14 @@ class HeatMap {
                     parent.update_sensor_data(parent, msg_data);
 
                     //check if the new message only contains a "motion" trigger event
-                    let motion_trigger = false;
+                    let motion_trigger = true;
                     let cooked = msg_data.payload_cooked;
                     //if payload_cooked only has a single key and it is 'motion' or 'occupancy'
                     // (usually paired though) then we now 
                     //it's an interrupt triggered motion event
                     if ((Object.keys(cooked).length < 3) && (("motion" in cooked) || ("occupancy" in cooked))) {
                         console.log('motion-only event detected', msg_data)
-                        motion_trigger = true;
+                        motion_trigger = false;
                     }
 
                     //Draw a splash event on screen
@@ -231,6 +272,81 @@ class HeatMap {
                 break;
         }
     }
+
+    //changes the url based on what we'd like to 
+    //show on the page following the initial load
+    read_url(parent) {
+        const queryString = window.location.search;
+        console.log(queryString);
+        const urlParams = new URLSearchParams(queryString);
+
+        const feature_exists = urlParams.has('feature');
+        const resolution_exists = urlParams.has('resolution');
+
+        //change the feature if available
+        if (feature_exists) {
+            const feature = urlParams.get('feature')
+            parent.feature = feature;
+            document.getElementById('features_list').value = parent.feature;
+        }
+
+        //change the resolution if available
+        if (resolution_exists) {
+            const resolution = urlParams.get('resolution')
+            //select the resolution from low, medium and high
+            switch (resolution) {
+                case 'low':
+                    parent.rect_size = LOW_REZ;
+                    break;
+
+                case 'medium':
+                    parent.rect_size = DEFAULT_REZ;
+                    break;
+
+                case 'high':
+                    parent.rect_size = HIGH_REZ;
+                    break;
+
+                default:
+                    parent.rect_size = DEFAULT_REZ;
+                    break;
+            }
+        }
+
+
+
+
+        //--------Iterate over keys --------//
+        // const
+        //     keys = urlParams.keys(),
+        //     values = urlParams.values(),
+        //     entries = urlParams.entries();
+
+        // for (const key of keys) console.log(key);
+        // // product, color, newuser, size
+
+        // for (const value of values) console.log(value);
+        // // shirt, blue, , m
+
+        // for (const entry of entries) {
+        //     console.log(`${entry[0]}: ${entry[1]}`);
+        // }
+        // product: shirt
+        // color: blue
+        // newuser:
+        // size: m
+
+        //-----------ADD NEW STUFF------//
+        //     console.log(urlParams.getAll('size'));
+        // [ 'm' ]
+
+        //Programmatically add a second size parameter.
+        //    urlParams.append('size', 'xl');
+
+        // console.log(urlParams.getAll('size'));
+        // [ 'm', 'xl' ]
+    }
+
 
     //-----------------------//
     //Generates the heatmap--//
@@ -317,183 +433,14 @@ class HeatMap {
                 .attr("fill", "white")
 
         })
-
-        // mask.append("circle")
-        //     .attr("cx", 20)
-        //     .attr("cy", 20)
-        //     .attr("r", 150)
-        //     .attr("fill", "white")
-
-        // mask.append("circle")
-        //     .attr("cx", 20)
-        //     .attr("cy", 20)
-        //     .attr("r", 120)
-
-        // mask.append("circle")
-        //     .attr("cx", 250)
-        //     .attr("cy", 250)
-        //     .attr("r", 150)
-        //     .attr("fill", "white")
-        // mask.append("circle")
-        //     .attr("cx", 250)
-        //     .attr("cy", 250)
-        //     .attr("r", 120)
-
-
-
     }
 
-    //copies the heatmap rectangles on top for an invisible lauer which 
-    //will have the splashes
-    make_sublayers() {
-        let cloned_layer = d3.select('#heatmap')
-            .clone(true)
-            .attr('id', 'heatmap_splashes')
-            .attr('pointer-events', 'none')
-            .selectAll('g')
-            .attr('id', function (d, i) {
-                return d3.select(this).attr("id") + '_splash'
-            })
-            .attr('class', function (d, i) {
-                return d3.select(this).attr("class") + '_splash'
-            })
-            .selectAll('rect')
-            // .attr('id', function (d, i) {
-            //     return d3.select(this).attr("id") + '_splash'
-            // })
-            .style('opacity', 0)
-            .style('fill', 'white')
-            .attr('class', function (d, i) {
-                return d3.select(this).attr("class") + '_splash'
-            })
+    draw_splash(parent, acp_id, motion_trigger) {
 
-    }
-
-    animation_ticker(parent) {
-        let interval_step = 100;
-        let total_duration = 4000;
-        let final_step = total_duration / interval_step;
-
-        parent.interval_timer = setInterval(function () {
-
-            if (parent.msg_queue.length < 1) {
-                return
-            }
-            for (let i = 0; i < parent.msg_queue.length; i++) {
-
-                let element = parent.msg_queue[i];
-                let heatmap_crate_id = element.crate_id;
-                let acp_id = element.acp_id;
-
-
-                //run the final animation frame routine
-                if (final_step - element.state <= 1) {
-
-                    //remove the message from the queue
-                    parent.msg_queue.splice(i, 1);
-
-                    //print the number of animations currently running
-                    console.log('current_backstack ', parent.msg_queue.length)
-
-                    //check that no messages queued for the crate first
-                    let msg_left = parent.msg_queue.find(
-                        el => {
-                            if (el.crate_id == heatmap_crate_id) {
-                                return true
-                            }
-                            return false
-                        }
-                    )
-
-                    //if no messages left in a crate, we can slowly fade out the splash layer
-                    if (!msg_left) {
-                        console.log('empty queue for ', heatmap_crate_id)
-                        d3.select('#' + heatmap_crate_id + '_heatmap_splash')
-                            .selectAll('rect')
-                            .transition()
-                            .duration(500)
-                            .style('opacity', 0)
-                            .on('interrupt', function () {
-                                d3.select(this).attr('opacity', 0);
-                            })
-                    }
-                    //skip to the next loop iteration
-                    continue
-                }
-                //else run the regular frame routine
-                let dist_value;
-                try {
-                    dist_value = parent.sensor_rect_dist[heatmap_crate_id][acp_id];
-
-                } catch (error) {
-                    //not sure about this step
-                    //what would the remaining rects look like?
-                    parent.msg_queue.splice(i, 1);
-                    element.state++;
-                    continue
-                }
-
-
-                //track the animation progres
-                let current_state = element.state / final_step;
-
-                //get all cells in a crate we want to update
-                let crate_cells = d3.selectAll('.' + heatmap_crate_id + '_rect_splash').nodes();
-
-                //iterate over the cells in crate
-                crate_cells.forEach(function (cell, index) {
-
-                    //select a cell
-                    let selected_cell = d3.select(cell);
-
-                    //get its current opacity
-                    let current_opacity = parseFloat(selected_cell.style("opacity"));
-
-                    //get the distance from the sensor
-                    let actual_dist = dist_value[index] < 20 ? 20 : dist_value[index];
-                    let dampening = actual_dist > 30 ? 30 : actual_dist;
-
-                    let final_opacity;
-                    let warp_delay;
-
-                    //in the first 10% of animation we draw a splash
-                    if (current_state < 0.1) {
-                        let splash_dampening = dist_value[index] / 5; //>1.5?1.5:dist_value[index];
-
-                        warp_delay = (((Math.cos(actual_dist / (element.run_state)) + 1))) / splash_dampening;
-                        //warp_delay = (((Math.cos(actual_dist / (final_step - element.run_state)) + 1))) / splash_dampening;
-
-                    }
-                    //and then draw the ripples
-                    else {
-                        let amplitude = 6; //how bright the splash is
-
-                        warp_delay = ((((Math.cos(actual_dist / element.run_state) + 1)) * amplitude) / (dampening));
-                        //let warp_delay = ((((Math.cos(actual_dist / (run_state + 2)) + 1)) * amplitude) / dampening);
-                    }
-
-                    //TODO:decrease amplitude or increase dampening in the last 20 percent of the animation
-                    //final opacity for the cell is its previous value +new value multiplied by coefficients
-                    final_opacity = (current_opacity * 0.6 + warp_delay * 0.4) /// 2;
-
-                    //limit the total opacity to 90%
-                    // final_opacity = final_opacity > 0.9 ? 0.9 : final_opacity
-
-                    //add the calculated opacity to the cell
-                    selected_cell.style('opacity', +final_opacity.toFixed(3));
-
-                    //iterator++
-                });
-                element.state++;
-
-                element.run_state += 0.65;
-            }
-
-        }, interval_step);
-    }
-
-    do_animation_alt(parent, acp_id) {
         let crate_id = parent.sensor_data[acp_id].crate_id;
+        console.log(acp_id, parent.sensor_data[acp_id].crate_id)
+        //if !motion_trigger, draw a smaller circle
+        let final_radius = motion_trigger == true ? parent.circle_radius * 10 : parent.circle_radius * 5;
 
         let position = {
             'x': d3.select('#' + acp_id + "_bim").attr('cx'),
@@ -504,26 +451,30 @@ class HeatMap {
         for (let splash_index = 1; splash_index < 4; ++splash_index) {
 
             //calculate the stroke for the splash's circle
-            let stroke = 4 / (parent.svg_scale * splash_index);
-            //stroke should be a function og time
+            let stroke_start = 4 / (parent.svg_scale * splash_index);
+
+            let stroke_finish = 1 / (parent.svg_scale * splash_index);
+
+            //stroke should be a function of time
 
             //console.log(position, stroke,parent.circle_radius)
             // let circle = 
             d3.select("#mask_" + crate_id).append("circle")
+                .attr("pointer-events", "none")
                 .attr("cx", position.x)
                 .attr("cy", position.y)
                 // .attr('transform', position.transf)
                 .attr("r", 0)
-                .style("stroke-width", stroke)
+                .style("stroke-width", stroke_start)
                 .style("fill", 'none')
                 .style('stroke', 'white')
                 .transition()
                 .delay(Math.pow(splash_index, 2) * 100)
-                .duration(3000)
+                .duration(parent.ripple_duration)
                 .ease(d3.easeSin)
-                .attr("r", parent.circle_radius * 10) //radius for waves
+                .attr("r", final_radius) //radius for waves
                 .style("stroke-opacity", 0)
-                //.style("stroke-width", stroke)
+                .style("stroke-width", stroke_finish)
                 .on("interrupt", function () {
                     d3.select(this).remove();
                 })
@@ -531,219 +482,14 @@ class HeatMap {
                     d3.select(this).remove(); //remove ripples
                 });
         }
-    }
-    do_animation(parent, acp_id) {
-        function in_progress(acp_id) {
-            parent.msg_queue.find(el => {
-                if (el.acp_id == acp_id) {
-                    el.state = 0;
-                    el.run_state = 1.5;
-                    return true
-                }
-                return false
-            })
-        }
-        let progress_state = in_progress(acp_id)
-        // console.log('msg', acp_id, progress_state)
-
-        if (!progress_state) {
-            try {
-                parent.msg_queue.push({
-                    'acp_id': acp_id,
-                    'crate_id': parent.sensor_data[acp_id].crate_id,
-                    'state': 0,
-                    'run_state': 1.5
-                }) //id and animation step
-                // parent.draw_splash_alt(parent, acp_id, 1) 
-            } catch (error) {
-
-            }
-
-        }
 
         //TODO - CAN UPDATE THE COLOR ON THE FLY?
         //  todo to do important
         //if WALK (or trigger) we DO NOT WANT TO UPDATE THE CRATE HEATMAP--> a lot of the time the msg only contains "motion":1 
         //change the crate's heatmap by recoloring the cells in based on the new readings
-        // parent.update_crate_heatmap(parent, sensor_data.crate_id, acp_id);
-
+        parent.update_crate_heatmap(parent, crate_id, acp_id);
     }
 
-
-    //Main raindrop function for incoming data:
-    //selects a sensor and sets it to update on by creating a raindrop
-    draw_splash(parent, acp_id, walk) {
-        //walks is a bollean parameter that makes a distinction between drawing a big splash or a small one
-        //reverse walk (only temporary) //TODO:fix this
-        walk != walk;
-
-        //get the data from the sensor data variable
-        let sensor_data = parent.sensor_data[acp_id];
-
-        //get drawn sensors' location on screen
-        let sensor_loc = {
-            x: document.getElementById(acp_id + "_hm").getAttribute("cx"),
-            y: document.getElementById(acp_id + "_hm").getAttribute("cy")
-        }
-
-        //debug location
-        //  console.log('sensorloc:', sensor_loc, acp_id, sensor_data)
-
-        //rects in polygons are classed by the crate they're in
-        let rect_class = sensor_data.crate_id + "_rect";
-
-        //select all relevant rects
-        d3.selectAll("." + rect_class).nodes().forEach(node => {
-
-            //acquire their position from the HTML data-loc property 
-            let raw_loc = node.dataset.loc.split(',')
-            let selected_crate = node.dataset.crate; //??? should this be sensor_data.crate_id ??? -- to be changed
-
-            //get rect's location on screen
-            let rect_loc = {
-                x: node.x.animVal.value,
-                y: node.y.animVal.value,
-                scale: parseFloat(raw_loc[2])
-            }
-
-            //recoloring rects -- I don't think it's how it should be implemented, lots of unnecessary recalcultion -- to be changed
-            //e.g. this value should clearly be retrieved using node.dataset property that's already in HTML
-            let cell_value = parent.get_cell_value(parent, selected_crate, rect_loc);
-
-            let color = parent.color_scheme(cell_value);
-
-            let dist_delay = parent.jb_tools.dist(rect_loc, sensor_loc);
-
-            let selected_node = d3.select(node);
-
-
-            //IMPORTANT TODO- ADD INTERUPT CASES TO END ANIMATIONS PREMATURELY
-            selected_node
-                .style("fill", function (d) {
-                    return color
-                })
-
-                //HERE BEGINS THE INITIAL SPLASH THAT IS JUST A BIG WHITE BLOB
-                //WE MAKE IT SHORT AT FIRST
-                .transition() // <------- TRANSITION STARTS HERE --------
-                .duration(parent.splash_dur) //250
-
-                .ease(d3.easeExpOut)
-
-                .delay(function (d, i) {
-
-                    let delay = (((Math.cos(dist_delay / 20) + 1)) * 2);
-
-                    // if (delay < 50) {
-                    //     delay = 0;
-                    // }
-                    // console.log('delay', delay, Math.cos(dist_delay), 'dist', dist_delay, loc, sensor_loc)
-                    // console.log('delay', delay,dist_delay);
-
-                    if (delay > 1000) {
-                        delay = 1000;
-                    }
-                    return delay
-                })
-                // .ease(d3.easeCubicIn)
-
-                .style("fill", function (d) {
-                    return color //'white'//'white' //color
-                })
-
-                .style('opacity', function (d, i) {
-                    //let opacity = (((Math.sin(dist_delay / 5) + 1)));
-
-                    let opacity = dist_delay / 100;
-
-                    if (walk) {
-                        opacity = dist_delay / 25
-                    }
-                    //console.log('opacity', opacity,dist_delay);
-
-                    if (opacity > parent.default_opacity) {
-                        opacity = parent.default_opacity;
-                    }
-                    return opacity
-                })
-                //setup interrupt cases when animationcan get suddenly cancelled by another
-                .on("interrupt", function () {
-                    selected_node.attr('opacity', parent.default_opacity);
-                    selected_node.attr('fill', color);
-                })
-
-                .on('end', function (d, i) {
-                    selected_node
-
-                        //HERE THE SECOND PART BEGINS WHERE WE SHOW THE RIPPLE
-                        .transition() // <------- TRANSITION STARTS HERE --------
-                        .duration(function (d, i) {
-                            if (walk) {
-                                return parent.ripple_dur //TODO ADD A MULTIPLYER
-                            } else {
-                                return parent.ripple_dur / 2;
-                            }
-                        })
-                        .ease(d3.easeCubicOut)
-
-                        .delay(function (d, i) {
-
-                            let wave_len = 5;
-                            let amplitude = 4000;
-
-                            // if (walk) {
-                            //     wave_len = 2.5;
-                            //     amplitude = 1000;
-                            // }
-                            //dampening function
-                            let warp_delay = (((Math.cos(dist_delay / wave_len) + 1)) * amplitude) / dist_delay;
-
-
-                            //THESE COMMMENTED OUT BITS HELP REDUCE THE WHITE CELLS 
-                            //THAT STAY AFTER THE RIPPLE, THIS IS THE TAIL END
-                            //OF THE MATHEMATICAL FUNCTION, SO WE WANT TO JUST CUT IT OFF
-                            // console.log('warp delay', warp_delay)
-                            //since the funciton follow 
-                            // if (warp_delay > 200) {
-                            //     warp_delay = 200;
-                            //     if (walk) {
-                            //         warp_delay = 75;
-                            //     }
-                            // }
-                            // if (warp_delay < 50) {
-                            //     warp_delay = 0;
-
-                            // }
-
-                            if (warp_delay > 1000) {
-                                warp_delay = 1000;
-                            }
-                            return warp_delay
-
-                        })
-
-                        .style("fill", function (d) {
-                            return color //'red'
-                        })
-                        .style('opacity', parent.default_opacity)
-
-                        //setup interrupt cases when animation can get suddenly cancelled by another
-                        .on("interrupt", function () {
-
-
-                            selected_node.attr('opacity', parent.default_opacity);
-                            selected_node.attr('fill', color);
-                        });
-                })
-        });
-
-
-        //TODO - CAN UPDATE THE COLOR ON THE FLY?
-        //  todo to do important
-        //if WALK (or trigger) we DO NOT WANT TO UPDATE THE CRATE HEATMAP--> a lot of the time the msg only contains "motion":1 
-        //change the crate's heatmap by recoloring the cells in based on the new readings
-        parent.update_crate_heatmap(parent, sensor_data.crate_id, acp_id);
-    }
 
     //API requests to get sensors per crate
     get_floor_sensors(parent) {
@@ -752,7 +498,10 @@ class HeatMap {
         let floor = parent.master.floor_number;
         console.log('master', system, floor, parent.master, parent.master['floor_coordinate_system'], parent.master.floor_coordinate_system)
         //passs feature as argument from html list of features
-        let feature = document.getElementById('features_list').value;
+
+        //let feature = document.getElementById('features_list').value;
+        //TODO: decide if we want to requery the entire system
+        let feature = 'temperature';
 
         let readings_url = parent.query_url + system + "/" + floor + "/" + feature + "/" + "?metadata=true";
         console.log('heatmap url', readings_url, feature)
@@ -856,12 +605,12 @@ class HeatMap {
     update_crate_heatmap(parent, crate_id, sensor_id) {
         //select the rectangles associated with a selected crate
         let class_id = crate_id + "_rect";
+        let selected_crate = crate_id // rect.dataset.crate; //???TODO:should this be sensor_data.crate_id ??? -- to be changed
 
         d3.selectAll("." + class_id).nodes().forEach(rect => {
 
             //acquire their position from the HTML data-loc property 
             let raw_loc = rect.dataset.loc.split(',')
-            let selected_crate = rect.dataset.crate; //??? should this be sensor_data.crate_id ??? -- to be changed
 
             //get rect's location on screen
             let rect_loc = {
@@ -873,7 +622,7 @@ class HeatMap {
             //--------------------------------------------//
             //--Uncomment bellow to fake sensor readings--//
             //--------------------------------------------//
-
+            //TODO:check that this works
             /*
              let temp_val = Math.random() * (3 + 3) - 3;
              let current_val = parent.sensor_data[sensor_id].payload.temperature;
@@ -885,7 +634,7 @@ class HeatMap {
 
             //update the reading with a new rand value
             parent.sensor_data[sensor_id].payload.temperature = new_val;
-            */
+             */
 
             //--------------------------------------------//
             //------------End of the subsegment-----------//
@@ -969,7 +718,7 @@ class HeatMap {
                         let delay = parent.animation_delay(cell_value);
                         return delay;
                     })
-                    .duration(parent.animation_dur)
+                    .duration(parent.crate_fill_duration)
                     .style("fill", function (d) {
                         return color
                     })
@@ -1231,7 +980,7 @@ class HeatMap {
                                     let delay = parent.animation_delay(cell_value);
                                     return delay;
                                 })
-                                .duration(parent.animation_dur)
+                                .duration(parent.crate_fill_duration)
                                 .style("fill", function (d) {
                                     return color
                                 })
@@ -1256,9 +1005,9 @@ class HeatMap {
         console.log('done', Date.now())
         parent.startup = false;
         //adding another mask layer on top
-        parent.make_sublayers();
-        parent.animation_ticker(parent);
-        // parent.make_masks(parent);
+        // parent.make_sublayers();
+        //parent.animation_ticker(parent);
+        parent.make_masks(parent);
         // parent.animation_ticker_alt(parent);
     }
 
@@ -1328,12 +1077,7 @@ class HeatMap {
 
     //callback to update sensors (for faked sensor data)
     update_callback(parent, acp_id, walk) {
-         parent.do_animation(parent, acp_id)
-
-        //parent.do_animation_alt(parent, acp_id)
-
-        //console.log('appended')
-        // parent.draw_splash_alt(parent, acp_id, walk);
+        parent.draw_splash(parent, acp_id, true)
     }
 
     //async update for faked sensor data - updates all;
@@ -1366,7 +1110,8 @@ class HeatMap {
                 ]
                 break;
             case 'FF':
-                sens_list = ["elsys-ems-050368",
+                sens_list = [
+                    "elsys-ems-050368",
                     "elsys-co2-055872",
                     "elsys-eye-04d243",
                     "elsys-eye-04d241",
