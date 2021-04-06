@@ -40,8 +40,6 @@ class SpaceFloor {
 
         let parent = this;
 
-        //   parent.wait_for_change(parent);
-
         // Page template DOM elements we'll update
         parent.page_draw_div = document.getElementById("main_drawing_div");
         parent.page_floor_svg = document.getElementById("drawing_svg"); // drawing SVG element
@@ -324,6 +322,9 @@ class SpaceFloor {
         // call SENSORS api to get the metadata for sensors on this floor
         parent.get_sensors_metadata(parent);
 
+         //add a sublayer for future apps
+         d3.select('#drawing_svg').append('g').attr('id', "app_overlay")
+         
         //declare zooming/panning function
         parent.manage_zoom(parent);
     }
@@ -364,10 +365,7 @@ class SpaceFloor {
             transform
         }) {
             d3.select('#bim_request').attr("transform", transform);
-            d3.select('#heatmap').attr("transform", transform);
-            d3.select('#heatmap_splashes').attr("transform", transform);
-            d3.select('#heatmap_splash_layer').attr("transform", transform);
-            d3.select('#heatmap_sensors').attr("transform", transform);
+            d3.select('#app_overlay').attr("transform", transform);
         }
 
         //resets the panned/zoomed svg to the initial transformation
