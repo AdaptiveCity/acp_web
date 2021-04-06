@@ -293,6 +293,9 @@ class HeatMap {
         //change the resolution if available
         if (resolution_exists) {
             const resolution = urlParams.get('resolution')
+            parent.resolution=resolution;
+            document.getElementById('resolution_list').value = parent.resolution;
+
             //select the resolution from low, medium and high
             switch (resolution) {
                 case 'low':
@@ -369,6 +372,8 @@ class HeatMap {
         d3.selectAll('#heatmap').remove();
         //remove redrawn sensors
         d3.selectAll('#heatmap_sensors').remove();
+        //removethe mask layer
+        d3.selectAll('#heatmap_splash_layer').remove();
 
         //change the resolution
         switch (rez_value) {
@@ -399,9 +404,9 @@ class HeatMap {
     make_masks(parent) {
 
         //"id", "mask_" + crate.dataset.crate
-
+console.log('making masks')
         //runs once
-        const splash_canvas = d3.select("#drawing_svg")
+        const splash_canvas = d3.select("#app_overlay")
             .append("g")
             .attr('id', 'heatmap_splash_layer')
         // .attr("width", 300)
@@ -469,7 +474,7 @@ class HeatMap {
                 .style("fill", 'none')
                 .style('stroke', 'white')
                 .transition()
-                .delay(Math.pow(splash_index, 2) * 100)
+                .delay(splash_index * 400)
                 .duration(parent.ripple_duration)
                 .ease(d3.easeSin)
                 .attr("r", final_radius) //radius for waves
@@ -859,8 +864,8 @@ class HeatMap {
         //make all polygons white so the underlying color does not interfere with the heatmap
         d3.selectAll('polygon').attr('class', 'g0-9')
 
-        //target the drawing_svg and append a sublayer for the heatmap
-        let main_svg = d3.select('#drawing_svg').append('g').attr('id', 'heatmap'); //parent.page_floor_svg;
+        //target the app_overlay and append a sublayer for the heatmap
+        let main_svg = d3.select('#app_overlay').append('g').attr('id', 'heatmap'); //parent.page_floor_svg;
 
         let h = parent.master.page_floor_svg.clientHeight;
         let w = parent.master.page_floor_svg.clientWidth;
@@ -1033,7 +1038,7 @@ class HeatMap {
     //display sensor on top of the heatmap
     attach_sensors(parent, results, svg_offset) {
         let scale = svg_offset.scale;
-        let main_svg = d3.select('#drawing_svg').append('g').attr('id', 'heatmap_sensors');
+        let main_svg = d3.select('#app_overlay').append('g').attr('id', 'heatmap_sensors');
 
         //declare circle properties - opacity and radius
         let rad = 4; // radius of sensor icon in METERS (i.e. XYZF before transform)
