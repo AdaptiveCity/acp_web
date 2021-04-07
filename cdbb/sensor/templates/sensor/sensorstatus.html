@@ -74,6 +74,18 @@ Spatial Building and Sensor Data: Sensor Status Display
         </div>
     </div>
 
+      <!-- FORM FOR VIZ TYPE SELECTION -->
+
+  <form id="ssd_view_form">
+    <label class='form_label' for="ssd_view">Select view:</label>
+    <br>
+    <select name="ssd_view" id="ssd_view_selection">
+        <option value="sensors">Sensors</option>
+        <option value="text">Text</option>
+        <option value="both" selected="selected">Both</option>
+    </select>
+</form>
+
 
     <!-- MAIN D3 VIZ DIV FOR SENSOR CIRCLES -->
     <div id='viz'>
@@ -86,17 +98,7 @@ Spatial Building and Sensor Data: Sensor Status Display
     <div id='text_collector'>
     </div>
 
-    <!-- FORM FOR VIZ TYPE SELECTION -->
-
-    <form id="ssd_view_form">
-        <label class='form_label' for="ssd_view">Select view:</label>
-        <br>
-        <select name="ssd_view" id="ssd_view_selection">
-            <option value="sensors">Sensors</option>
-            <option value="text">Text</option>
-            <option value="both" selected="selected">Both</option>
-        </select>
-    </form>
+  
 
 </div>
 

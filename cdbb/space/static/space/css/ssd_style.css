@@ -6,11 +6,17 @@
 }
 
 #viz_header {
-    display: block;
+    display: inline-block;
     margin-left: 1em;
 
     margin-top: 0.1em;
     margin-bottom: 0.1em;
+}
+
+#ssd_view_form {
+    display: inline-block;
+    float: right;
+
 }
 
 #ssd_control {

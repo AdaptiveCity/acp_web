@@ -12,7 +12,7 @@ body {
 
 .drawing_div {
     height: 90%;
-    width: 50%;
+    width: 90%;
     display: inline-block;
     border: black dashed 1px;
 }

@@ -56,24 +56,16 @@ class SpaceFloor {
         parent.floor_number = 0;
         parent.floor_coordinate_system = null;
 
-        //Determines choropleth's color scheme
-        parent.hue = "q"; /* b=blue, g=green, r=red colours - from ColorBrewer */
 
-        //Breaks the data values into 9 ranges, as css has nine hard color categories
-        parent.cat_lim = 9;
+        //------------------------------------//
+        //---------CHOROPLETH STUFF-----------//
+        //------------------------------------//
 
-        //determines how to color in polygon based on X property (e.g. # sensors)
-        parent.quantize =
-            d3.scaleQuantize()
-            .domain([0, parent.cat_lim])
-            //TODO change the range that it matches the range of max sensors in a crate
-            .range(d3.range(parent.cat_lim).map(function (i) {
-                return parent.hue + i + "-" + parent.cat_lim;
-            }));
+        //parent.setup_choropleth(parent)
 
-        //Uses in conjunction with quantize above -> enter crate_id and get associated
-        //values with it (e.g. # sensors)
-        parent.rateById = new Map(); //d3 v6 standard
+        //------------------------------------//
+        //---------CHOROPLETH END--------------//
+        //------------------------------------//
 
         //-------------------------------------------//
         //----------Other global variables-----------//
@@ -91,7 +83,6 @@ class SpaceFloor {
         parent.previous_circle_radius = 0; // set on mouse over, used to remember radius for reset on mouse out.
         parent.defaultScale = 1; /* default scale of map - fits nicely on standard screen */
 
-        parent.set_legend(parent);
 
         parent.promiseResolve, parent.promiseReject;
 
@@ -271,7 +262,7 @@ class SpaceFloor {
         //assign fill colors
         d3.select(parent.page_floor_svg).selectAll("polygon")
             .attr("class", function (d) {
-                return parent.quantize_class(parent, parent.quantize(parent.rateById.get(this.id)));
+                return 'inactive'
             })
             .append("title").text(function (d) {
                 return this.parentNode.id;
@@ -284,8 +275,7 @@ class SpaceFloor {
             })
             .on("mouseout", function (d) {
                 d3.select(this).attr("class", function (d) {
-                    // reset room color to quantize range
-                    return parent.quantize_class(parent, parent.quantize(parent.rateById.get(this.id)))
+                    return 'inactive'
                 });
             })
             .on('click', function (d) {
@@ -542,7 +532,7 @@ class SpaceFloor {
         parent.jb_tools.tooltips();
 
         //fill polygons based on # of sensors 
-        parent.get_choropleth(parent);
+        //parent.get_choropleth(parent);
     }
 
     //displays BIM metadata on the side, when loaded a floorspace page
@@ -702,6 +692,29 @@ class SpaceFloor {
         return odd;
     };
 
+    setup_choropleth(parent) {
+        //Determines choropleth's color scheme
+        parent.hue = "q"; /* b=blue, g=green, r=red colours - from ColorBrewer */
+
+        //Breaks the data values into 9 ranges, as css has nine hard color categories
+        parent.cat_lim = 9;
+
+        //determines how to color in polygon based on X property (e.g. # sensors)
+        parent.quantize =
+            d3.scaleQuantize()
+            .domain([0, parent.cat_lim])
+            //TODO change the range that it matches the range of max sensors in a crate
+            .range(d3.range(parent.cat_lim).map(function (i) {
+                return parent.hue + i + "-" + parent.cat_lim;
+            }));
+
+        //Uses in conjunction with quantize above -> enter crate_id and get associated
+        //values with it (e.g. # sensors)
+        parent.rateById = new Map(); //d3 v6 standard
+
+        parent.set_legend(parent);
+    }
+
     //color polygons based on the number of sensors in them
     get_choropleth(parent) {
 
@@ -721,12 +734,32 @@ class SpaceFloor {
                 return parent.quantize_class(parent, parent.quantize(parent.rateById.get(this.id)));
             })
 
+        d3.select(parent.page_floor_svg).selectAll("polygon")
+            .attr("class", function (d) {
+                return parent.quantize_class(parent, parent.quantize(parent.rateById.get(this.id)));
+            })
+            .append("title").text(function (d) {
+                return this.parentNode.id;
+            });
+
+        //set mouse events
+        d3.select(parent.page_floor_svg).selectAll("polygon")
+            .on("mouseover", function (d) {
+                d3.select(this).attr("class", "hover");
+            })
+            .on("mouseout", function (d) {
+                d3.select(this).attr("class", function (d) {
+                    // reset room color to quantize range
+                    return parent.quantize_class(parent, parent.quantize(parent.rateById.get(this.id)))
+                });
+            })
+            .on('click', function (d) {
+                // FLOORSPACE_LINK set in template with "crate_id" string placeholder
+                window.location = FLOORSPACE_LINK.replace("crate_id", this.id);
+                console.log('CLICKED ON FLOOR_PLAN', d3.select(this))
+            });
+
     }
-    //--------------------------------------------------//
-    //----------------choropleth end-----------------------//
-    //--------------------------------------------------//
-
-
 
     //quantizes colors so we have discrete rather continouos values
     //use for the legend+coloring polygons based on the sensors in them
@@ -739,9 +772,7 @@ class SpaceFloor {
         }
     }
 
-    //----------------------------------------------//
     //--------------LEGEND definition---------------//
-    //----------------------------------------------//
     set_legend(parent) {
 
         d3.select("#legend_svg").remove();
@@ -784,12 +815,12 @@ class SpaceFloor {
                 d3.select(this).style("stroke", "black");
             })
             .on("click", function (d) {
-                console.log('ddd', this.className.baseVal)
+
                 // Highlights selected rooms
                 d3.select('#bim_request')
                     .selectAll('.' + this.className.baseVal)
                     .transition()
-                    .duration(1000)
+                    .duration(500)
                     .attr('class', 'active')
 
                     .on('end',
@@ -797,7 +828,7 @@ class SpaceFloor {
                             //quantize polygons again according to sensors in them
                             d3.selectAll('.' + this.className.baseVal)
                                 .transition()
-                                .duration(1000)
+                                .duration(500)
                                 .attr("class", function (d) {
                                     return parent.quantize_class(parent, parent.quantize(parent.rateById.get(this.id)));
                                 })
@@ -816,18 +847,20 @@ class SpaceFloor {
             .text(function (d, i) {
                 var extent = parent.quantize.invertExtent(d);
 
-                if(extent[0] == 1){
-                    return (' '+extent[0] + ' sensor')
-                }
-                else if((extent[0]<8)){
-                    return  (' '+extent[0] + ' sensors')
-                }
-                else{
-                   return ('> ' + extent[0] + ' sensors')
+                if (extent[0] == 1) {
+                    return (' ' + extent[0] + ' sensor')
+                } else if ((extent[0] < 8)) {
+                    return (' ' + extent[0] + ' sensors')
+                } else {
+                    return ('> ' + extent[0] + ' sensors')
                 }
             })
             .style("font-family", "sans-serif")
             .style("font-size", "10px");
     } // end set_legend
+
+    //--------------------------------------------------//
+    //----------------choropleth end-----------------------//
+    //--------------------------------------------------//
 
 } // end class SpaceFloor

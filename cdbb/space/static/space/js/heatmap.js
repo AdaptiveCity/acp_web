@@ -38,6 +38,8 @@ class HeatMap {
             //Set up event listener for the HEATMAP BUTTON
             document.getElementById('show_rain').addEventListener('click', () => {
 
+                //TODO:remove subdivs inside #app_overlay
+
                 //init the heatmap
                 self.init(self);
 
@@ -71,11 +73,11 @@ class HeatMap {
         parent.crate_fill_duration = 500;
 
         //separate animation to see how long the 'raindrop' or 'splash' remains visible
-        parent.ripple_duration = 4000;
+        parent.ripple_duration = 3500;
 
         //make a global c_conf reference from the parent class
         //CREATES A COLORBAR
-        parent.c_conf = parent.jb_tools.canvas_conf(70, 240, 15, 10, 15, 20); //(110, 320, 10, 5, 10, 5);
+        parent.c_conf = parent.jb_tools.canvas_conf(90, 240, 15, 8, 15, 32); //(110, 320, 10, 5, 10, 5);
 
         //the delay for drawing individual items during the animation
         parent.animation_delay = d3.scaleLinear().range([3000, 1000]);
@@ -90,10 +92,6 @@ class HeatMap {
         parent.timer_short; //the socket has been unactive for a while -- color yellow
         parent.timer_long; //assume the socket connection was lost -- color red
 
-        //adding debug globals
-        //TODO:remove unnecessary
-        parent.startup = true;
-        parent.sensor_rect_dist = {}
 
         //get the contextual scaling for ripples
         parent.circle_radius = parent.master.sensor_radius;
@@ -115,8 +113,8 @@ class HeatMap {
         //------FETCH THE DATA FOR SENSORS------//
         //--------------------------------------//
 
-        //Use get_floor_sensors for the API calls, get_local_sensors for faked offline data
-        parent.get_floor_sensors(parent);
+        //Use fetch_floor_sensors for the API calls, get_local_sensors for faked offline data
+        parent.fetch_floor_sensors(parent);
         //parent.get_local_sensors(parent);
 
         //--------------------------------------//
@@ -143,7 +141,11 @@ class HeatMap {
             console.log('You selected: ', this.value);
             parent.feature = this.value;
             parent.update_url('feature', parent.feature)
-            parent.redraw_heatmap(parent, parent.feature)
+
+            //first query then load
+            parent.refetch_floor_sensors(parent)
+
+            // parent.redraw_heatmap(parent, parent.feature)
         });
 
         //attach an event listener to change the heatmap resolution
@@ -423,7 +425,7 @@ class HeatMap {
         }
 
         for (let splash_index = 1; splash_index < 4; ++splash_index) {
-
+console.log('splash',acp_id, splash_index)
             //calculate the stroke for the splash's circle
             let stroke_start = 3.5 / (parent.svg_scale * splash_index);
 
@@ -466,7 +468,7 @@ class HeatMap {
 
 
     //API requests to get sensors per crate
-    get_floor_sensors(parent) {
+    fetch_floor_sensors(parent) {
 
         let system = parent.master.floor_coordinate_system;
         let floor = parent.master.floor_number;
@@ -477,7 +479,7 @@ class HeatMap {
         //TODO: decide if we want to requery the entire system
         let feature = 'temperature';
 
-        let readings_url = parent.query_url + system + "/" + floor + "/" + feature + "/" + "?metadata=true";
+        let readings_url = parent.query_url + system + "/" + floor + "/" + parent.feature + "/" + "?metadata=true";
         console.log('heatmap url', readings_url, feature)
 
         //query the url to get all of the sensors on the floor
@@ -497,7 +499,44 @@ class HeatMap {
             parent.connect_rt(parent)
 
         });
+    }
 
+    //API requests to get sensors per crate
+    refetch_floor_sensors(parent) {
+
+        let system = parent.master.floor_coordinate_system;
+        let floor = parent.master.floor_number;
+        //console.log('master', system, floor, parent.master, parent.master['floor_coordinate_system'], parent.master.floor_coordinate_system)
+        //passs feature as argument from html list of features
+
+        //let feature = document.getElementById('features_list').value;
+        //TODO: decide if we want to requery the entire system
+
+        let readings_url = parent.query_url + system + "/" + floor + "/" + parent.feature + "/" + "?metadata=true";
+        console.log('heatmap url', readings_url, parent.feature)
+
+        //OPTIONAL: wipe all previous data - not a good idea because it will not display sensors that do not have our selected feature;
+        //IMO, we still want to see that data is coming in to other sensors 
+        parent.sensor_data = {};
+        parent.crates_with_sensors = {}
+
+        //query the url to get all of the sensors on the floor
+        d3.json(readings_url, {
+            crossOrigin: "anonymous"
+        }).then(function (received_data) {
+            console.log('new heatmap received', received_data)
+            parent.handle_sensors_metadata(parent, received_data)
+
+            //-----------------------------------//
+            //---generate and show the heatmap---//
+            //-----------------------------------//
+            //parent.redraw_heatmap(parent);
+            parent.update_resolution(parent, parent.resolution);
+
+            // parent.master.jb_tools.tooltips();
+
+
+        });
     }
 
     // Returns a "list object" (i.e. dictionary on acp_id) of sensors on
@@ -548,7 +587,10 @@ class HeatMap {
         console.log('crates w sensors', parent.crates_with_sensors)
     }
 
+    //when a new message arrives, we want to update our data structures
+    //so that the heatmap is always up to date;
     update_sensor_data(parent, msg) {
+
         //msg contains acp_id, acp_ts and payload_cooked
         try {
             let acp_id = msg.acp_id;
@@ -560,14 +602,11 @@ class HeatMap {
             //e.g. the new data packet can only have motion=1, w/out updates for other features, hence we can't
             //just wipe the rest of the data by overwriting the entire payload_cooked property in the data struct
 
-            console.log('pre', parent.sensor_data[acp_id].payload)
             for (let feature in new_payload) {
                 console.log('new', feature, 'is', new_payload[feature], 'was', parent.sensor_data[acp_id].payload[feature])
 
                 parent.sensor_data[acp_id].payload[feature] = new_payload[feature];
             }
-            console.log('post', parent.sensor_data[acp_id].payload)
-
 
         } catch (error) {
             console.log('failed to update the data struct with payloads', error)
@@ -620,7 +659,7 @@ class HeatMap {
             //transform the feature value into a color
             let color = parent.color_scheme(cell_value);
 
-            let feature = document.getElementById('features_list').value;
+            let feature = parent.feature;
 
             //update the rect on screen
             d3.select(rect)
@@ -756,20 +795,6 @@ class HeatMap {
                 'dist': dist
             });
 
-            //test for splashes
-            if (parent.startup) {
-                //console.log('undefined',parent.sensor_rect_dist[crate])
-                if (parent.sensor_rect_dist[crate] == undefined) {
-                    parent.sensor_rect_dist[crate] = {}
-                }
-                if (parent.sensor_rect_dist[crate][sensor.acp_id] == undefined) {
-                    parent.sensor_rect_dist[crate][sensor.acp_id] = []
-                }
-
-                //let warp_delay = ((((Math.cos(dist_value[iterator] / (int_count - interval_count)) + 1)) * amplitude) / dist_value[iterator]);
-
-                parent.sensor_rect_dist[crate][sensor.acp_id].push(dist)
-            }
 
             //add the distance from the cell to the sensor to the cumulative distance  variable
             //(keeps track of the total distance from the cell to all sensors)
@@ -977,7 +1002,7 @@ class HeatMap {
         parent.set_colorbar(parent);
 
         console.log('done', Date.now())
-        parent.startup = false;
+
         //adding another mask layer on top
         // parent.make_sublayers();
         //parent.animation_ticker(parent);
@@ -990,15 +1015,16 @@ class HeatMap {
         d3.select('#heatmap').remove();
         d3.select('#heatmap_sensors').remove();
         d3.select('#heatmap_splash_layer').remove();
-        console.log('no error')
         d3.select('#sensor_request').style('opacity', 1);
 
         //d3.selectAll('.sensor_node_off').attr('class','sensor_node').style('opacity', 0.65);
 
         console.log('parent.master', parent.master)
         //make sure to pass the master object rather than the "heatmap parent" itself
-         parent.master.get_choropleth(parent.master);
-         parent.master.set_legend(parent.master)
+
+        //OPTIONAL: show choropleth
+        parent.master.setup_choropleth(parent.master)
+        parent.master.get_choropleth(parent.master);
     }
 
     //----------------------------------------------------------------//
@@ -1160,33 +1186,58 @@ class HeatMap {
     //draws the horizontal line over the colobar bar when hovering over the heatmap
     set_cbar_value(parent, value) {
 
-        var scale_inv = d3.scaleLinear().domain([parent.min_max_range.min, parent.min_max_range.max]).range([parent.c_conf.height + parent.c_conf.bottom, parent.c_conf.bottom]); //TODO adjust for top offset as well
+        //save the value received from the cell (this is the raw value)
+        let original_value = parseFloat(value).toFixed(1)
+
+        //create an inverse scale required for to map from the cell value back to the colorbar
+        let scale_inv = d3.scaleLinear()
+            .domain([parent.min_max_range.min, parent.min_max_range.max])
+            .range([parent.c_conf.height + parent.c_conf.bottom, parent.c_conf.bottom]) //TODO adjust for top offset as well
+
+        //get the div for the colorbar/legend
         let target_svg = d3.select("#legend_svg");
 
-        let element_width=parent.c_conf.width-parent.c_conf.left-parent.c_conf.right;
-        let lime_offset=parent.c_conf.right;
+        //calculate the colorbar's bar's actual width
+        //this will be necessary when drawing another rectangle over the colorbar to illustrate a value in range
+        let bar_width = parent.c_conf.width - parent.c_conf.left - parent.c_conf.right;
+
+        //adjust  the input value so we account for 5%/95% distribution
+        //(more on this in the get_min_max function)
+        if (value > parent.min_max_range.max) {
+            value = parent.min_max_range.max
+        }
+        if (value < parent.min_max_range.min) {
+            value = parent.min_max_range.min
+        }
+
+        //create a hover_val div that will have the text showing the hovered cell's
+        //value, a lime colored rectangle showing its relative position in the range of values
+        // and a white background for the text
         target_svg.append('g')
             .attr('id', 'hover_val')
             .append('rect')
-            .attr("y", function (d) {
-                //adjust values
-                if (value > parent.min_max_range.max) {
-                    value = parent.min_max_range.max
-                }
-                if (value < parent.min_max_range.min) {
-                    value = parent.min_max_range.min
-                }
-
-                return scale_inv(value)
-            })
-            .attr("x", parent.c_conf.left+parent.c_conf.width/2)
-            .attr("width", element_width)
+            .attr("y", scale_inv(value))
+            .attr("x", parent.c_conf.left + parent.c_conf.width / 2)
+            .attr("width", bar_width)
             .attr("height", 2.5)
-            .style("fill", 'lime');
+            .style("fill", 'lime'); // lime colored rectangle to make it distinctive from the colorbar
 
-        parent.jb_tools.add_text(d3.select("#hover_val"), parseFloat(value).toFixed(1),element_width+lime_offset, scale_inv(value), '0.5em', "translate(0,0)").attr("font-size", '0.75em')
-        // 0 is the offset from the left
+        //add a white background for text
+        d3.select('#hover_val').append('g')
+            .append('rect')
+            .attr("rx", 5)
+            .attr("ry", 5)
+            .attr("x", 0)
+            .attr("y", scale_inv(value) - 6) //offset by 6px so it looks nicer
+            .attr("width", 57)
+            .attr("height", '1.15em')
+            .style('fill', 'white')
+            .style('opacity', 0.5);
 
+        //show the hovered cell's value in text form (target element, value to show, position_x, position_y)
+        let cell_txt_value = parent.jb_tools.add_text(d3.select("#hover_val"), original_value, parent.c_conf.left - 5, scale_inv(value) + 8.5);
+        cell_txt_value
+            .attr("font-size", '1.15em') //adjust text size
     }
 
 
@@ -1202,37 +1253,37 @@ class HeatMap {
             .attr('id', "legend_svg");
 
         //set the scale 
-        let scale = d3.scaleLinear().domain([parent.c_conf.height, 0]).range([parent.min_max_range.min_abs, parent.min_max_range.max_abs]);//abs
+        let scale = d3.scaleLinear().domain([parent.c_conf.height, 0]).range([parent.min_max_range.min, parent.min_max_range.max]); //abs
         //set the inverse scale 
         let scale_inv = d3.scaleLinear().domain([parent.min_max_range.min, parent.min_max_range.max]).range([parent.c_conf.height, 0]);
 
         //create a series of bars comprised of small rects to create a gradient illusion
         let bar = parent.master.legend_svg.selectAll(".bars")
-            .data(d3.range(0, parent.c_conf.height), function (d, i) {
-                return d;
+            .data(d3.range(0, parent.c_conf.height), function (i) {
+                return i;
             })
             .enter().append("rect")
             .attr("class", "bars")
             .attr("y", function (i) {
                 return parent.c_conf.bottom + i;
             })
-            .attr("x",  parent.c_conf.left+parent.c_conf.width/2)
+            .attr("x", parent.c_conf.left + parent.c_conf.width / 2)
 
             .attr("height", 1)
-            .attr("width", parent.c_conf.width-parent.c_conf.left-parent.c_conf.right)
+            .attr("width", parent.c_conf.width - parent.c_conf.left - parent.c_conf.right)
 
-            .style("fill", function (d, i) {
-                return parent.color_scheme(scale(d));
+            .style("fill", function (i) {
+                return parent.color_scheme(scale(i));
             });
 
 
         //text showing range on left/right
         //jb_tools.add_text(TARGET SVG, TXT VALUE, X LOC, Y LOC, dy, TRANSLATE);
-        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.max, parent.c_conf.left+parent.c_conf.width/2,0, "0.75em", "translate(0,0)").attr("font-size", '0.75em') // 0 is the offset from the left
-        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.min,parent.c_conf.left+parent.c_conf.width/2,parent.c_conf.height+parent.c_conf.top+parent.c_conf.bottom, "0em", "translate(0,0)").attr("font-size", '0.75em') // 0 is the offset from the left
+        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.max, parent.c_conf.left + parent.c_conf.width / 2, 0, "0.75em", "translate(0,0)").attr("font-size", '0.75em') // 0 is the offset from the left
+        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.min, parent.c_conf.left + parent.c_conf.width / 2, parent.c_conf.height + parent.c_conf.top + parent.c_conf.bottom, "0em", "translate(0,0)").attr("font-size", '0.75em') // 0 is the offset from the left
 
         //Adds the feature on the right side
-        parent.jb_tools.add_text(parent.master.legend_svg, document.getElementById('features_list').value, -parent.c_conf.height/2,parent.c_conf.left+parent.c_conf.width, "3.5px", "rotate(-90)") // 0 is the offset from the left
+        parent.jb_tools.add_text(parent.master.legend_svg, document.getElementById('features_list').value, -parent.c_conf.height / 2, parent.c_conf.left + parent.c_conf.width, "3.5px", "rotate(-90)") // 0 is the offset from the left
 
     }
 
@@ -1271,8 +1322,11 @@ class HeatMap {
             min_abs: Math.min(...value_array).toFixed(2) //absolute min
         };
 
-        //reset min_max values for scaling
-        parent.color_scheme.domain([parent.min_max_range.min_abs, parent.min_max_range.max_abs]);//abs
+        //for colors, we want the heatmap to have a range of min and max, where min and max are adjusted 
+        //for 95%/5% percentiles;
+        parent.color_scheme.domain([parent.min_max_range.min, parent.min_max_range.max]);
+
+        //for the animation delay, we can choose either, since it's less important
         parent.animation_delay.domain([parent.min_max_range.min_abs, parent.min_max_range.max_abs]);
 
         console.log('new minmax:', parent.min_max_range, 'feature:', feature);

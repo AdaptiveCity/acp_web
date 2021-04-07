@@ -129,10 +129,10 @@ select:hover {
 
 
 .drawing_div {
-    margin: 0em 1em 0em 1em;
+    margin: 0em 0.25em 0em 1em;
     display: inline-block;
-    height: 86%;
-    width: 50%;
+    height: 98%;
+    width: 86%;
     display: inline-block;
     border: Gray dashed 1px;
 }
