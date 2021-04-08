@@ -100,7 +100,7 @@ class SpaceFloor {
         parent.setup_buttons(parent);
 
         parent.loaded.then(function () {
-            console.log('promise resolved; data finished loading')
+            console.log('promise resolved; floor data finished loading')
         }, function () {
             console.log('someting went wrong')
         })
@@ -143,26 +143,20 @@ class SpaceFloor {
     }
     // Use BIM api to get data for this floor
     get_floor_crate(parent) {
-        console.log('TEST', 'get_floor_crate')
         var request = new XMLHttpRequest();
         request.overrideMimeType('application/json');
 
         request.addEventListener("load", function () {
             var crates_dict = JSON.parse(request.responseText)
             // Note the BIM api returns a dictionary
-            console.log('TEST', 'get_floor_crate', 'received')
-
             parent.handle_floor_crate(parent, crates_dict[CRATE_ID]);
         });
         request.open("GET", API_BIM + "get/" + CRATE_ID + "/0/");
         request.send();
-        console.log('TEST', 'get_floor_crate', 'sent')
-
     }
 
     // Will be called with a crate object when that is returned by BIM api
     handle_floor_crate(parent, crate) {
-        console.log('TEST', 'handle_floor_crate')
 
         console.log("handle_floor_crate got", crate);
 
@@ -185,7 +179,6 @@ class SpaceFloor {
 
     // We get the SVG for the floor using *floor number* in the "acp_location_xyz" property
     get_floor_svg(parent) {
-        console.log('TEST', 'get_floor_svg')
 
         var space_api_url = API_SPACE + 'get_floor_number/' +
             parent.floor_coordinate_system + '/' + parent.floor_number + '/';
@@ -197,20 +190,15 @@ class SpaceFloor {
 
         request.addEventListener("load", function () {
             var xml = request.responseXML
-            console.log('TEST', 'get_floor_svg', 'received')
-
             parent.handle_floor_svg(parent, xml);
         });
 
         request.open("GET", space_api_url);
         request.send();
-        console.log('TEST', 'get_floor_svg', 'sent')
 
     }
 
     handle_floor_svg(parent, space_info) {
-        console.log('TEST', 'handle_floor_svg')
-
         console.log("handle_floor_svg() loaded floor SVG", space_info);
         let scale = 8.3; //DEBUG
 
@@ -522,7 +510,6 @@ class SpaceFloor {
         }
 
         //change the global data_loaded
-        console.log('TEST', 'data_loaded')
         parent.promiseResolve()
 
         //draw sensors over the floorplan

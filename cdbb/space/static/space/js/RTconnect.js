@@ -57,7 +57,7 @@ class RTconnect {
 
         //if the sensor list is undefined, we want to open the socket for all messages
         if (sensor_list != undefined) {
-            console.log('sensor list is defined', sensor_list)
+            console.log('sensor list is defined', sensor_list.length)
 
             self.sub_list = sensor_list
 

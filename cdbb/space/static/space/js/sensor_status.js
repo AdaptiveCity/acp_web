@@ -1,5 +1,7 @@
 "use strict"
 
+//TODO: remove text display
+
 class SensorStatusDisplay {
 
     // Called to create instance in page : space_floorplan = SpaceFloorplan()
@@ -18,16 +20,17 @@ class SensorStatusDisplay {
         //e.g. [{'acp_id':zzzzzzz, 'tt':3},...]
         self.msg_history = {};
 
-        self.query_url = API_SENSORS + '/list/?type_metadata=true'
+        self.API_GET_ALL = API_SENSORS + '/list/?type_metadata=true'
 
         self.sensor_list = [];
         self.sub_list = [];
 
         self.CIRCLE_RADIUS = 15;
         self.scaling = 60;
-        self.columns = 24;
         self.spacing = 25;
         self.margin = 25;
+        self.columns = Math.floor((window.innerWidth-(self.margin*2))/self.scaling);
+
         self.rt_mon = new RTconnect();
 
         self.sensor_circles = [];
@@ -39,13 +42,10 @@ class SensorStatusDisplay {
         self.color_recent_day = 'rgb(207, 85, 58)'; //red (inactive>24h but <week)
         self.color_recent_week = 'rgb(255,255,255)'; //white (inactive > week)
 
-        self.symbol_inactive='?'; //inactive for 1 or 2 hours
-        self.symbol_dead='X'; //inactive for more than 24 hours
+        self.symbol_inactive = '?'; //inactive for 1 or 2 hours
+        self.symbol_dead = 'X'; //inactive for more than 24 hours
 
-        //--------------------------------------//
-        //--------SET UP EVENT LISTENERS--------//
-        //--------------------------------------//
-        self.setup_buttons(self);
+       
     }
 
     // init() called when page loaded#
@@ -72,86 +72,47 @@ class SensorStatusDisplay {
 
         //check if the ssd class has been instantiated with 
         //a predefined list of sensors to be subscribed to
-        if (predefined_sensor_sub != undefined) {
-            parent.handle_queried_sensors(parent, predefined_sensor_sub);
+        if (CRATE_ID != 'None') {
 
+            d3.json(parent.API_GET_ALL, {
+
+                crossOrigin: "anonymous"
+            }).then(function (queried_sensor_list) {
+
+                let full_sensor_list = queried_sensor_list.sensors;
+                let sensor_list = {};
+
+                for (let sensor in full_sensor_list) {
+
+                    let sensor_crate = full_sensor_list[sensor].crate_id;
+                    if (sensor_crate == CRATE_ID) {
+                        console.log('yall', full_sensor_list[sensor])
+                        sensor_list[sensor] = full_sensor_list[sensor];
+                    }
+
+                }
+                console.log('the list', sensor_list)
+
+
+                parent.handle_queried_sensors(parent, sensor_list);
+            });
         } else { //else just load all of the sensors available
-            d3.json(parent.query_url, {
+            d3.json(parent.API_GET_ALL, {
                 crossOrigin: "anonymous"
             }).then(function (queried_sensor_list) {
                 let sensor_list = queried_sensor_list['sensors'];
+
+                console.log('the list', sensor_list)
+
                 parent.handle_queried_sensors(parent, sensor_list);
             });
         }
 
-        //make the main viz divs (svg+txt) visible
+        //make the main viz divs visible
         document.getElementById("ssd_main").style.display = "inline-block";
-
-        //----------------------------------------------------------//
-        //--------SET UP EVENT LISTENERS FOR THE VIZ RUNTIME--------//
-        //----------------------------------------------------------//
-        parent.setup_controls(parent);
-
+        document.getElementById("viz").style.display = "inline-block";
     }
-    setup_buttons(parent) {
-
-        try {
-            //Set up a button listener to launch the SSD
-            document.getElementById('show_ssd').addEventListener('click', () => {
-
-                //check if the ssd is present then close it
-                //check if display is not none
-                //and change the button name to start
-
-                //else if display is none then initiate the viz
-                parent.init(parent, parent.master.sensor_metadata);
-                //and change the button name to close
-                //parent.ssd.close(parent.ssd)
-            })
-        } catch (error) {
-            console.log('no buttons present', error)
-        }
-
-    }
-
-    setup_controls(parent) {
-
-        //get the default state that the txt_collector started with;
-        //this depends on the page that it loaded in (either block or inline-block)
-        let default_text = document.getElementById("text_collector").style.display;
-
-        //Set up event listener for the SSD drop down selection//
-        document.getElementById('ssd_view_selection').addEventListener('change', function () {
-            //check the default for text_collector
-            console.log('You selected: ', this.value, 'txt default', default_text);
-
-            switch (this.value) {
-                case 'text':
-                    document.getElementById("text_collector").style.display = "inline-block";
-                    document.getElementById("viz").style.display = "none";
-
-                    break;
-
-                case 'sensors':
-                    document.getElementById("viz").style.display = "inline-block";
-                    document.getElementById("text_collector").style.display = "none";
-                    break;
-
-                case 'both':
-                    //this will have to depend on context since sometimes text-collector will have to be block (e.g. floorpage) and sometimes inline(e.g. ssd)
-                    document.getElementById("viz").style.display = "inline-block";
-                    document.getElementById("text_collector").style.display = default_text;
-                    break;
-
-                default:
-                    document.getElementById("viz").style.display = "inline-block";
-                    document.getElementById("text_collector").style.display = "inline-block";
-                    break;
-            }
-
-            //parent.redraw_heatmap(parent, this.value)
-        });
-    }
+     
 
     //checks a list of sensors for their acp_type_ids, draws them on screen
     // and issues a subscription to the rt_monitor client
@@ -181,14 +142,6 @@ class SensorStatusDisplay {
         //set the start time for the init subscribtion
         parent.today = new Date();
         parent.start_date = document.getElementById('start_time').innerHTML += parent.today.toString().slice(0, 24);
-
-        //set text box width to match that of the viz for aesthetics
-        // svg_width = document.getElementById('main_canvas').clientWidth;
-        //TODO: change to 100% width
-        console.log('svg size', (parent.scaling * parent.columns + 2 * parent.margin), document.getElementById('viz').clientWidth, document.getElementById("text_collector").style.width)
-        document.getElementById("text_collector").style.width = (parent.scaling * parent.columns + parent.margin) + 'px';
-
-        console.log('svg size post', document.getElementById("text_collector").style.width)
 
     }
 
@@ -295,71 +248,7 @@ class SensorStatusDisplay {
             sensor_circle.start_timer(sensor_circle);
 
         }
-
-
         console.log('list of sensors', parent.sensor_circles)
-
-
-        //set up mouse interaction
-        d3.selectAll(".sensors")
-            .on('mouseover', function (d, i) {
-                //will do tomorrow
-                // rt_mon.viz_tools.tooltips();
-
-                console.log('hover', d3.select(this).node().id, d3.select(this).selectChild().node().dataset.acp_id)
-                //highlight the sensor's outline
-                let selected_sensor = d3.select(this).selectChild();
-
-                selected_sensor.transition()
-                    .duration(300)
-                    .ease(d3.easeSin)
-                    .style("stroke-width", 2)
-
-                    // .style("fill", 'none')
-                    // .style('stroke', '#cc0000')
-
-                    .attr("r", parent.CIRCLE_RADIUS + 5) //radius for waves
-                    .on("interrupt", function () {
-                        selected_sensor.attr('r', parent.CIRCLE_RADIUS).style("stroke-width", 1);
-                    })
-                    .on("end", function () {
-                        selected_sensor.transition()
-                            .duration(300)
-                            .attr('r', parent.CIRCLE_RADIUS).style("stroke-width", 1);
-                    });
-
-                //try highlighting the sensor on the floorplan in case it's loaded
-                //this is optional and for debug purposes
-                try {
-                    //get sensor attributes on the floorplan
-                    let sensor_on_floor = d3.select('#' + selected_sensor.node().dataset.acp_id + '_bim');
-                    let sensor_radius = parent.master.sensor_radius;
-                    let sensor_fill = parent.master.sensor_color;
-
-                    sensor_on_floor.transition()
-                        .duration(750)
-                        .ease(d3.easeSin)
-                        .style("stroke-width", 2)
-                        .style("fill", 'red')
-                        .attr("r", sensor_radius * 2) //radius for waves
-                        .on("interrupt", function () {
-                            d3.select(this)
-                                .attr('r', sensor_radius)
-                                .style("fill", sensor_fill);
-                        })
-                        .on("end", function () {
-                            d3.select(this)
-                                .transition()
-                                .duration(500)
-                                .attr('r', sensor_radius)
-                                .style("fill", sensor_fill);
-                        });
-                } catch (error) {
-                    //console.log('floorplan not present')
-                }
-            }) //add on mouseout
-
-
     }
 
 
@@ -468,31 +357,7 @@ class SensorStatusDisplay {
             }
         }
 
-        //get the txt box div
-        let txt_hist = document.getElementById('text_collector');
 
-        //reformat the message (for time or date)
-        let recieved_time = self.jb_tools.make_time(msg.acp_ts) //alternatively use self.viz_tools.make_date(msg.acp_ts)
-
-        //senf json object to the debug panel
-        //*Important* only works with JSON.stringify(clean_msg_json)
-        let clean_msg_json = {
-            'acp_ts': msg.ts,
-            'acp_id': msg.acp_id,
-            'cooked': msg.payload_cooked
-        }; //<br>'+INDENT+.substring(1, yourString.length-1)
-        let cooked_txt = JSON.stringify(msg.payload_cooked); //optionally add (msg.payload_cooked,undefined, 10)10 is the indent
-        let cooked_txt_clean = cooked_txt == undefined ? 'no msg' : cooked_txt.substring(1, cooked_txt.length - 1)
-
-        let clean_msg_txt = recieved_time + '&nbsp&gt;&nbsp' + '<span id="green_span">' + msg.acp_id + "</span>" + '<pre id="json_msg">' + cooked_txt_clean + '</pre>';
-
-        // txt_hist.innerHTML = JSON.stringify(clean_msg) + '<br><br>' + txt_hist.innerHTML;
-        txt_hist.innerHTML = clean_msg_txt + '<br><br>' + txt_hist.innerHTML;
-
-        var recent = new Date();
-        document.getElementById('most_recent').innerHTML = recent.toString().slice(0, 24);
-
-        // txt_hist.innerHTML += JSON.stringify(clean_msg)+'\n';
     }
 
 

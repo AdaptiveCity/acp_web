@@ -6,16 +6,17 @@ const LOW_REZ = 8;
 
 class HeatMap {
 
-    // Called to create instance in page : space_floorplan = SpaceFloorplan()
-    constructor(floorspace) {
+    // Called to create instance in page :let rt_heatmap = new HeatMap(space_floor);
+
+    constructor(space_floor) {
 
         let self = this;
 
         //throughout the class the master is the main visualisation, parent is HeatMap
-        self.master = floorspace;
+        self.master = space_floor;
 
         //declare the url to request data from
-        self.query_url = "https://cdbb.uk/api/readings/get_floor_feature/";
+        self.API_HEATMAP = "https://cdbb.uk/api/readings/get_floor_feature/";
 
         // Instatiante an RTmonitor class
         self.rt_con = new RTconnect(self);
@@ -23,40 +24,13 @@ class HeatMap {
         //a set of useful d3 functions
         self.jb_tools = new VizTools2();
 
-        //--------------------------------------//
-        //--------SET UP EVENT LISTENERS--------//
-        //--------------------------------------//
-
-        //TODO: remove this since we will be on a separete page
-        self.setup_buttons(self);
+        self.pre_init(self);
 
     }
 
-    //TODO: add more buttons from the heatmaps class rather than floor
-    setup_buttons(self) {
-        try {
-            //Set up event listener for the HEATMAP BUTTON
-            document.getElementById('show_rain').addEventListener('click', () => {
+    pre_init(parent) {
 
-                //TODO:remove subdivs inside #app_overlay
-
-                //init the heatmap
-                self.init(self);
-
-                //first reset the drawn floorplan to it's original location
-                self.master.manage_zoom.reset(self);
-            })
-        } catch (error) {
-            console.log(error, 'no button present - heatmap not available')
-        }
-    }
-
-    // init() called when page loaded
-    init(parent) {
-        //----------------------------------//
-        //-----declare object globals-------//
-        //----------------------------------//
-
+        //--------DATA STRUCTURES----------//
         //sensor data+location required to draw the heatmap
         parent.sensor_data = {};
 
@@ -65,37 +39,7 @@ class HeatMap {
 
         //declare the min max range of values for temp/co2/humidity - will change during runtime
         parent.min_max_range = {};
-
-        //declare the main colorscheme for the heatmap
-        parent.color_scheme = d3.scaleSequential(d3.interpolateInferno)
-
-        //total time to draw transitions when changing the active feature (temperature, humidity etc)
-        parent.crate_fill_duration = 500;
-
-        //separate animation to see how long the 'raindrop' or 'splash' remains visible
-        parent.ripple_duration = 3500;
-
-        //make a global c_conf reference from the parent class
-        //CREATES A COLORBAR
-        parent.c_conf = parent.jb_tools.canvas_conf(90, 240, 15, 8, 15, 32); //(110, 320, 10, 5, 10, 5);
-
-        //the delay for drawing individual items during the animation
-        parent.animation_delay = d3.scaleLinear().range([3000, 1000]);
-
-        //heatmap opacity
-        parent.default_opacity = 0.75;
-        parent.sensor_opacity = parent.master.sensor_opacity;
-
-        //set div id's show status change upon connect
-        parent.txt_div_id = 'rain_rt';
-        parent.status_div_id = 'rain_rt_state'
-        parent.timer_short; //the socket has been unactive for a while -- color yellow
-        parent.timer_long; //assume the socket connection was lost -- color red
-
-
-        //get the contextual scaling for ripples
-        parent.circle_radius = parent.master.sensor_radius;
-        parent.svg_scale = parent.master.svg_scale;
+        //--------DATA STRUCTURES END-------//
 
         //--------------------------------------//
         //--------LOOKUP THE URL FOR ARGS-------//
@@ -107,23 +51,100 @@ class HeatMap {
         //feature (to be changed by the URL)
         parent.feature = 'temperature'; //set temperature as the default for this page
 
+        //read url parameters and reset parent.feature and parent.resolution if necessary
         parent.read_url(parent);
+
+        //declare the promise
+        parent.promiseResolve, parent.promiseReject;
+
+        parent.loaded = new Promise(function (resolve, reject) {
+            parent.promiseResolve = resolve;
+            parent.promiseReject = reject;
+        });
+
+        //TODO:delete
+        parent.loaded.then(function () {
+            console.log('promise resolved; data finished loading')
+        }, function () {
+            console.log('someting went wrong')
+        })
+
 
         //--------------------------------------//
         //------FETCH THE DATA FOR SENSORS------//
         //--------------------------------------//
 
         //Use fetch_floor_sensors for the API calls, get_local_sensors for faked offline data
-        parent.fetch_floor_sensors(parent);
+        parent.load_sensor_data(parent);
         //parent.get_local_sensors(parent);
 
+    }
+
+
+    // init() called when page loaded
+    init(parent) {
+
+        //--------ANIMATION DURATIONS----------//
+        //total time to draw transitions when changing the active feature (temperature, humidity etc)
+        parent.crate_fill_duration = 500;
+
+        //separate animation to see how long the 'raindrop' or 'splash' remains visible
+        parent.ripple_duration = 3500;
+
+        //the delay for drawing individual items during the animation
+        parent.animation_delay = d3.scaleLinear().range([2500, 500]);
+        //------ANIMATION DURATIONS END--------//
+
+
+        //--------MISC STYLING----------//
+        //declare the main colorscheme for the heatmap
+        //https://observablehq.com/@d3/color-schemes ; set by 'd3.interpolate'+color-scheme
+        parent.color_scheme = d3.scaleSequential(d3.interpolatePlasma)//interpolatePlasma//interpolateInferno
+
+        //make a global c_conf reference from the parent class;
+        //this creates a colorbar svg on the right side of the screen
+        parent.c_conf = parent.jb_tools.canvas_conf(90, 240, 15, 8, 15, 32);
+
+        //heatmap opacity
+        parent.default_opacity = 0.75;
+        parent.sensor_opacity = parent.master.sensor_opacity;
+        //-------MISC STYLING END------//
+
+
+        //--------RT MONITOR MISC----------//
+        //set div id's show status change upon connect
+        parent.txt_div_id = 'rain_rt';
+        parent.status_div_id = 'rain_rt_state'
+        parent.timer_short; //the socket has been unactive for a while -- color yellow
+        parent.timer_long; //assume the socket connection was lost -- color red
+        //-------RT MONITOR MISC END-------//
+
+
+        //--------HEATMAP/SENSOR SCALING----------//
+        //get the contextual scaling for ripples
+        parent.circle_radius = parent.master.sensor_radius;
+        parent.svg_scale = parent.master.svg_scale;
+        //-----HEATMAP/SENSOR SCALING END---------//
+
+
+        //-----------------------------------//
+        //---generate and show the heatmap---//
+        //-----------------------------------//
+        parent.show_heatmap(parent);
+        parent.master.jb_tools.tooltips();
+
+        //connect rt_monitor automatically
+        parent.connect_rt(parent)
+
         //--------------------------------------//
-        //--------SET UP EVENT LISTENERS-2------//
+        //--------SET UP EVENT LISTENERS--------//
         //--------------------------------------//
         parent.setup_controls(parent);
 
     }
 
+
+    //SETS UP BUTTONS ON THE SLIDING MENU ON THE RIGHT
     setup_controls(parent) {
 
         //connect to rt monitor
@@ -131,33 +152,32 @@ class HeatMap {
             parent.disconnect_rt(parent)
         });
 
-        //Set up event listener to hide the HEATMAP
+        //Set up an event listener to hide the HEATMAP
         document.getElementById('reset').addEventListener('click', () => {
             parent.hide_heatmap(parent);
         });
 
         //attach an event listener to the list of properties
         document.getElementById('features_list').addEventListener('change', function () {
-            console.log('You selected: ', this.value);
             parent.feature = this.value;
             parent.update_url('feature', parent.feature)
 
             //first query then load
             parent.refetch_floor_sensors(parent)
-
-            // parent.redraw_heatmap(parent, parent.feature)
         });
 
         //attach an event listener to change the heatmap resolution
         document.getElementById('resolution_list').addEventListener('change', function () {
-            console.log('You selected: ', this.value);
             parent.resolution = this.value;
             parent.update_url('resolution', parent.resolution)
             parent.update_resolution(parent, parent.resolution);
         });
     }
 
+    //UPDATES THE URL WITH THE SELECTED FEATURE/HEATMAP RESOLUTION
+    //"param" is either 'feature' or 'resolution', "value" can be e.g. co2(feature) or high(resolution)
     update_url(param, value) {
+        //get the url with the search parameters
         let url = new URL(window.location.href);
         let search_params = url.searchParams;
 
@@ -170,9 +190,10 @@ class HeatMap {
         // the new url string
         let new_url = url.toString();
 
-        // output : .../space/floor_rain/FF/?feature=nope&resolution=high
+        // output : .../space/floor_rain/FF/?feature=co2&resolution=high
         console.log(new_url);
 
+        //push the state and update the url
         let newRelativePathQuery = window.location.pathname + '?' + search_params.toString();
         window.history.pushState(null, '', newRelativePathQuery);
     }
@@ -181,8 +202,8 @@ class HeatMap {
     connect_rt(parent) {
         //get a list of all sensors rendered on screen
         parent.sub_list = Object.keys(parent.master.sensor_data);
-        //console.log('sensors', parent.sub_list)
-        //do rtmonitor connect, telling which sensors to subscribe to
+
+        //create an rtmonitor connection, telling which sensors to subscribe to
         parent.rt_con.connect(parent.check_status.bind(parent), parent.sub_list);
     }
 
@@ -204,7 +225,7 @@ class HeatMap {
     check_status(value, msg) {
         let parent = this; //reference to the heatmap self object
 
-        console.log('returned', value, parent)
+        //console.log('returned rt_con state', value)
 
         switch (value) {
             //RealTime monitor connection successful
@@ -229,6 +250,7 @@ class HeatMap {
                     //check if the new message only contains a "motion" trigger event
                     let motion_trigger = true;
                     let cooked = msg_data.payload_cooked;
+
                     //if payload_cooked only has a single key and it is 'motion' or 'occupancy'
                     // (usually paired though) then we now 
                     //it's an interrupt triggered motion event
@@ -277,9 +299,11 @@ class HeatMap {
     //changes the url based on what we'd like to 
     //show on the page following the initial load
     read_url(parent) {
+        //get the url with the search parameters
         const queryString = window.location.search;
         const urlParams = new URLSearchParams(queryString);
 
+        //create booleans to see if feature/resolution exist
         const feature_exists = urlParams.has('feature');
         const resolution_exists = urlParams.has('resolution');
 
@@ -328,19 +352,17 @@ class HeatMap {
     //-----------------------//
     //Generates the heatmap--//
     //-----------------------//
-
-    //It is attached to an event listener on the template *heatmap* button 
     show_heatmap(parent) {
         //stop drawn floorplan polygons from interacting with the heatmap overlay
         d3.selectAll('polygon').attr('pointer-events', 'none');
 
+        //generate the heatmap grid
         parent.show_heatmap_original(parent)
-        //parent.show_heatmap_alt(parent)
     }
+
     //-------------------------------------------------//
     //Reloads the heatmap with a different resolution--//
     //-------------------------------------------------//
-
     update_resolution(parent, rez_value) {
         //remove current heatmap
         d3.selectAll('#heatmap').remove();
@@ -368,36 +390,42 @@ class HeatMap {
         //first reset the drawn floorplan to it's original location
         parent.master.manage_zoom.reset(parent.master);
 
-        //load the new heatmap
+        //create a new heatmap
         parent.show_heatmap(parent);
 
         //update tooltips
         parent.master.jb_tools.tooltips();
     }
 
+    //creates a sublayer of masks so that splashes 
+    //do not cross crate boundaries
     make_masks(parent) {
 
-        //"id", "mask_" + crate.dataset.crate
-        console.log('making masks')
-        //runs once
+        //get the app_overlay layer and append a new sublayer for masks
         const splash_canvas = d3.select("#app_overlay")
             .append("g")
             .attr('id', 'heatmap_splash_layer')
 
+        //append a defs layer for masks
         const defs = splash_canvas.append("defs")
 
-        //add a mask for every crate 
+        //add a mask for every crate;
+        //here we iterate ovre all drawn BIM polygons and make 
+        //a copy for each one as a mask polygon
         d3.selectAll('polygon').nodes().forEach(crate => {
 
+            //append masks to the defs layer
             let mask = defs.append("mask")
                 .attr('pointer-events', 'none')
                 .attr("id", "mask_" + crate.id);
 
-            let polygon_points = crate.attributes.points.value.split(' ');
+            //copy current polygon infornation and save it be reused for mask polygons
+            let polygon_points = crate.attributes.points.value.split(' '); //this creates a list of coordinates
             let polygon_transform = crate.attributes.transform.value;
-            //the last element is an empty string, so we remove it
+            //the last element in the the list of polygon coordinates is an empty string, so we remove it
             polygon_points.pop();
 
+            //with the previous BIM polygon information, make its copy as a mask
             let crate_polygon =
                 splash_canvas.append("polygon")
                 .attr("points", polygon_points)
@@ -405,118 +433,112 @@ class HeatMap {
                 .attr('pointer-events', 'none')
                 .attr('stroke-width', 0.01)
                 .attr("stroke", "black")
-                .attr("mask", "url(#mask_" + crate.id + ")")
-                .attr("fill", "white")
-
+                .attr("mask", "url(#mask_" + crate.id + ")") //pass the mask reference from above
+                .attr("fill", "white") //determines what color the splash will look like
         })
     }
 
+    //draws splashes when new data arrives and recolors the entire crate based on the data
+    //acp_id determine where the splash will radiate from, motion_trigger determines the size of the splash
     draw_splash(parent, acp_id, motion_trigger) {
 
+        //find the crate the acp_id sensor is in
         let crate_id = parent.sensor_data[acp_id].crate_id;
-        console.log(acp_id, parent.sensor_data[acp_id].crate_id)
+
+        //the motion trigger argument determines the size of the splash
+        //the idea here is that we want to emphasize motion triggered splashes,
+        //whereas we declare periodic updates to be less importnat and hence smaller splashes are drawn 
+
         //if !motion_trigger, draw a smaller circle
         let final_radius = motion_trigger == true ? parent.circle_radius * 10 : parent.circle_radius * 5;
 
+        //get the sensor's position
         let position = {
             'x': d3.select('#' + acp_id + "_bim").attr('cx'),
             'y': d3.select('#' + acp_id + "_bim").attr('cy'),
             'transf': d3.select('#' + acp_id + "_bim").attr("transform")
         }
 
+        //draw three expanding circles as a splash
         for (let splash_index = 1; splash_index < 4; ++splash_index) {
-console.log('splash',acp_id, splash_index)
-            //calculate the stroke for the splash's circle
-            let stroke_start = 3.5 / (parent.svg_scale * splash_index);
 
-            let stroke_finish = 1 / (parent.svg_scale * splash_index);
+            //stroke should be a function of time, so over the course of the splash animation
+            //we change it from a thicker stroke to a smaller one, showing how the splash slowly disintegrates
 
-            //stroke should be a function of time
+            //calculate the starting stroke for the splash's circle
+            let stroke_start = 4.5 / (parent.svg_scale * splash_index); //strokes take into account the svg scale
 
-            //console.log(position, stroke,parent.circle_radius)
-            // let circle = 
-            d3.select("#mask_" + crate_id).append("circle")
+            //calculate the finishing stroke for the splash's circle
+            let stroke_finish = 1.5 / (parent.svg_scale * splash_index); //strokes take into account the svg scale
+
+            //create an expanding circle that will disappear when it finishes the animation
+            let circle =
+                d3.select("#mask_" + crate_id) //target the mask
+                .append("circle")
                 .attr("pointer-events", "none")
                 .attr("cx", position.x)
                 .attr("cy", position.y)
-                // .attr('transform', position.transf)
-                .attr("r", 0)
+                .attr("r", 0) //start as a circle with 0 radius
                 .style("stroke-width", stroke_start)
                 .style("fill", 'none')
-                .style('stroke', 'white')
-                .transition()
+                .style('stroke', 'white') //I think this is optional as the color is determined by the mask
+                .transition() //initiate the transition
                 .delay(splash_index * 400)
                 .duration(parent.ripple_duration)
                 .ease(d3.easeSin)
-                .attr("r", final_radius) //radius for waves
+                .attr("r", final_radius) //the final circle radius before dissapearing
                 .style("stroke-opacity", 0)
                 .style("stroke-width", stroke_finish)
                 .on("interrupt", function () {
-                    d3.select(this).remove();
+                    d3.select(this).remove(); //in case of an interrupt, cancel all and delete the circle
                 })
                 .on("end", function () {
                     d3.select(this).remove(); //remove ripples
                 });
         }
 
-        //TODO - CAN UPDATE THE COLOR ON THE FLY?
-        //  todo to do important
-        //if WALK (or trigger) we DO NOT WANT TO UPDATE THE CRATE HEATMAP--> a lot of the time the msg only contains "motion":1 
         //change the crate's heatmap by recoloring the cells in based on the new readings
         parent.update_crate_heatmap(parent, crate_id, acp_id);
     }
 
-
     //API requests to get sensors per crate
-    fetch_floor_sensors(parent) {
+    //THIS IS DONE FOR THE INITIAL CONNECTION
+    load_sensor_data(parent) {
 
+        //get the system and floor paramters required for the url
         let system = parent.master.floor_coordinate_system;
         let floor = parent.master.floor_number;
-        console.log('master', system, floor, parent.master, parent.master['floor_coordinate_system'], parent.master.floor_coordinate_system)
-        //passs feature as argument from html list of features
 
-        //let feature = document.getElementById('features_list').value;
-        //TODO: decide if we want to requery the entire system
-        let feature = 'temperature';
-
-        let readings_url = parent.query_url + system + "/" + floor + "/" + parent.feature + "/" + "?metadata=true";
-        console.log('heatmap url', readings_url, feature)
+        //combine the parameters into a coherent url
+        let readings_url = parent.API_HEATMAP + system + "/" + floor + "/" + parent.feature + "/" + "?metadata=true";
 
         //query the url to get all of the sensors on the floor
         d3.json(readings_url, {
             crossOrigin: "anonymous"
         }).then(function (received_data) {
-            console.log('heatmap received', received_data)
-            parent.handle_sensors_metadata(parent, received_data)
+            console.log('heatmap received', received_data);
+            parent.handle_sensors_metadata(parent, received_data);
 
-            //-----------------------------------//
-            //---generate and show the heatmap---//
-            //-----------------------------------//
-            parent.show_heatmap(parent);
-            parent.master.jb_tools.tooltips();
-
-            //connect rt_monitor automatically
-            parent.connect_rt(parent)
+            //change the global data_loaded
+            console.log('TEST', 'heatmap data_loaded')
+            parent.promiseResolve()
 
         });
     }
 
     //API requests to get sensors per crate
+    //THIS IS DONE WHEN CHANGING FEATURES ON THE LOADED PAGE
     refetch_floor_sensors(parent) {
 
+        //get the system and floor paramters required for the url
         let system = parent.master.floor_coordinate_system;
         let floor = parent.master.floor_number;
-        //console.log('master', system, floor, parent.master, parent.master['floor_coordinate_system'], parent.master.floor_coordinate_system)
-        //passs feature as argument from html list of features
 
-        //let feature = document.getElementById('features_list').value;
-        //TODO: decide if we want to requery the entire system
+        //combine the parameters into a coherent url
+        let readings_url = parent.API_HEATMAP + system + "/" + floor + "/" + parent.feature + "/" + "?metadata=true";
 
-        let readings_url = parent.query_url + system + "/" + floor + "/" + parent.feature + "/" + "?metadata=true";
-        console.log('heatmap url', readings_url, parent.feature)
-
-        //OPTIONAL: wipe all previous data - not a good idea because it will not display sensors that do not have our selected feature;
-        //IMO, we still want to see that data is coming in to other sensors 
+        //OPTIONAL: wipe all previous data;
+        //might not be a good idea because it will not display sensors that do not have our selected feature;
         parent.sensor_data = {};
         parent.crates_with_sensors = {}
 
@@ -524,18 +546,11 @@ console.log('splash',acp_id, splash_index)
         d3.json(readings_url, {
             crossOrigin: "anonymous"
         }).then(function (received_data) {
-            console.log('new heatmap received', received_data)
+            //draw all the relevant sensors
             parent.handle_sensors_metadata(parent, received_data)
 
-            //-----------------------------------//
-            //---generate and show the heatmap---//
-            //-----------------------------------//
-            //parent.redraw_heatmap(parent);
+            //in this case use update_resolution, rather than show_heatmap()
             parent.update_resolution(parent, parent.resolution);
-
-            // parent.master.jb_tools.tooltips();
-
-
         });
     }
 
@@ -572,11 +587,9 @@ console.log('splash',acp_id, splash_index)
                     });
                 } else {
                     parent.crates_with_sensors[results['sensors'][sensor].crate_id].push({
-                            'acp_id': sensor,
-                            'payload': results['readings'][sensor].payload_cooked
-                        }
-
-                    );
+                        'acp_id': sensor,
+                        'payload': results['readings'][sensor].payload_cooked
+                    });
                 }
 
 
@@ -616,6 +629,9 @@ console.log('splash',acp_id, splash_index)
     }
 
     update_crate_heatmap(parent, crate_id, sensor_id) {
+
+        //TODO: update colorbar if min_max changed
+
         //select the rectangles associated with a selected crate
         let class_id = crate_id + "_rect";
         let selected_crate = crate_id // rect.dataset.crate; //???TODO:should this be sensor_data.crate_id ??? -- to be changed
@@ -850,7 +866,8 @@ console.log('splash',acp_id, splash_index)
 
     //used when generating the heatmap for the first time (not redrawing)
     show_heatmap_original(parent) {
-        console.log('start', Date.now())
+        console.time('[TOTAL TIME LAPSED ]');
+
 
         let selected_feature = document.getElementById('features_list').value;
         parent.get_min_max(parent, selected_feature);
@@ -1001,7 +1018,7 @@ console.log('splash',acp_id, splash_index)
         //debug only, "parent" now working somehow
         parent.set_colorbar(parent);
 
-        console.log('done', Date.now())
+        console.timeEnd('[TOTAL TIME LAPSED ]');
 
         //adding another mask layer on top
         // parent.make_sublayers();
@@ -1312,7 +1329,7 @@ console.log('splash',acp_id, splash_index)
             }
         }
 
-        console.log('value arr', value_array)
+        //console.log('value arr', value_array)
 
         //reset the main variable
         parent.min_max_range = {
