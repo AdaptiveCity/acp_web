@@ -94,8 +94,8 @@ Spatial Building and Sensor Data: Rain app
         <svg class="drawing_svg" id="drawing_svg">
         </svg>
 
-     
-        
+
+
     </div>
     <div id="legend_and_buttons">
         <div id="legend_container"></div>
@@ -103,7 +103,7 @@ Spatial Building and Sensor Data: Rain app
         <!-- close LEGEND AND BUTTONS -->
     </div>
 
-   
+
 
     <div id="mySidenav" class="sidenav">
         <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
@@ -142,7 +142,7 @@ Spatial Building and Sensor Data: Rain app
                             <option value="temperature" selected="selected">Temperature</option>
                             <option value="humidity">Humidity</option>
                             <option value="vdd">Battery</option>
-                            <option value="digital">Open/Close</option>                            
+                            <option value="digital">Open/Close</option>
                         </select>
                         <br>
                     </form>
@@ -228,13 +228,18 @@ Spatial Building and Sensor Data: Rain app
     let space_floor = new SpaceFloor();
     space_floor.init();
 
-    let rt_heatmap = new HeatMap(space_floor);
 
     //wait for the page to load
     space_floor.loaded.then(function () {
-        rt_heatmap.init(rt_heatmap)
-    })
 
+        let rt_heatmap = new HeatMap(space_floor);
+        console.log('now loading heatmap')
+        
+        rt_heatmap.loaded.then(function () {
+            console.log('heatmap loaded')
+            rt_heatmap.init(rt_heatmap)
+        })
+    })
 </script>
 {% endblock %}
 <!-- lazy_script -->

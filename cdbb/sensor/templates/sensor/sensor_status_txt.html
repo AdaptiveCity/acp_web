@@ -1,0 +1,106 @@
+{% extends "cdbb.html" %}
+{% load static %}
+{% block page_title %}CDBB Sensor Status Page{% endblock %}
+{% block title %}CDBB Sensor Status Page Title{% endblock %}
+
+{% block head %}
+<!-- Our style sheets -->
+<link rel="stylesheet" href="{% static 'space/css/space.css' %}" />
+<!-- <link rel="stylesheet" type="text/css" href="{% static 'space/css/building.css' %}" /> -->
+<link rel="stylesheet" type="text/css" href="{% static 'space/css/ssd_style.css' %}" />
+
+<!-- TO BE CHANGED WITH A LOCAL COPY -->
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+
+<!-- Local copy of d3 -->
+<script type="text/javascript" src="{% static 'js/d3.v6_5.min.js' %}"></script>
+
+<!-- JS SCRIPT for space snd building -->
+<script type="text/javascript" src="{% static 'space/js/sensor_status_txt.js' %}"></script>
+<!-- <script type="text/javascript" src="{% static 'space/js/sensor_circle.js' %}"></script> -->
+<script type="text/javascript" src="{% static 'space/js/RTconnect.js' %}"></script>
+
+<!-- viz_tools contains some common rendering functions -->
+<!-- <script type="text/javascript" src="{% static 'space/js/viz_tools.js' %}"></script> -->
+<script type="text/javascript" src="{% static 'js/VizTools2.js' %}"></script>
+
+<!-- building.js defines class SpaceBuilding -->
+<!-- <script type='text/javascript' src="{% static 'space/js/building.js' %}"></script> -->
+
+<!-- Page local script -->
+<script type="text/javascript">
+    API_BIM = '{{ API_BIM }}';
+    API_SENSORS = '{{ API_SENSORS }}';
+    API_READINGS = '{{ API_READINGS }}';
+    API_SPACE = '{{ API_SPACE }}';
+    CRATE_ID = '{{ CRATE_ID }}';
+
+    URL_FLOOR = '{% url "space_floor" "crate_id" %}'
+</script>
+{% endblock %}
+
+{% block header_title %}
+Spatial Building and Sensor Data: Sensor Status Display
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <div class="breadcrumb">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/home_icon.png' %}" />
+        </a>
+    </div>
+    <div class="breadcrumb">
+        &gt; <a href="{% url 'space_map' %}">Map</a>
+    </div>
+    <div class="breadcrumb">
+        &gt; Crate {{ CRATE_ID }}
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div id='ssd_main'>
+
+
+    <div id='viz_header'>
+
+        <h4 id='start_time' class='header_time_text'>Started: </h4>
+
+        <h5 id='recent_update' class='header_time_text'>Most Recent: <span id='most_recent'></span></h5>
+
+        <div id='ssd_control' class='rt_status'><span id='ssd_rt_state'
+                class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='ssd_rt'>RtM not connected</span>
+        </div>
+    </div>
+
+
+    <!-- TEXT BOX FOR MOST RECENT MESSAGES -->
+    <div id='text_collector'>
+    </div>
+
+</div>
+
+<!-- <div id="drawing_coords">0,0</div>
+
+<div class="drawing_div" id='main_drawing_div'>
+    <svg id="drawing_svg">
+    </svg>
+</div> -->
+{% endblock %}
+<!-- content -->
+
+<!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
+{% block lazy_script %}
+<script>
+    console.log('lazy_script ssd');
+    var ssd = new SensorStatusTxtDisplay();
+    ssd.init(ssd);
+
+    //do something about predefined list and check url beforehand
+    // var space_building = new SpaceBuilding();
+    // space_building.init();
+</script>
+{% endblock %}
+<!-- lazy_script -->
