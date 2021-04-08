@@ -2,7 +2,7 @@
 from django.urls import path
 
 from .views import SensorHomeView, SensorView, SensorChartView, SensorSelectView, \
-    SensorListView, SensorResearchView, SensorTypesView, SensorTypeView,SensorStatusView
+    SensorListView, SensorResearchView, SensorTypesView, SensorTypeView, SensorStatusView, SensorStatusTxtView
 
 urlpatterns = [
     path('home/', SensorHomeView.as_view(), name='sensor_home'),
@@ -13,7 +13,9 @@ urlpatterns = [
     path('research/', SensorResearchView.as_view(), name='sensor_research'),
     path('types/', SensorTypesView.as_view(), name='sensor_types'),
     path('type/<acp_type_id>/', SensorTypeView.as_view(), name='sensor_type'),   
-    path('sensor_status/<crate_id>/', SensorStatusView.as_view(), name='space_sensor_status'),
-    path('sensor_status/', SensorStatusView.as_view(), name='space_sensor_status')
+    path('sensor_status/<crate_id>/', SensorStatusView.as_view(), name='sensor_status'),
+    path('sensor_status/', SensorStatusView.as_view(), name='sensor_status'),
+    path('sensor_status_txt/<crate_id>/', SensorStatusTxtView.as_view(), name='sensor_status_txt'),
+    path('sensor_status_txt/', SensorStatusTxtView.as_view(), name='sensor_status_txt')
 
 ]
