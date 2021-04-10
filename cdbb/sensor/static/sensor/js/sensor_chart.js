@@ -410,7 +410,7 @@ function init_chart() {
         // .attr('opacity', 0);
 
 
-    //add overlay rect 
+    //add overlay rect
     chart_svg.append("rect")
         .attr("x", chart_offsetx)
         .attr("y", chart_offsety)
@@ -437,26 +437,26 @@ function draw_chart(readings, feature, feature2) {
     var chart_xAxis; // x axis
     var chart_xValue; // value for x axis selected from current data object (i.e. timestamp)
     var chart_xMap; // fn for x display value
-    
+
     var chart_yScale;
     var chart_yAxis;
     var chart_yValue;
     var chart_yMap;
-    
+
     var chart_yScale2;
     var chart_yAxis2;
     var chart_yValue2;
     var chart_yMap2;
-    
-    
+
+
     //var chart_cValue; // value from current data point to determine color of circle (i.e. route_id)
     var chart_color; // color chosen for current circle on scatterplaot
     var chart_color2; // color chosen for current circle on scatterplaot
-    
+
     // time of day for scatterplot to start/end
     var CHART_START_TIME = 0; // start chart at midnight
     var CHART_END_TIME = 24; // end chart at midnight
-    
+
     var CHART_DOT_RADIUS = 6; // size of dots on scatterplot
 
 
@@ -710,7 +710,7 @@ function draw_chart(readings, feature, feature2) {
     var brush = d3.brush().extent([
             [0, 0],
             [chart_width, chart_height]
-        ]).on("end", brushended),
+        ]).on("end", function(event,d) { brushended(event); }),
         idleTimeout,
         idleDelay = 350;
 
@@ -729,7 +729,7 @@ function draw_chart(readings, feature, feature2) {
         .attr("id", "scatterplot")
         .attr("clip-path", "url(#clip)")
         .attr('pointer-events', 'none')
-        .on("dblclick", function (d) { //on doubleclick reset the visualisation
+        .on("dblclick", function (event, d) { //on doubleclick reset the visualisation
 
             //redraw chart
             scatter.selectAll("*").remove();
@@ -742,9 +742,9 @@ function draw_chart(readings, feature, feature2) {
         .attr('pointer-events', 'none')
         .call(brush);
 
-    function brushended() {
+    function brushended(event) {
 
-        let s = d3.event.selection;
+        let s = event.selection;
         if (!s) {
             if (!idleTimeout) return idleTimeout = setTimeout(idled, idleDelay);
             chart_xScale.domain(d3.extent(readings, function (d) {
@@ -776,20 +776,20 @@ function draw_chart(readings, feature, feature2) {
         set_zoom_hint(false); // hint how to zoom back out
 
         var t = scatter.transition().duration(750);
-        chart_graph.select("#axis--x").transition(t).call(chart_xAxis);
-        chart_graph.select("#axis--y").transition(t).call(chart_yAxis);
+        chart_graph.select("#axis--x").transition().duration(750).call(chart_xAxis);
+        chart_graph.select("#axis--y").transition().duration(750).call(chart_yAxis);
 
         if (feature2) {
-            chart_graph.select("#axis--y2").transition(t).call(chart_yAxis2);
+            chart_graph.select("#axis--y2").transition().duration(750).call(chart_yAxis2);
         }
 
-        chart_graph.selectAll('.dot').transition(t)
+        chart_graph.selectAll('.dot').transition().duration(750)
             .attr("r", CHART_DOT_RADIUS)
             .attr("cx", chart_xMap)
             .attr("cy", chart_yMap);
 
         if (feature2) {
-            chart_graph.selectAll('.dot2').transition(t)
+            chart_graph.selectAll('.dot2').transition().duration(750)
                 .attr("r", CHART_DOT_RADIUS)
                 .attr("cx", chart_xMap)
                 .attr("cy", chart_yMap2);
@@ -804,13 +804,13 @@ function draw_chart(readings, feature, feature2) {
                         return 0;
                     } else return 1;
                 })
-                .on("click", function (d) {
+                .on("click", function (event, d) {
                     show_reading_popup(d);
                 })
-                .on("mouseover", function (d) {
-                    mouseover_interactions(d, feature);
+                .on("mouseover", function (event, d) {
+                    mouseover_interactions(event, d, feature);
                 })
-                .on("mouseout", function (d) {
+                .on("mouseout", function (event, d) {
                     chart_tooltip_el.transition()
                         .duration(500)
                         .style("opacity", 0);
@@ -824,13 +824,13 @@ function draw_chart(readings, feature, feature2) {
                     return 0;
                 } else return 1;
             })
-            .on("click", function (d) {
+            .on("click", function (event, d) {
                 show_reading_popup(d);
             })
-            .on("mouseover", function (d) {
-                mouseover_interactions(d, feature);
+            .on("mouseover", function (event, d) {
+                mouseover_interactions(event, d, feature);
             })
-            .on("mouseout", function (d) {
+            .on("mouseout", function (event, d) {
                 chart_tooltip_el.transition()
                     .duration(500)
                     .style("opacity", 0);
@@ -856,14 +856,14 @@ function draw_chart(readings, feature, feature2) {
         })
         .attr('pointer-events', 'all')
 
-        .on("click", function (d) {
+        .on("click", function (event, d) {
             show_reading_popup(d);
         })
-        .on("mouseover", function (d) {
+        .on("mouseover", function (event, d) {
             console.log('try mouseover', d)
-            mouseover_interactions(d, feature);
+            mouseover_interactions(event, d, feature);
         })
-        .on("mouseout", function (d) {
+        .on("mouseout", function (event, d) {
             chart_tooltip_el.transition()
                 .duration(500)
                 .style("opacity", 0);
@@ -885,13 +885,13 @@ function draw_chart(readings, feature, feature2) {
             .style('stroke', 'black')
             .attr('pointer-events', 'all')
 
-            .on("click", function (d) {
+            .on("click", function (event, d) {
                 show_reading_popup(d);
             })
-            .on("mouseover", function (d) {
-                mouseover_interactions(d, feature2);
+            .on("mouseover", function (event,d) {
+                mouseover_interactions(event, d, feature2);
             })
-            .on("mouseout", function (d) {
+            .on("mouseout", function (event, d) {
                 chart_tooltip_el.transition()
                     .duration(500)
                     .style("opacity", 0);
@@ -958,7 +958,7 @@ function draw_chart(readings, feature, feature2) {
 
 //created a 'bag' function that has d3 interactivity for hover over circles
 //I thought it was easier than having duplicated chunks of code
-function mouseover_interactions(d, feature) {
+function mouseover_interactions(event, d, feature) {
 
     let tooltip_height = d3.select('#chart_tooltip')._groups[0][0].clientHeight;
     let tooltip_width = d3.select('#chart_tooltip')._groups[0][0].clientWidth;
@@ -978,16 +978,16 @@ function mouseover_interactions(d, feature) {
         .style("left",
             function () {
                 //push the tooltip to the left rather than to the right if out of screen
-                if (d3.event.pageX + tooltip_width > document.body.clientWidth) {
-                    return d3.event.pageX - tooltip_width + tooltip_offset_x + "px";
-                } else return d3.event.pageX - tooltip_offset_x + "px";
+                if (event.pageX + tooltip_width > document.body.clientWidth) {
+                    return event.pageX - tooltip_width + tooltip_offset_x + "px";
+                } else return event.pageX - tooltip_offset_x + "px";
             }
         )
         .style("top", function () {
             //drop the tooltip upwards rather than downwards if out of screen
-            if (d3.event.pageY + tooltip_height > document.body.clientHeight) {
-                return d3.event.pageY - tooltip_height + tooltip_offset_y + "px";
-            } else return d3.event.pageY - tooltip_offset_y + "px";
+            if (event.pageY + tooltip_height > document.body.clientHeight) {
+                return event.pageY - tooltip_height + tooltip_offset_y + "px";
+            } else return event.pageY - tooltip_offset_y + "px";
         });
 
     //console.log('d',d, 'feature',feature)
@@ -1123,4 +1123,3 @@ function report_error(error_id, error_msg) {
     document.getElementById('popup_message').textContent = error_msg;
 
 }
-

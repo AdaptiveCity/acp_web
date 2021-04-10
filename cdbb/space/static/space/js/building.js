@@ -4,7 +4,6 @@
 This is the JS for page template 'building.html' to provide a rendered view of a BUILDING.
 
 Dependencies (static/js):
-    viz_tools.js
     d3
 */
 
@@ -13,11 +12,7 @@ class SpaceBuilding {
     // Called to create instance in page : space_building = SpaceBuilding()
     constructor() {
 
-        // Instantiate a jb2328 utility class e.g. for getBoundingBox()
-        this.viz_tools = new VizTools();
-
         // vertical offset for drawn floors (in pixels)
-
         this.y_offset = 110;
         // rotating colors for drawn floors
         this.floor_colors = ['#ff8888', '#ffff88', '#88ff88'];
@@ -25,7 +20,7 @@ class SpaceBuilding {
         // Transform parameters to scale SVG to screen
         // Will be updated in handle_building_space_data()
         this.svg_scale = 1;
-        this.svg_x = 0;    // x,y point of top-left corner
+        this.svg_x = 0; // x,y point of top-left corner
         this.svg_y = 0;
         this.svg_cx = 0; // x,y point for center of rotation
         this.svg_cy = 0;
@@ -61,8 +56,8 @@ class SpaceBuilding {
         request.addEventListener("load", function () {
             parent.handle_building_space_data(parent, request.responseXML); // alternatively request.responseText
         });
-        var space_api_url = API_SPACE+"get_bim/"+crate_id+"/1/";
-        console.log("get_building_space_data() http request: "+space_api_url)
+        var space_api_url = API_SPACE + "get_bim/" + crate_id + "/1/";
+        console.log("get_building_space_data() http request: " + space_api_url)
         request.open("GET", space_api_url);
         request.send();
     }
@@ -74,7 +69,7 @@ class SpaceBuilding {
 
         // Create a list of floor polygons (unordered)
         parent.floor_list = []
-        polygons.forEach( function(polygon) {
+        polygons.forEach(function (polygon) {
             var crate_type = polygon.getAttribute("data-crate_type");
             // Create a list of just the 'floor' objects that can be sorted before rendering
             if (crate_type == "floor") {
@@ -88,7 +83,7 @@ class SpaceBuilding {
         });
 
         // Sort the list of floors by their data-floor_number properties
-        parent.floor_list.sort( function(a,b) {
+        parent.floor_list.sort(function (a, b) {
             var a_floor_number = a.getAttribute("data-floor_number");
             var b_floor_number = b.getAttribute("data-floor_number");
             return a_floor_number - b_floor_number;
@@ -101,11 +96,22 @@ class SpaceBuilding {
         var min_x = 99999;
         var min_y = 99999;
 
-        parent.floor_list.forEach( function(polygon) {
+        parent.floor_list.forEach(function (polygon) {
             // Note we have to append the DOM object to the page for getBBox to work
             parent.append_floor(parent, polygon);
+            
             // Get bounding box of floor polygon
-            var box = parent.viz_tools.box(polygon);
+            let bounding_box = polygon.getBBox();
+
+            let box = {
+                x: bounding_box.x,
+                y: bounding_box.y,
+                cx: bounding_box.x + bounding_box.width / 2,
+                cy: bounding_box.y + bounding_box.height / 2,
+                w: bounding_box.width,
+                h: bounding_box.height
+            };
+
             // Update max width, height found so far
             if (box.w > max_w) max_w = box.w;
             if (box.h > max_h) max_h = box.h;
@@ -113,7 +119,7 @@ class SpaceBuilding {
             if (box.y < min_y) min_y = box.y;
             console.log("box", box);
         });
-        console.log("box min_x:",min_x,"min_y:",min_y,"max_w",max_w,"max_h",max_h);
+        console.log("box min_x:", min_x, "min_y:", min_y, "max_w", max_w, "max_h", max_h);
         // calculate appropriate scale for svg
         var diagonal = Math.sqrt(max_w * max_w + max_h * max_h);
         var w = parent.page_floor_svg.clientWidth;
@@ -131,12 +137,12 @@ class SpaceBuilding {
         parent.svg_cx = Math.round(max_w / 2);
         parent.svg_cy = Math.round(max_h / 2);
         // offset per floor
-        parent.svg_floor_offset = parent.svg_scale * max_h / 4 ;
+        parent.svg_floor_offset = parent.svg_scale * max_h / 4;
 
-        console.log("x:",parent.svg_x,"y:",parent.svg_y,"scale:",parent.svg_scale,"cx:",parent.svg_cx,"cy:",parent.svg_cy );
+        console.log("x:", parent.svg_x, "y:", parent.svg_y, "scale:", parent.svg_scale, "cx:", parent.svg_cx, "cy:", parent.svg_cy);
 
         // Now iterate the floors from bottom to top, and draw them at required scale:
-        parent.floor_list.forEach( function(polygon) {
+        parent.floor_list.forEach(function (polygon) {
             var polygon_id = polygon.getAttribute("id");
             parent.draw_floor(parent, polygon_id, polygon);
         });
@@ -147,13 +153,12 @@ class SpaceBuilding {
 
     // Add the floor svg objects to the DOM parent SVG (but invisible)
     append_floor(parent, floor_svg) {
-        // note viz_tools.box returns ZEROs if used before the appendChild()
-        //console.log("box before render", parent.viz_tools.box(floor_svg));
-		var floorplan = parent.page_floor_svg.appendChild(floor_svg); //svgMap /* floorplan */
+
+        var floorplan = parent.page_floor_svg.appendChild(floor_svg); //svgMap /* floorplan */
 
         // Now we've done the appendChild we can work out the bounding box and the scale
-		//make invisible prior loading
-		d3.select(floorplan).style("opacity", 0);
+        //make invisible prior loading
+        d3.select(floorplan).style("opacity", 0);
     }
 
     // Translate / Scale / Rotate the floor SVG
@@ -168,51 +173,51 @@ class SpaceBuilding {
         let y_off = parent.svg_y * parent.svg_scale - parent.svg_floor_offset * floor_number;
         let cx = parent.svg_cx * parent.svg_scale;
         let cy = parent.svg_cy * parent.svg_scale;
-        var svg_transform = "translate("+ Math.round(x_off) + ","
-                                        + Math.round(y_off) + ") " +
-                            "rotate(-20,0,0) " + //-45
-                            "scale("+parent.svg_scale+") ";
+        var svg_transform = "translate(" + Math.round(x_off) + "," +
+            Math.round(y_off) + ") " +
+            "rotate(-20,0,0) " + //-45
+            "scale(" + parent.svg_scale + ") ";
 
         console.log(y_off, svg_transform);
-		//attach css styling and add mouse events
-		d3.select('#'+crate_id)
+        //attach css styling and add mouse events
+        d3.select('#' + crate_id)
             .style("stroke-width", 0.5 / parent.svg_scale)
             .attr("stroke", "black")
             .attr('fill', color)
             //.attr('id', 'floor_' + crate_id)
             .attr('class', 'floor')
-			//---on click load floor page---//
-			.on('click', function () {
-				window.location = URL_FLOOR.replace("crate_id",crate_id);
-			})
-			//---on mouseover make other floors less visible---//
-			.on('mouseover', function () {
+            //---on click load floor page---//
+            .on('click', function () {
+                window.location = URL_FLOOR.replace("crate_id", crate_id);
+            })
+            //---on mouseover make other floors less visible---//
+            .on('mouseover', function () {
                 //console.log("mouseover",crate_id);
                 return parent.mouse_over_floor(parent, crate_id);
-			})
-			//---on mouseout make everything visible the same amount---//
-			.on('mouseout', function () {
-				d3.selectAll('.floor')
+            })
+            //---on mouseout make everything visible the same amount---//
+            .on('mouseout', function () {
+                d3.selectAll('.floor')
                     .transition()
                     .duration(250)
                     .style("stroke-width", 0.5)
                     .style("opacity", 1);
-			})
+            })
             //.attr("transform","translate("+x_off+","+y_off+") scale("+parent.svg_scale+")")
             //.attr("transform","translate(-10,-25) rotate(0,12,12) scale(2)")
             .attr("transform", svg_transform);
 
-		//d3.select(floorplan).attr("transform", "translate(0," + (450 - y_off) + ") rotate(-45) scale(1)");
+        //d3.select(floorplan).attr("transform", "translate(0," + (450 - y_off) + ") rotate(-45) scale(1)");
     }
 
     //after loading all three floors make SVGs visible
     loaded() {
-    	d3.selectAll('.floor').transition().duration(500).style("opacity", 1).style("stroke-width", 0.5);
+        d3.selectAll('.floor').transition().duration(500).style("opacity", 1).style("stroke-width", 0.5);
     }
 
     // Highlight the floor the mouse is hovering over
     mouse_over_floor(parent, crate_id) {
-        parent.floor_list.forEach( function(crate) {
+        parent.floor_list.forEach(function (crate) {
             let floor_crate_id = crate.getAttribute("id");
             if (floor_crate_id != crate_id) {
                 //is not selected, make less visible

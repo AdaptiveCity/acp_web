@@ -490,6 +490,8 @@ class SpaceFloor {
         var sensors_api_url = API_SENSORS + "get_floor_number/" +
             parent.floor_coordinate_system + "/" + parent.floor_number + '/';
 
+            console.log('sensor url', sensors_api_url)
+
         console.log("get_sensors_metadata() ", sensors_api_url);
         request.open("GET", sensors_api_url);
         request.send();

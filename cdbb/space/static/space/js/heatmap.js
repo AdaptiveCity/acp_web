@@ -766,7 +766,7 @@ class HeatMap {
 
         //select on of the features (co2, temperature, humidity etc)
         //TODO:user URL
-        let feature = document.getElementById('features_list').value;
+        let feature = parent.feature;//document.getElementById('features_list').value;
 
         //get cell's coordinates and scale
         let rect_loc = coords;
