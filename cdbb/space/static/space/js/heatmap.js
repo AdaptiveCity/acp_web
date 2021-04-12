@@ -97,9 +97,13 @@ class HeatMap {
 
 
         //--------MISC STYLING----------//
+
+        //declare the splash color
+        parent.splash_color = 'red';
+
         //declare the main colorscheme for the heatmap
         //https://observablehq.com/@d3/color-schemes ; set by 'd3.interpolate'+color-scheme
-        parent.color_scheme = d3.scaleSequential(d3.interpolatePlasma)//interpolatePlasma//interpolateInferno
+        parent.color_scheme = d3.scaleSequential(d3.interpolateViridis) //interpolatePlasma//interpolateInferno
 
         //make a global c_conf reference from the parent class;
         //this creates a colorbar svg on the right side of the screen
@@ -434,7 +438,7 @@ class HeatMap {
                 .attr('stroke-width', 0.01)
                 .attr("stroke", "black")
                 .attr("mask", "url(#mask_" + crate.id + ")") //pass the mask reference from above
-                .attr("fill", "white") //determines what color the splash will look like
+                .attr("fill", parent.splash_color) //determines what color the splash will look like
         })
     }
 
@@ -616,7 +620,12 @@ class HeatMap {
             //just wipe the rest of the data by overwriting the entire payload_cooked property in the data struct
 
             for (let feature in new_payload) {
-                console.log('new', feature, 'is', new_payload[feature], 'was', parent.sensor_data[acp_id].payload[feature])
+                let new_value = new_payload[feature];
+                let old_value = parent.sensor_data[acp_id].payload[feature];
+
+                if (new_value != old_value) {
+                    console.log('new', feature, 'is', new_value, 'was', old_value)
+                }
 
                 parent.sensor_data[acp_id].payload[feature] = new_payload[feature];
             }
@@ -766,7 +775,7 @@ class HeatMap {
 
         //select on of the features (co2, temperature, humidity etc)
         //TODO:user URL
-        let feature = parent.feature;//document.getElementById('features_list').value;
+        let feature = parent.feature; //document.getElementById('features_list').value;
 
         //get cell's coordinates and scale
         let rect_loc = coords;
@@ -1021,10 +1030,7 @@ class HeatMap {
         console.timeEnd('[TOTAL TIME LAPSED ]');
 
         //adding another mask layer on top
-        // parent.make_sublayers();
-        //parent.animation_ticker(parent);
         parent.make_masks(parent);
-        // parent.animation_ticker_alt(parent);
     }
 
 

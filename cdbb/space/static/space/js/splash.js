@@ -5,45 +5,72 @@ class SplashMap {
     // Called to create instance in page : space_floorplan = SpaceFloorplan()
     constructor(floorspace) {
 
-        let self = this;
+        let parent = this;
 
         //throughout the class the master is the main visualisation, parent is HeatMap
-        self.master = floorspace;
+        parent.master = floorspace;
 
         // Instatiante an RTmonitor class
-        self.rt_con = new RTconnect(self);
+        parent.rt_con = new RTconnect(parent);
 
         //a set of useful d3 functions
-        self.jb_tools = new VizTools2();
+        parent.jb_tools = new VizTools2();
 
         //set div id's show status change upon connect
-        self.txt_div_id = 'splash_rt';
-        self.status_div_id = 'splash_rt_state'
+        parent.txt_div_id = 'splash_rt';
+        parent.status_div_id = 'splash_rt_state'
+
+        //declare the splash color
+        parent.splash_color='red';
 
         //--------------------------------------//
         //--------SET UP EVENT LISTENERS--------//
         //--------------------------------------//
 
-        //Set up event listener to connect to RTmonitor
-        document.getElementById('show_splash').addEventListener('click', () => {
-            self.init(self);
-        })
+        //connect to rt monitor
+        document.getElementById('rain_rt_connect').addEventListener('click', () => {
+            parent.disconnect_rt(parent)
+        });
 
+    }
+
+    //disconnects rt monitor to stop splashes
+    disconnect_rt(parent) {
+        //disconnect the socket:
+        parent.rt_con.do_disconnect(parent.rt_con);
+
+        //change button colors/innerHTML
+        document.getElementById(parent.txt_div_id).innerHTML = 'RTm disconnected';
+        document.getElementById(parent.status_div_id).style.backgroundColor = 'rgb(255, 50, 50)';
+
+        //clear all timers
+        clearTimeout(parent.timer_short);
+        clearTimeout(parent.timer_long);
+    }
+
+    //connects to the rt monitor via websockets
+    connect_rt(parent) {
+        //get a list of all sensors rendered on screen
+        parent.sub_list = Object.keys(parent.master.sensor_data);
+
+        //create an rtmonitor connection, telling which sensors to subscribe to
+        parent.rt_con.connect(parent.check_status.bind(parent), parent.sub_list);
     }
 
     // init() called when page loaded
     init(parent) {
-        console.log('loading',JSON.stringify(parent.master),parent.master['sensor_data'], parent.master.sensor_data)
-        
-        //get a list of all sensors rendered on screen
-        parent.sub_list = Object.keys(parent.master.sensor_data);
-        console.log('sensors', parent.sub_list)
+        console.log('loading', JSON.stringify(parent.master), parent.master['sensor_data'], parent.master.sensor_data)
 
         parent.timer_short; //the socket has been unactive for a while -- color yellow
         parent.timer_long; //assume the socket connection was lost -- color red
-        
+
+        //separate animation to see how long the 'raindrop' or 'splash' remains visible
+        parent.ripple_duration = 3500;
+
+        parent.make_masks(parent);
+
         //do rtmonitor connect, telling which sensors to subscribe to
-        parent.rt_con.connect(parent.check_status.bind(parent), parent.sub_list);
+        parent.connect_rt(parent);
 
         //get the contextual scaling for ripples
         parent.circle_radius = parent.master.sensor_radius;
@@ -65,8 +92,9 @@ class SplashMap {
             case '2':
                 try {
                     console.log('new_msg', msg)
-                    let msg_data = msg;
-                    parent.update_floorplan(parent, msg_data)
+                    let acp_id = msg.acp_id;
+                    let motion_trigger = true;
+                    parent.draw_splash(parent, acp_id, motion_trigger)
                 } catch (err) {
                     console.log('something went wrong', err)
                 }
@@ -100,85 +128,107 @@ class SplashMap {
         }
     }
 
+    //creates a sublayer of masks so that splashes 
+    //do not cross crate boundaries
+    make_masks(parent) {
 
-    draw_ripples(self, acp_id) { //<-D
+        //get the app_overlay layer and append a new sublayer for masks
+        const splash_canvas = d3.select("#app_overlay")
+            .append("g")
+            .attr('id', 'heatmap_splash_layer')
 
-        console.log('ripple', acp_id);
-        self.draw_splash(self, acp_id);
+        //append a defs layer for masks
+        const defs = splash_canvas.append("defs")
 
-        for (var i = 1; i < 3; ++i) {
+        //add a mask for every crate;
+        //here we iterate ovre all drawn BIM polygons and make 
+        //a copy for each one as a mask polygon
+        d3.selectAll('polygon').nodes().forEach(crate => {
 
-            //calculate the stroke for the splash's circle
-            let stroke = 4 / (self.svg_scale * i);
+            //append masks to the defs layer
+            let mask = defs.append("mask")
+                .attr('pointer-events', 'none')
+                .attr("id", "mask_" + crate.id);
 
-            let position = {
-                'x': d3.select('#' + acp_id + "_bim").attr('cx'),
-                'y': d3.select('#' + acp_id + "_bim").attr('cy'),
-                'transf': d3.select('#' + acp_id + "_bim").attr("transform")
-            }
+            //copy current polygon infornation and save it be reused for mask polygons
+            let polygon_points = crate.attributes.points.value.split(' '); //this creates a list of coordinates
+            let polygon_transform = crate.attributes.transform.value;
+            //the last element in the the list of polygon coordinates is an empty string, so we remove it
+            polygon_points.pop();
 
-            let circle = d3.select('#bim_request').append("circle")
+            //with the previous BIM polygon information, make its copy as a mask
+            let crate_polygon =
+                splash_canvas.append("polygon")
+                .attr("points", polygon_points)
+                .attr("transform", polygon_transform)
+                .attr('pointer-events', 'none')
+                .attr('stroke-width', 0.01)
+                .attr("stroke", "black")
+                .attr("mask", "url(#mask_" + crate.id + ")") //pass the mask reference from above
+                .attr("fill", parent.splash_color) //determines what color the splash will look like
+        })
+    }
+
+    //draws splashes when new data arrives and recolors the entire crate based on the data
+    //acp_id determine where the splash will radiate from, motion_trigger determines the size of the splash
+    draw_splash(parent, acp_id, motion_trigger) {
+
+        //find the crate the acp_id sensor is in
+        let crate_id = parent.master.sensor_data[acp_id].crate_id;
+
+        //the motion trigger argument determines the size of the splash
+        //the idea here is that we want to emphasize motion triggered splashes,
+        //whereas we declare periodic updates to be less importnat and hence smaller splashes are drawn 
+
+        //if !motion_trigger, draw a smaller circle
+        let final_radius = motion_trigger == true ? parent.circle_radius * 10 : parent.circle_radius * 5;
+
+        //get the sensor's position
+        let position = {
+            'x': d3.select('#' + acp_id + "_bim").attr('cx'),
+            'y': d3.select('#' + acp_id + "_bim").attr('cy'),
+            'transf': d3.select('#' + acp_id + "_bim").attr("transform")
+        }
+
+        //draw three expanding circles as a splash
+        for (let splash_index = 1; splash_index < 4; ++splash_index) {
+
+            //stroke should be a function of time, so over the course of the splash animation
+            //we change it from a thicker stroke to a smaller one, showing how the splash slowly disintegrates
+
+            //calculate the starting stroke for the splash's circle
+            let stroke_start = 4.5 / (parent.svg_scale * splash_index); //strokes take into account the svg scale
+
+            //calculate the finishing stroke for the splash's circle
+            let stroke_finish = 1.5 / (parent.svg_scale * splash_index); //strokes take into account the svg scale
+
+            //create an expanding circle that will disappear when it finishes the animation
+            let circle =
+                d3.select("#mask_" + crate_id) //target the mask
+                .append("circle")
+                .attr("pointer-events", "none")
                 .attr("cx", position.x)
                 .attr("cy", position.y)
-                .attr('transform', position.transf)
-                .attr("r", 0)
-                .style("stroke-width", stroke)
+                .attr("r", 0) //start as a circle with 0 radius
+                .style("stroke-width", stroke_start)
                 .style("fill", 'none')
-                .style('stroke', '#cc0000')
-                .transition()
-                .delay(Math.pow(i, 2.5) * 100)
-                .duration(2000)
+                .style('stroke', 'white') //make sure it's different from the mask color
+                .transition() //initiate the transition
+                .delay(splash_index * 400)
+                .duration(parent.ripple_duration)
                 .ease(d3.easeSin)
-                .attr("r", self.circle_radius * 10) //radius for waves
+                .attr("r", final_radius) //the final circle radius before dissapearing
                 .style("stroke-opacity", 0)
+                .style("stroke-width", stroke_finish)
                 .on("interrupt", function () {
-                    d3.select(this).remove();
+                    d3.select(this).remove(); //in case of an interrupt, cancel all and delete the circle
                 })
                 .on("end", function () {
                     d3.select(this).remove(); //remove ripples
                 });
         }
-    }
-
-    update_floorplan(self, msg_data) {
-        let acp_id = msg_data.acp_id;
-        //console.lo
-        //self.add_hist(self, acp_id, msg_data)
-        //self.set_colorbar(self)
-        // self.reset_animations(self)
-        self.draw_ripples(self, acp_id);
-    }
 
 
-    draw_splash(self, acp_id) {
-        //let multiplier = 1.1; //10% increase self.circle_radius
-        let sensor_circle = d3.select('#' + acp_id + "_bim");
-        let new_color = 'purple' //self.color_scheme(self.msg_history[acp_id].pinged);
-        sensor_circle
-            .transition().duration(700)
-            .attr('r', self.circle_radius / 3)
-            //.ease(d3.easeBackInOut.overshoot(3.5))
-            //flash red to indicate a splash
-            .style('fill', 'red')
-            //in case a new animation starts before the this one has finished, we want to finish the original ASAP 
-            .on("interrupt", function () {
-                sensor_circle.attr('r', self.circle_radius);
-                sensor_circle.attr('fill', new_color);
-            })
-            .on('end', function (d) {
-                sensor_circle
-                    //fill the circle with the new color
-                    .style('fill', new_color)
-                    .transition().duration(450)
-                    //overshoot the easing to add a little wiggle effect, brings some life to circles
-                    // .ease(d3.easeBackInOut.overshoot(3.5))
-                    .attr('r', self.circle_radius)
-                    //in case a new animation starts before the this one has finished, we want to finish the original ASAP 
-                    .on("interrupt", function () {
-                        sensor_circle.attr('r', self.circle_radius);
-                        sensor_circle.attr('fill', new_color);
-                    });
-            });
     }
 
     mock_data(self) {
@@ -196,9 +246,9 @@ class SplashMap {
                 "occupancy": 0
             }
         }
-        //self.msg_received(msg_data)
-        //self.update_viz(self, acp_id, msg_data)
-        self.update_floorplan(self, msg_data);
+
+        let motion_trigger = true;
+        parent.draw_splash(parent, acp_id, motion_trigger)
 
     }
 

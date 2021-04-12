@@ -55,7 +55,7 @@
 {% endblock %}
 
 {% block header_title %}
-Spatial Building and Sensor Data: Splash app
+Splash app
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -111,11 +111,23 @@ Spatial Building and Sensor Data: Splash app
             <!-- MAIN SPLASH ACTIVATION -->
             <div class="button_wrapper">
                 <!-- <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button> -->
-                <a id="show_splash" class="button1">Stop Splash</a>
+                <a id="rain_rt_connect" class="button1">RT Disconnect</a>
             </div>
 
             <div id='splash_control' class='rt_status'><span id='splash_rt_state'
                     class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='splash_rt'>RtM not connected</span></div>
+            <br>
+
+            <!-- change sensor opacity slider -->
+            <div class="button_wrapper">
+                <div class="slidecontainer">
+                    <label for="opacity_slider">Sensor Opacity:</label>
+                    <br>
+                    <input type="range" min="0" max="100" value="50" name='opacity_slider' class="slider"
+                        id="sensor_opacity">
+                </div>
+            </div>
+
             <br>
 
             <!-- reset zoom -->
