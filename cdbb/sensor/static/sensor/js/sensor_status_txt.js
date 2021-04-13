@@ -19,7 +19,7 @@ class SensorStatusTxtDisplay {
         self.msg_history = {};
 
         self.API_GET_ALL = API_SENSORS + '/list/?type_metadata=true'
-        self.API_GET_CRATE = API_SENSORS //https://cdbb.uk/api/sensors/get_bim/WGB/FN07/
+        self.API_GET_CRATE = API_SENSORS 
 
         self.sensor_list = [];
         self.sub_list = [];
@@ -41,9 +41,7 @@ class SensorStatusTxtDisplay {
         self.color_recent_week = 'rgb(255,255,255)'; //white (inactive > week)
 
         self.symbol_inactive = '?'; //inactive for 1 or 2 hours
-        self.symbol_dead = 'X'; //inactive for more than 24 hours
-
-        
+        self.symbol_dead = 'X'; //inactive for more than 24 hours        
     }
 
     // init() called when page loaded#
