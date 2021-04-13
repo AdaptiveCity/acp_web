@@ -82,12 +82,6 @@ Spatial Building and Sensor Data: Sensor Status Display
 
 </div>
 
-<!-- <div id="drawing_coords">0,0</div>
-
-<div class="drawing_div" id='main_drawing_div'>
-    <svg id="drawing_svg">
-    </svg>
-</div> -->
 {% endblock %}
 <!-- content -->
 
@@ -95,10 +89,10 @@ Spatial Building and Sensor Data: Sensor Status Display
 {% block lazy_script %}
 <script>
     console.log('lazy_script ssd');
-    var ssd = new SensorStatusDisplay();
+    
+    let ssd = new SensorStatusDisplay();
     ssd.init(ssd);
-    // var space_building = new SpaceBuilding();
-    // space_building.init();
+   
 </script>
 {% endblock %}
 <!-- lazy_script -->

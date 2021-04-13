@@ -10,7 +10,6 @@
 
 <!-- Local copy of d3 -->
 <script type="text/javascript" src="{% static 'js/d3.v6_5.min.js' %}"></script>
-<!-- <script type="text/javascript" src="{% static 'js/d3.v5.min.js' %}"></script> -->
 
 <!-- JS SCRIPT for space snd building -->
 <script type="text/javascript" src="{% static 'space/js/space.js' %}"></script>
@@ -72,7 +71,7 @@ Spatial Building and Sensor Data: FLOOR VIEW
     <div id="legend_and_buttons">
         <div id="legend_container"></div>
     </div>
-    
+
 </div>
 
 
@@ -86,7 +85,7 @@ Spatial Building and Sensor Data: FLOOR VIEW
 {% block lazy_script %}
 <script>
     console.log('lazy_script');
-    var space_floor = new SpaceFloor();
+    let space_floor = new SpaceFloor();
     space_floor.init();
 </script>
 {% endblock %}
