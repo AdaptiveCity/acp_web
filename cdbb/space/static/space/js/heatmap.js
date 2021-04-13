@@ -1094,114 +1094,7 @@ class HeatMap {
 
         }
     }
-    //-----------------------------------------------------------------//
-    //------------------------FAKE DEPLOYMENT--------------------------//
-    //-----------------------------------------------------------------//
-
-
-    //callback to update sensors (for faked sensor data)
-    update_callback(parent, acp_id, walk) {
-        parent.draw_splash(parent, acp_id, true)
-    }
-
-    //async update for faked sensor data - updates all;
-    //iterates through sensors and sets them to update on screen every *x* milliseconds
-    fake_splashes(parent) {
-        console.log(parent.sensor_data)
-        for (let sensor in parent.sensor_data) {
-            console.log('incoming update ', sensor)
-            let wildcard = false //Math.random() < 0.5;
-            window.setInterval(parent.update_callback, parent.jb_tools.random_int(8000, 8000 * 10), parent, sensor, wildcard);
-        }
-    }
-
-    //show fake path on LL
-    fake_path(parent) {
-        let sens_list;
-        switch (CRATE_ID) {
-            case 'GF':
-                sens_list = [
-                    "elsys-ers-04f006",
-                    "elsys-ers-04f007",
-                    "elsys-snd-04bb60",
-                    "elsys-ers-04f005",
-                    "elsys-co2-0558bb",
-                    "elsys-co2-0558b2",
-                    "elsys-co2-0558b5",
-                    "elsys-co2-0559f5",
-                    "elsys-co2-0559f4",
-                    "elsys-co2-0559f7",
-                ]
-                break;
-            case 'FF':
-                sens_list = [
-                    "elsys-ems-050368",
-                    "elsys-co2-055872",
-                    "elsys-eye-04d243",
-                    "elsys-eye-04d241",
-                    "elsys-eye-04d23c",
-                    "elsys-eye-04d245",
-                    "elsys-co2-0559fa",
-                    "elsys-eye-04d23e",
-                    "elsys-co2-05586f"
-                ];
-                break;
-            case 'll_0':
-                sens_list = [
-                    "elsys-co2-0520ba",
-                    "elsys-ems-0503e0",
-                    "elsys-eye-044504",
-                    "elsys-co2-0520bb",
-                    "elsys-co2-0520bc",
-                    "elsys-co2-0520bd",
-                    "elsys-co2-0520be",
-                    "elsys-co2-0520bf",
-                    "elsys-co2-0520c0",
-                    "elsys-co2-0520c1",
-                    "elsys-co2-0520c2",
-                    "elsys-co2-0520c3"
-                ];
-                break;
-        }
-
-
-
-        let counter = 1;
-        for (let i = 0; i < sens_list.length; i++) {
-            let sensor = sens_list[i];
-            console.log('incoming update ', sensor)
-            window.setTimeout(parent.update_callback, counter * 1000, parent, sensor, false);
-            counter++;
-        }
-    }
-
-    // Alternative to get_readings() using local file for sensors API response
-    get_local_sensors(parent) {
-
-        console.log('loading local data')
-
-        //we have fake data only for wgb and vlab
-        let selection = CRATE_ID == 'FF' ? 'WGB' : 'VLAB'; //for now leaving the Lockdown Lab away from this
-
-        //local file loading from Django
-        d3.json(window.location.origin + "/static_web/js/" + selection + "_JSON.json", {
-            crossOrigin: "anonymous"
-
-        }).then(function (received_data) {
-            console.log('heatmap received', received_data)
-            parent.handle_sensors_metadata(parent, received_data)
-
-            //-----------------------------------//
-            //---generate and show the heatmap---//
-            //-----------------------------------//
-            parent.show_heatmap(parent);
-        });
-    }
-
-    //-----------------------------------------------------------------//
-    //---------------------END FAKE DEPLOYMENT-------------------------//
-    //-----------------------------------------------------------------//
-
+  
     //-----------------------------------------------------------------//
     //----------------------------COLOR BAR----------------------------//
     //-----------------------------------------------------------------//
@@ -1357,4 +1250,113 @@ class HeatMap {
     //-----------------------------------------------------------------//
     //-------------------END UTILITY FUNCTIONS-------------------------//
     //-----------------------------------------------------------------//
+
+      //-----------------------------------------------------------------//
+    //------------------------FAKE DEPLOYMENT--------------------------//
+    //-----------------------------------------------------------------//
+
+
+    //callback to update sensors (for faked sensor data)
+    update_callback(parent, acp_id, walk) {
+        parent.draw_splash(parent, acp_id, true)
+    }
+
+    //async update for faked sensor data - updates all;
+    //iterates through sensors and sets them to update on screen every *x* milliseconds
+    fake_splashes(parent) {
+        console.log(parent.sensor_data)
+        for (let sensor in parent.sensor_data) {
+            console.log('incoming update ', sensor)
+            let wildcard = false //Math.random() < 0.5;
+            window.setInterval(parent.update_callback, parent.jb_tools.random_int(8000, 8000 * 10), parent, sensor, wildcard);
+        }
+    }
+
+    //show fake path on LL
+    fake_path(parent) {
+        let sens_list;
+        switch (CRATE_ID) {
+            case 'GF':
+                sens_list = [
+                    "elsys-ers-04f006",
+                    "elsys-ers-04f007",
+                    "elsys-snd-04bb60",
+                    "elsys-ers-04f005",
+                    "elsys-co2-0558bb",
+                    "elsys-co2-0558b2",
+                    "elsys-co2-0558b5",
+                    "elsys-co2-0559f5",
+                    "elsys-co2-0559f4",
+                    "elsys-co2-0559f7",
+                ]
+                break;
+            case 'FF':
+                sens_list = [
+                    "elsys-ems-050368",
+                    "elsys-co2-055872",
+                    "elsys-eye-04d243",
+                    "elsys-eye-04d241",
+                    "elsys-eye-04d23c",
+                    "elsys-eye-04d245",
+                    "elsys-co2-0559fa",
+                    "elsys-eye-04d23e",
+                    "elsys-co2-05586f"
+                ];
+                break;
+            case 'll_0':
+                sens_list = [
+                    "elsys-co2-0520ba",
+                    "elsys-ems-0503e0",
+                    "elsys-eye-044504",
+                    "elsys-co2-0520bb",
+                    "elsys-co2-0520bc",
+                    "elsys-co2-0520bd",
+                    "elsys-co2-0520be",
+                    "elsys-co2-0520bf",
+                    "elsys-co2-0520c0",
+                    "elsys-co2-0520c1",
+                    "elsys-co2-0520c2",
+                    "elsys-co2-0520c3"
+                ];
+                break;
+        }
+
+
+
+        let counter = 1;
+        for (let i = 0; i < sens_list.length; i++) {
+            let sensor = sens_list[i];
+            console.log('incoming update ', sensor)
+            window.setTimeout(parent.update_callback, counter * 1000, parent, sensor, false);
+            counter++;
+        }
+    }
+
+    // Alternative to get_readings() using local file for sensors API response
+    get_local_sensors(parent) {
+
+        console.log('loading local data')
+
+        //we have fake data only for wgb and vlab
+        let selection = CRATE_ID == 'FF' ? 'WGB' : 'VLAB'; //for now leaving the Lockdown Lab away from this
+
+        //local file loading from Django
+        d3.json(window.location.origin + "/static_web/js/" + selection + "_JSON.json", {
+            crossOrigin: "anonymous"
+
+        }).then(function (received_data) {
+            console.log('heatmap received', received_data)
+            parent.handle_sensors_metadata(parent, received_data)
+
+            //-----------------------------------//
+            //---generate and show the heatmap---//
+            //-----------------------------------//
+            parent.show_heatmap(parent);
+        });
+    }
+
+    //-----------------------------------------------------------------//
+    //---------------------END FAKE DEPLOYMENT-------------------------//
+    //-----------------------------------------------------------------//
+
 }

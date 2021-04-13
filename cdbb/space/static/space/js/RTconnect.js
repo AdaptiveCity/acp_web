@@ -23,7 +23,8 @@ class RTconnect {
 
         this.connect_filter = {
             "msg_type": "rt_subscribe",
-            "request_id": "abc"
+            "request_id": "abc",
+            "options": [ "previous_msg", "latest_msg" ]
         };
 
         this.sub_list;

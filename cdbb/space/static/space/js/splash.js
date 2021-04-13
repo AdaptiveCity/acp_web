@@ -21,7 +21,7 @@ class SplashMap {
         parent.status_div_id = 'splash_rt_state'
 
         //declare the splash color
-        parent.splash_color='red';
+        parent.splash_color = 'red';
 
         //--------------------------------------//
         //--------SET UP EVENT LISTENERS--------//
@@ -32,6 +32,39 @@ class SplashMap {
             parent.disconnect_rt(parent)
         });
 
+    }
+
+    // init() called when page loaded
+    init(parent) {
+
+        parent.timer_short; //the socket has been unactive for a while -- color yellow
+        parent.timer_long; //assume the socket connection was lost -- color red
+
+        //separate animation to see how long the 'raindrop' or 'splash' remains visible
+        parent.ripple_duration = 3500;
+
+        //create a layer of svg masks so that splash ripples don't leave crate boundaries
+        parent.make_masks(parent);
+
+        //do rtmonitor connect, telling which sensors to subscribe to
+        parent.connect_rt(parent);
+
+        //get the contextual scaling for ripples
+        parent.circle_radius = parent.master.sensor_radius;
+        parent.svg_scale = parent.master.svg_scale;
+    }
+
+    //-----------------------------------------------------------------//
+    //--------------------RTmonitor connectivity-----------------------//
+    //-----------------------------------------------------------------//
+
+    //connects to the rt monitor via websockets
+    connect_rt(parent) {
+        //get a list of all sensors rendered on screen
+        parent.sub_list = Object.keys(parent.master.sensor_data);
+
+        //create an rtmonitor connection, telling which sensors to subscribe to
+        parent.rt_con.connect(parent.check_status.bind(parent), parent.sub_list);
     }
 
     //disconnects rt monitor to stop splashes
@@ -48,34 +81,9 @@ class SplashMap {
         clearTimeout(parent.timer_long);
     }
 
-    //connects to the rt monitor via websockets
-    connect_rt(parent) {
-        //get a list of all sensors rendered on screen
-        parent.sub_list = Object.keys(parent.master.sensor_data);
-
-        //create an rtmonitor connection, telling which sensors to subscribe to
-        parent.rt_con.connect(parent.check_status.bind(parent), parent.sub_list);
-    }
-
-    // init() called when page loaded
-    init(parent) {
-        console.log('loading', JSON.stringify(parent.master), parent.master['sensor_data'], parent.master.sensor_data)
-
-        parent.timer_short; //the socket has been unactive for a while -- color yellow
-        parent.timer_long; //assume the socket connection was lost -- color red
-
-        //separate animation to see how long the 'raindrop' or 'splash' remains visible
-        parent.ripple_duration = 3500;
-
-        parent.make_masks(parent);
-
-        //do rtmonitor connect, telling which sensors to subscribe to
-        parent.connect_rt(parent);
-
-        //get the contextual scaling for ripples
-        parent.circle_radius = parent.master.sensor_radius;
-        parent.svg_scale = parent.master.svg_scale;
-    }
+    //-----------------------------------------------------------------//
+    //------------------end RTmonitor connectivity---------------------//
+    //-----------------------------------------------------------------//
 
     //updates the rtmonitor status icon on the page
     check_status(value, msg) {
@@ -94,6 +102,7 @@ class SplashMap {
                     console.log('new_msg', msg)
                     let acp_id = msg.acp_id;
                     let motion_trigger = true;
+                    console.log(msg.acp_ts)
                     parent.draw_splash(parent, acp_id, motion_trigger)
                 } catch (err) {
                     console.log('something went wrong', err)
@@ -128,6 +137,10 @@ class SplashMap {
         }
     }
 
+    //------------------------------------------------------------------//
+    //----------SVG modifications and drawing animations----------------//
+    //------------------------------------------------------------------//
+
     //creates a sublayer of masks so that splashes 
     //do not cross crate boundaries
     make_masks(parent) {
@@ -135,10 +148,10 @@ class SplashMap {
         //get the app_overlay layer and append a new sublayer for masks
         const splash_canvas = d3.select("#app_overlay")
             .append("g")
-            .attr('id', 'heatmap_splash_layer')
+            .attr('id', 'heatmap_splash_layer');
 
         //append a defs layer for masks
-        const defs = splash_canvas.append("defs")
+        const defs = splash_canvas.append("defs");
 
         //add a mask for every crate;
         //here we iterate ovre all drawn BIM polygons and make 
@@ -231,6 +244,10 @@ class SplashMap {
 
     }
 
+    //-----------------------------------------------------------------//
+    //------------------------FAKE DEPLOYMENT--------------------------//
+    //-----------------------------------------------------------------//
+
     mock_data(self) {
         let acp_id = self.sub_list[Math.floor(Math.random() * self.sub_list.length)];
         console.log('moooooock', acp_id)
@@ -268,4 +285,7 @@ class SplashMap {
         }
     }
 
+    //-----------------------------------------------------------------//
+    //---------------------END FAKE DEPLOYMENT-------------------------//
+    //-----------------------------------------------------------------//
 }
