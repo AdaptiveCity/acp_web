@@ -242,13 +242,12 @@ class HeatMap {
             case '2':
                 //MESSAGE RECEIVED, updates data structures
                 try {
-                    //sensor_data[sensor_id]=msg.value
                     //do animation
                     let msg_data = msg;
-                    console.log('value received', value, msg_data)
+                    //console.log('value received', value, msg_data)
 
                     //send not only acp_id but an entire msg 
-                    console.log('updating sensor data structs')
+                    //console.log('updating sensor data structs')
                     parent.update_sensor_data(parent, msg_data);
 
                     //check if the new message only contains a "motion" trigger event
@@ -259,7 +258,7 @@ class HeatMap {
                     // (usually paired though) then we now 
                     //it's an interrupt triggered motion event
                     if ((Object.keys(cooked).length < 3) && (("motion" in cooked) || ("occupancy" in cooked))) {
-                        console.log('motion-only event detected', msg_data)
+                        console.log('motion-only event detected', cooked)
                         motion_trigger = false;
                     }
 
@@ -524,7 +523,7 @@ class HeatMap {
             parent.handle_sensors_metadata(parent, received_data);
 
             //change the global data_loaded
-            console.log('TEST', 'heatmap data_loaded')
+            //and proceed to load the heatmap
             parent.promiseResolve()
 
         });
@@ -614,6 +613,12 @@ class HeatMap {
             let new_acp_ts = msg.acp_ts;
             let new_payload = msg.payload_cooked;
 
+            console.log(acp_id)
+
+            //variable that controls that any new value in packet
+            //is different from old
+            let any_updates = false;
+
             parent.sensor_data[acp_id].acp_ts = new_acp_ts;
             //here we take into account that sensor's payload can have only one or multiple updates to features
             //e.g. the new data packet can only have motion=1, w/out updates for other features, hence we can't
@@ -624,11 +629,19 @@ class HeatMap {
                 let old_value = parent.sensor_data[acp_id].payload[feature];
 
                 if (new_value != old_value) {
-                    console.log('new', feature, 'is', new_value, 'was', old_value)
+                    any_updates = true;
+                    console.log('new', feature, 'is', new_value, '(was '+old_value+')')
                 }
 
                 parent.sensor_data[acp_id].payload[feature] = new_payload[feature];
             }
+
+            //print out that nothing's changed from the previous packet
+            if (!any_updates) {
+                console.log('same readings as last message')
+            }
+            //make the end of the message more distinct
+            console.log('-----------------------------')
 
         } catch (error) {
             console.log('failed to update the data struct with payloads', error)
@@ -1018,6 +1031,7 @@ class HeatMap {
 
         //iterate through results to extract data required to show sensors on the floorplan
         let results = parent.sensor_data;
+
         //redraw the sensors on the newly generated heatmap;
         //mandatory passing the consolidated svg object due to svg offsetting
         parent.attach_sensors(parent, results, consolidated_svg)
@@ -1032,7 +1046,6 @@ class HeatMap {
         //adding another mask layer on top
         parent.make_masks(parent);
     }
-
 
     hide_heatmap(parent) {
         d3.select('#heatmap').remove();
@@ -1060,7 +1073,10 @@ class HeatMap {
         let main_svg = d3.select('#app_overlay').append('g').attr('id', 'heatmap_sensors');
 
         //declare circle properties - opacity and radius
-        let rad = 4; // radius of sensor icon in METERS (i.e. XYZF before transform)
+        // radius of sensor icon in METERS (i.e. XYZF before transform)
+        let rad = 4; //hardcoded value for heatmap circles
+        //I found that scaling heatmap circle's radius doesn't work as well as with floor.js
+
         for (let sensor in results) {
             try {
                 //    console.log(sensor)
@@ -1078,7 +1094,7 @@ class HeatMap {
                     .attr("transform", null)
                     .attr("r", rad)
                     .attr("class", 'sensor_node')
-                    .attr("id", sensor_id + "_hm") //'hm_' +
+                    .attr("id", sensor_id + "_hm")
                     .attr('data-acp_id', sensor_id)
                     .style("opacity", parent.master.sensor_opacity)
                     .style("fill", "pink")
@@ -1094,7 +1110,7 @@ class HeatMap {
 
         }
     }
-  
+
     //-----------------------------------------------------------------//
     //----------------------------COLOR BAR----------------------------//
     //-----------------------------------------------------------------//
@@ -1251,7 +1267,7 @@ class HeatMap {
     //-------------------END UTILITY FUNCTIONS-------------------------//
     //-----------------------------------------------------------------//
 
-      //-----------------------------------------------------------------//
+    //-----------------------------------------------------------------//
     //------------------------FAKE DEPLOYMENT--------------------------//
     //-----------------------------------------------------------------//
 

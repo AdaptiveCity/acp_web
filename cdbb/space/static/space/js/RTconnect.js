@@ -92,7 +92,7 @@ class RTconnect {
         //------on_message received------//
         //-------------------------------//
         self.socket.onmessage = function (e) {
-            console.log('new message');
+            //console.log('new message');
             let msg = JSON.parse(e.data);
             if (msg.msg_type != null && msg.msg_type == "rt_nok") {
                 console.log('Error', e.data);

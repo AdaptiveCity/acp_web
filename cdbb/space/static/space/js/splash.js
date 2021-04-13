@@ -101,8 +101,19 @@ class SplashMap {
                 try {
                     console.log('new_msg', msg)
                     let acp_id = msg.acp_id;
+
+                    //check if the new message only contains a "motion" trigger event
                     let motion_trigger = true;
-                    console.log(msg.acp_ts)
+                    let cooked = msg_data.payload_cooked;
+
+                    //if payload_cooked only has a single key and it is 'motion' or 'occupancy'
+                    // (usually paired though) then we now 
+                    //it's an interrupt triggered motion event
+                    if ((Object.keys(cooked).length < 3) && (("motion" in cooked) || ("occupancy" in cooked))) {
+                        console.log('motion-only event detected', cooked)
+                        motion_trigger = false;
+                    }
+
                     parent.draw_splash(parent, acp_id, motion_trigger)
                 } catch (err) {
                     console.log('something went wrong', err)

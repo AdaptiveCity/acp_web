@@ -142,31 +142,30 @@ class VizTools2 {
 
     tooltips() {
         self = this;
-        var previous_circle_radius;
+
+        //declare the values that will help with the positioning of the tooltip
+        let eventX;
+        let eventY;
+        let tooltip_height;
+        let tooltip_width;
+        let tooltip_offset_y;
+        let tooltip_offset_x;
 
         d3.selectAll("circle") // For new circle, go through the update process
             .on("mouseover", function (event, d) {
-                previous_circle_radius = 0.5; //document.getElementById(el).getAttribute('r')
 
-                // d3.select(this).transition().duration(250)
-                //     .attr("r", 0.75);
+                //get the starting xy coordinate for the mouse
+                eventX = event.pageX;
+                eventY = event.pageY;
 
-                // Specify where to put label of text
-                let x = event.pageX - document.getElementById('drawing_svg').getBoundingClientRect().x + 50;
-                let y = event.pageY - document.getElementById('drawing_svg').getBoundingClientRect().y + 50;
+                //calculate tooltip height and width
+                tooltip_height = d3.select('#tooltip').node().clientHeight;
+                tooltip_width = d3.select('#tooltip').node().clientWidth;
 
-                let eventX = event.pageX;
-                let eventY = event.pageY;
+                //declare the offset from the mouse coordinates
+                tooltip_offset_y = 6;
+                tooltip_offset_x = 6;
 
-                let tooltip_height = d3.select('#tooltip')._groups[0][0].clientHeight;
-                let tooltip_width = d3.select('#tooltip')._groups[0][0].clientWidth;
-
-                let tooltip_offset_y = 6;
-                let tooltip_offset_x = 6;
-
-                //console.log('hover over', this, x, y);
-
-                //var sensor_id = this.id;
                 //extracted from the data-acp_id property embedded withing the html node
                 let sensor_id = this.dataset.acp_id;
 
@@ -176,14 +175,13 @@ class VizTools2 {
                 //make tooltip appear smoothly
                 self.tooltip_div.style('visibility', 'visible')
                     .transition()
-                    .duration(200)
+                    .duration(250)
                     .style("opacity", .9);
 
                 // Create API url for sensor reading AND metadata
-                //let readings_url = API_READINGS + 'get/' + sensor_id +'/?metadata=true';  OLD API
-                //before we used tfc app9
-                let readings_url = API_READINGS + 'get_feature/' + sensor_id + '/temperature/?metadata=true'
-                console.log('circle mouseover fetching', readings_url)
+                //TODO: we fetch for vdd as the common denominator value for all sensors
+                //which might be troublesome down the line if a particular sensor doesn't have a vdd measure
+                let readings_url = API_READINGS + 'get_feature/' + sensor_id + '/vdd/?metadata=true'
 
                 d3.json(readings_url, {
                     crossOrigin: "anonymous"
@@ -194,8 +192,6 @@ class VizTools2 {
                     let sensor_metadata = received_data["sensor_info"];
 
                     let reading_obj = '';
-                    // let parsed=self.parse_readings.parse_reading(reading,sensor_metadata);     OLD API
-                    //		console.log('parsed',parsed);
 
                     //check that the packet contains any readings
                     if (received_data['acp_error_msg'] != undefined) { //|| Object.keys(parsed).length<1 
@@ -225,9 +221,8 @@ class VizTools2 {
                         });
 
                     //if return msg is an object (or not a string), then we have full readings - generate d3 canvas and draw elements
-                    if ((typeof (reading_obj) != 'string')&&(reading_obj!=undefined)) {
+                    if ((typeof (reading_obj) != 'string') && (reading_obj != undefined)) {
 
-                        console.log('error?', reading_obj)
                         //attach a timestamp
                         //convert to string and slice off the unnecessary bits (GMT etc)
                         let reading_ts = self.make_date(reading_obj['acp_ts']).toString().slice(0, 25);
@@ -245,6 +240,7 @@ class VizTools2 {
             })
             .on("mouseout", function (d) {
 
+                //remove the tooltip on mouse out
                 self.tooltip_div.transition()
                     .duration(500)
                     //make invisible
@@ -254,6 +250,7 @@ class VizTools2 {
                         //remove old tooltip
                         d3.select(this).style('visibility', 'hidden')
                     })
+
 
             })
             // On a user 'click' of a sensor icon, jump to the 'sensor' page.
@@ -286,12 +283,18 @@ class VizTools2 {
             self.draw_cbar(readings, readings.all_features[feature_list[i]], '#tooltip');
         }
 
-        //heatmap is within try/catch since not all sensors have 8x8s
-        try {
-            self.draw_heatmap(readings, '#tooltip');
-        } catch (error) {
-            console.log('no elsys eye: ', error)
+
+        //detemine if it's an elsys eye device, then try to draw an 8x8 heatmap
+        if (meta['acp_type_id'] == "elsys-eye") {
+            //heatmap is within try/catch since not all sensors have 8x8s
+            try {
+                self.draw_heatmap(readings, '#tooltip');
+            } catch (error) {
+                console.log('no elsys 8x8 data - try updating your device firmware');
+                //console.log(error);
+            }
         }
+
 
     }
 
