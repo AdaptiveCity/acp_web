@@ -19,6 +19,7 @@
 <script type="text/javascript" src="{% static 'js/jsonpath.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/parse_readings.js' %}"></script>
 <script type="text/javascript" src="{% static '/js/VizTools2.js' %}"></script>
+<script type="text/javascript" src="{% static '/js/TemplateTools.js' %}"></script>
 <script type="text/javascript" src="{% static '/js/maths.js' %}"></script>
 
 <!-- LOAD APP SCRIPTS -->
@@ -76,7 +77,7 @@ Splash app
     </div>
 
     <div id='wrapped_ham'>
-        <a id='hamburger_link' onclick="openNav()">
+        <a id='hamburger_link' onclick="ttools.openNav()">
             <img id='hamburger_img' alt="hamburger_menu_icon" src="{% static 'images/burger.png' %}" />
             <!-- burger.png -->
         </a>
@@ -102,7 +103,7 @@ Splash app
     </div>
 
     <div id="mySidenav" class="sidenav">
-        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+        <a href="javascript:void(0)" class="closebtn" onclick="ttools.closeNav()">&times;</a>
 
         <!-- OUTERMOST WRAPPER FOR ALL BUTTONS -->
         <div class='all_buttons'>
@@ -140,18 +141,6 @@ Splash app
     </div>
 
 
-
-    <script>
-        /* Set the width of the side navigation to 250px */
-        function openNav() {
-            document.getElementById("mySidenav").style.width = "250px";
-        }
-
-        /* Set the width of the side navigation to 0 */
-        function closeNav() {
-            document.getElementById("mySidenav").style.width = "0";
-        }
-    </script>
     <!-- end MAIN CONTENT -->
 </div>
 
@@ -166,6 +155,9 @@ Splash app
 <!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
 {% block lazy_script %}
 <script>
+    //instantiate template tools (js functions that handle the navigation bar, etc)
+    let ttools=new TemplateTools();
+    
     console.log('lazy_script');
     var space_floor = new SpaceFloor();
     space_floor.init();

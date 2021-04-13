@@ -19,25 +19,6 @@
 <script type="text/javascript" src="{% static 'js/jsonpath.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/parse_readings.js' %}"></script>
 <script type="text/javascript" src="{% static '/js/VizTools2.js' %}"></script>
-<script type="text/javascript" src="{% static '/js/maths.js' %}"></script>
-
-<!-- LOAD APP SCRIPTS -->
-
-<!-- ssd files -->
-<link rel="stylesheet" type="text/css" href="{% static 'space/css/ssd_style.css' %}" />
-<script type="text/javascript" src="{% static 'space/js/sensor_status.js' %}"></script>
-<script type="text/javascript" src="{% static 'space/js/sensor_circle.js' %}"></script>
-
-
-<!-- Rain class  -->
-<script type='text/javascript' src="{% static 'space/js/heatmap.js' %}"></script>
-
-<!-- Splash class  -->
-<script type='text/javascript' src="{% static 'space/js/splash.js' %}"></script>
-
-<!-- RTMonitor tests -->
-<script type='text/javascript' src="{% static 'space/js/RTconnect.js' %}"></script>
-<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 
 <!-- building.js defines class SpaceBuilding -->
 <script type='text/javascript' src="{% static 'space/js/floor.js' %}"></script>
@@ -74,13 +55,6 @@ Spatial Building and Sensor Data: FLOOR VIEW
     <div class="breadcrumb">
         &gt; Floor {{ CRATE_ID }}
     </div>
-
-    <div id='wrapped_ham'>
-        <a id='hamburger_link' onclick="openNav()">
-            <img id='hamburger_img' alt="hamburger_menu_icon" src="{% static 'images/burger.png' %}" />
-            <!-- burger.png -->
-        </a>
-    </div>
 </div>
 {% endblock %}
 
@@ -97,155 +71,10 @@ Spatial Building and Sensor Data: FLOOR VIEW
 
     <div id="legend_and_buttons">
         <div id="legend_container"></div>
-
-        <!-- close LEGEND AND BUTTONS -->
     </div>
-
-    <div id="mySidenav" class="sidenav">
-        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-
-        <!-- OUTERMOST WRAPPER FOR ALL BUTTONS -->
-        <div class='all_buttons'>
-
-            <!-- MAIN SSD ACTIVATION -->
-            <div class="button_wrapper">
-                <!-- <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button> -->
-                <a id="show_ssd" class="button1">Sensor Status</a>
-            </div>
-
-            <div id='ssd_control' class='rt_status'><span id='ssd_rt_state'
-                    class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='ssd_rt'>RtM not connected</span></div>
-
-            <!-- RAIN CONFIGURATION/HIDE SETTINGS -->
-            <div class='hidden_divs'>
-                <!-- FORM FOR VIZ TYPE SELECTION -->
-
-                <form id="ssd_view_form">
-                    <label class='form_label' for="ssd_view">Select view:</label>
-                    <br>
-                    <select name="ssd_view" id="ssd_view_selection">
-                        <option value="sensors">Sensors</option>
-                        <option value="text">Text</option>
-                        <option value="both" selected="selected">Both</option>
-                    </select>
-                </form>
-                <br>
-
-            </div>
-
-            <!-- MAIN SPLASH ACTIVATION -->
-            <div class="button_wrapper">
-                <!-- <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button> -->
-                <a id="show_splash" class="button1">Splash</a>
-            </div>
-
-            <div id='splash_control' class='rt_status'><span id='splash_rt_state'
-                    class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='splash_rt'>RtM not connected</span></div>
-            <br>
-
-            <!-- MAIN RAIN ACTIVATION -->
-            <div class="button_wrapper">
-                <!-- <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button> -->
-                <a id="show_rain" class="button1">Rain</a>
-            </div>
-
-            <br>
-
-            <!-- RAIN CONFIGURATION/HIDE SETTINGS -->
-            <div class='hidden_divs'>
-
-                <!-- FEATURE SELECT -->
-                <div class="button_wrapper" id='heatmap_activation'>
-
-                    <!-- Real Time Subscription for Rain -->
-                    <div class="button_wrapper" id='heatmap_rt_con'>
-                        <a id="rain_rt_connect" class="button1">RT Subscribe</a>
-                    </div>
-                    <div id='rain_control' class='rt_status'><span id='rain_rt_state'
-                            class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='rain_rt'>RtM not connected</span>
-                    </div>
-
-                    <!-- I know the following should not be hardcoded, this is just for debug -->
-                    <form id="feature_form">
-                        <label class='form_label' for="features">Feature:</label>
-                        <br>
-                        <select name="features" id="features_list">
-                            <option value="co2">CO2</option>
-                            <option value="temperature" selected="selected">Temperature</option>
-                            <option value="humidity">Humidity</option>
-                            <option value="vdd">Battery</option>
-                            <option value="digital">Open/Close</option>                            
-                        </select>
-                        <br>
-                    </form>
-
-                </div>
-
-                <!-- CHANGE RESOLUTION -->
-                <div class="button_wrapper" id='heatmap_activation'>
-
-                    <!-- I know the following should not be hardcoded, this is just for debug -->
-                    <form id="resolution_form">
-                        <label class='form_label' for="resolution">Resolution:</label>
-                        <br>
-                        <select name="resolution" id="resolution_list">
-                            <option value="low">Low</option>
-                            <option value="medium" selected="selected">Medium</option>
-                            <option value="high">High</option>
-                        </select>
-                        <br>
-                    </form>
-
-                </div>
-
-                <br>
-
-                <!-- change sensor opacity slider -->
-                <div class="button_wrapper">
-                    <div class="slidecontainer">
-                        <label for="opacity_slider">Sensor Opacity:</label>
-                        <br>
-                        <input type="range" min="0" max="100" value="50" name='opacity_slider' class="slider"
-                            id="sensor_opacity">
-                    </div>
-                </div>
-
-                <br>
-
-                <!-- HIDE HEATMAP -->
-                <div class="button_wrapper" id='heatmap_activation'>
-                    <a id="reset" class="button1">Hide Heatmap</a>
-                </div>
-                <br>
-
-            </div>
-
-            <!-- reset zoom -->
-            <div class="button_wrapper" id='reset_zoom_wrapper'>
-                <a id="reset_zoom" class="button1">Reset Zoom</a>
-            </div>
-
-            <!-- close ALL_BUTTONS -->
-        </div>
-    </div>
-
-
-
-    <script>
-        /* Set the width of the side navigation to 250px */
-        function openNav() {
-            document.getElementById("mySidenav").style.width = "250px";
-        }
-
-        /* Set the width of the side navigation to 0 */
-        function closeNav() {
-            document.getElementById("mySidenav").style.width = "0";
-        }
-    </script>
-    <!-- end MAIN CONTENT -->
+    
 </div>
 
-<!-- </div> -->
 
 <!-- TOOLTIP - will be made visible/invisible as mouse moves over sensors -->
 <div id="tooltip" class="tooltip">
@@ -257,12 +86,8 @@ Spatial Building and Sensor Data: FLOOR VIEW
 {% block lazy_script %}
 <script>
     console.log('lazy_script');
-    let space_floor = new SpaceFloor();
+    var space_floor = new SpaceFloor();
     space_floor.init();
-
-    // let rt_heatmap= new HeatMap(space_floor);
-    // let rt_splash= new SplashMap(space_floor);
-    //let ssd= new SensorStatusDisplay(space_floor)
 </script>
 {% endblock %}
 <!-- lazy_script -->
