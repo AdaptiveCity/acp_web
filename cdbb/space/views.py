@@ -59,3 +59,19 @@ class FloorspaceView(LoginRequiredMixin, TemplateView):
             context['CRATE_IDS'] = settings.CRATE_IDS
             context['CRATE_ID'] = self.kwargs['crate_id']
             return context
+            
+#Heatmap view aka Rain
+class RainView(LoginRequiredMixin, TemplateView):
+    # Template from "acp_web/cdbb/space/templates/space/"
+    template_name = 'space/floor_rain.html'
+
+    # We override get_context_data to return the vars to embed in the template
+    def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            context['API_BIM'] = settings.API_BIM
+            context['API_SENSORS'] = settings.API_SENSORS
+            context['API_READINGS'] = settings.API_READINGS
+            context['API_SPACE'] = settings.API_SPACE
+            context['CRATE_IDS'] = settings.CRATE_IDS
+            context['CRATE_ID'] = self.kwargs['crate_id']
+            return context
