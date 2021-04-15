@@ -44,7 +44,7 @@ class SplashMap {
         parent.ripple_duration = 3500;
 
         //create a layer of svg masks so that splash ripples don't leave crate boundaries
-        parent.make_masks(parent);
+        parent.make_clips(parent);
 
         //do rtmonitor connect, telling which sensors to subscribe to
         parent.connect_rt(parent);
@@ -104,7 +104,7 @@ class SplashMap {
 
                     //check if the new message only contains a "motion" trigger event
                     let motion_trigger = true;
-                    let cooked = msg_data.payload_cooked;
+                    let cooked = msg.payload_cooked;
 
                     //if payload_cooked only has a single key and it is 'motion' or 'occupancy'
                     // (usually paired though) then we now 
@@ -154,42 +154,46 @@ class SplashMap {
 
     //creates a sublayer of masks so that splashes 
     //do not cross crate boundaries
-    make_masks(parent) {
+    make_clips(parent) {
 
-        //get the app_overlay layer and append a new sublayer for masks
+        //get the app_overlay layer and append a new sublayer for clippaths and splash animations
         const splash_canvas = d3.select("#app_overlay")
             .append("g")
-            .attr('id', 'heatmap_splash_layer');
+            .attr('id', 'heatmap_splash_layer')
 
         //append a defs layer for masks
-        const defs = splash_canvas.append("defs");
+        const defs = splash_canvas.append("defs")
 
         //add a mask for every crate;
         //here we iterate ovre all drawn BIM polygons and make 
         //a copy for each one as a mask polygon
-        d3.selectAll('polygon').nodes().forEach(crate => {
+        d3.selectAll('.crate').select('polygon').nodes().forEach(crate => {
 
-            //append masks to the defs layer
-            let mask = defs.append("mask")
+            //append clip paths to the defs layer
+            let clip_def = defs.append("clipPath")
                 .attr('pointer-events', 'none')
-                .attr("id", "mask_" + crate.id);
+                .attr("id", "clip_" + crate.id);
 
-            //copy current polygon infornation and save it be reused for mask polygons
+            //copy current polygon infornation and save it be reused for clip path polygons
             let polygon_points = crate.attributes.points.value.split(' '); //this creates a list of coordinates
             let polygon_transform = crate.attributes.transform.value;
             //the last element in the the list of polygon coordinates is an empty string, so we remove it
             polygon_points.pop();
 
-            //with the previous BIM polygon information, make its copy as a mask
+            //with the previous BIM polygon information, make its copy as a polygon clippath
             let crate_polygon =
-                splash_canvas.append("polygon")
+                clip_def.append("polygon")
                 .attr("points", polygon_points)
                 .attr("transform", polygon_transform)
                 .attr('pointer-events', 'none')
                 .attr('stroke-width', 0.01)
                 .attr("stroke", "black")
-                .attr("mask", "url(#mask_" + crate.id + ")") //pass the mask reference from above
-                .attr("fill", parent.splash_color) //determines what color the splash will look like
+
+            //g references for the layer that we will append drawn circles to
+            let clippy = splash_canvas
+                .append('g')
+                .attr("id", 'clipped_' + crate.id)
+                .attr("clip-path", "url(#clip_" + crate.id + ")") //pass the mask reference from above
         })
     }
 
@@ -226,30 +230,41 @@ class SplashMap {
             //calculate the finishing stroke for the splash's circle
             let stroke_finish = 1.5 / (parent.svg_scale * splash_index); //strokes take into account the svg scale
 
-            //create an expanding circle that will disappear when it finishes the animation
-            let circle =
-                d3.select("#mask_" + crate_id) //target the mask
-                .append("circle")
-                .attr("pointer-events", "none")
-                .attr("cx", position.x)
-                .attr("cy", position.y)
-                .attr("r", 0) //start as a circle with 0 radius
-                .style("stroke-width", stroke_start)
-                .style("fill", 'none')
-                .style('stroke', 'white') //make sure it's different from the mask color
-                .transition() //initiate the transition
-                .delay(splash_index * 400)
-                .duration(parent.ripple_duration)
-                .ease(d3.easeSin)
-                .attr("r", final_radius) //the final circle radius before dissapearing
-                .style("stroke-opacity", 0)
-                .style("stroke-width", stroke_finish)
-                .on("interrupt", function () {
-                    d3.select(this).remove(); //in case of an interrupt, cancel all and delete the circle
-                })
-                .on("end", function () {
-                    d3.select(this).remove(); //remove ripples
-                });
+            //create a delay for circles that create ripples
+            let ms_delay = splash_index * 400;
+
+            //a colors for splashes
+            let colorA = 'red';
+
+            //inline function definition for circles
+            let create_circle = function (delay_sample, color_sample) {
+                d3.select("#clipped_" + crate_id) //target the mask
+                    .append("circle")
+                    .attr("pointer-events", "none")
+                    .attr("cx", position.x)
+                    .attr("cy", position.y)
+                    .attr("r", 0) //start as a circle with 0 radius
+                    .style("stroke-width", stroke_start)
+                    .style("fill", 'none')
+                    .style('stroke', color_sample) //defines the colors of the circle for splash animation
+                    .attr('transform', position.transf)
+                    .transition() //initiate the transition
+                    .delay(delay_sample)
+                    .duration(parent.ripple_duration)
+                    .ease(d3.easeSin)
+                    .attr("r", final_radius) //the final circle radius before dissapearing
+                    .style("stroke-opacity", 0)
+                    .style("stroke-width", stroke_finish)
+                    .on("interrupt", function () {
+                        d3.select(this).remove(); //in case of an interrupt, cancel all and delete the circle
+                    })
+                    .on("end", function () {
+                        d3.select(this).remove(); //remove ripples
+                    });
+            }
+
+            //create circles by passing different delays and colors
+            create_circle(ms_delay, colorA);
         }
 
 
