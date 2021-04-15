@@ -964,7 +964,7 @@ class HeatMap {
         d3.selectAll('polygon').attr('class', 'g0-9')
 
         //target the app_overlay and append a sublayer for the heatmap
-        //let main_svg = d3.select('#app_overlay').append('g').attr('id', 'heatmap'); //parent.page_floor_svg;
+        let main_svg = d3.select('#app_overlay').append('g').attr('id', 'heatmap'); //parent.page_floor_svg;
 
         let h = parent.master.page_floor_svg.clientHeight;
         let w = parent.master.page_floor_svg.clientWidth;
@@ -1024,8 +1024,8 @@ class HeatMap {
                 let cell_spacing = -0.1; //spacing inbetween cells
 
                 //create a parent div for all crate lvl heatmaps
-                //let crate_div = main_svg.append('g').attr('id', element.id + '_heatmap').attr('class', 'heatmap_crates')
-                let crate_div = d3.select("#heatmap_clipped_" + element.id)
+                let crate_div = main_svg.append('g').attr('id', element.id + '_heatmap').attr('class', 'heatmap_crates')
+                //let crate_div = d3.select("#heatmap_clipped_" + element.id)
 
                 //iterate throught rows and columns and fill in the selected polygon with rectangles representing heatmap cells
                 for (let i = pol_left; i <= pol_left+pol_w+parent.rect_size; i += parent.rect_size) {
@@ -1040,8 +1040,8 @@ class HeatMap {
                         };
 
                         //determine if the cell is inside the polygon boundaries
-                        if(true){//defaulting to true
-                        //if (parent.jb_tools.inside(coords, polygon_points)) {
+                        //if(true){//defaulting to true
+                        if (parent.jb_tools.inside(coords, polygon_points)) {
 
                             rect_count++;
 
