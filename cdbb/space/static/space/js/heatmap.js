@@ -359,8 +359,6 @@ class HeatMap {
         //stop drawn floorplan polygons from interacting with the heatmap overlay
         d3.selectAll('polygon').attr('pointer-events', 'none');
 
-        parent.make_clips_heatmap(parent);
-
         //generate the heatmap grid
         parent.show_heatmap_original(parent)
     }
@@ -444,53 +442,6 @@ class HeatMap {
                 .append('g')
                 .attr("id", 'clipped_' + crate.id)
                 .attr("clip-path", "url(#clip_" + crate.id + ")") //pass the mask reference from above
-        })
-    }
-
-    //creates a sublayer of masks so that splashes 
-    //do not cross crate boundaries
-    make_clips_heatmap(parent) {
-
-        //get the app_overlay layer and append a new sublayer for clippaths and splash animations
-        const splash_canvas = d3.select("#app_overlay")
-            .append('g')
-            .attr('id', 'heatmap')
-            .append("g")
-            .attr('id', 'heatmap_clips')
-
-        //append a defs layer for masks
-        const defs = splash_canvas.append("defs")
-
-        //add a mask for every crate;
-        //here we iterate ovre all drawn BIM polygons and make 
-        //a copy for each one as a mask polygon
-        d3.selectAll('.crate').select('polygon').nodes().forEach(crate => {
-
-            //append clip paths to the defs layer
-            let clip_def = defs.append("clipPath")
-                .attr('pointer-events', 'none')
-                .attr("id", "heatmap_clip_" + crate.id);
-
-            //copy current polygon infornation and save it be reused for clip path polygons
-            let polygon_points = crate.attributes.points.value.split(' '); //this creates a list of coordinates
-            let polygon_transform = crate.attributes.transform.value;
-            //the last element in the the list of polygon coordinates is an empty string, so we remove it
-            polygon_points.pop();
-
-            //with the previous BIM polygon information, make its copy as a polygon clippath
-            let crate_polygon =
-                clip_def.append("polygon")
-                .attr("points", polygon_points)
-                .attr("transform", polygon_transform)
-                .attr('pointer-events', 'none')
-                .attr('stroke-width', 0.01)
-                .attr("stroke", "black")
-
-            //g references for the layer that we will append drawn circles to
-            let clippy = splash_canvas
-                .append('g')
-                .attr("id", 'heatmap_clipped_' + crate.id)
-                .attr("clip-path", "url(#heatmap_clip_" + crate.id + ")") //pass the mask reference from above
         })
     }
 
