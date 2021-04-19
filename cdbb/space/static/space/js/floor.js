@@ -490,7 +490,7 @@ class SpaceFloor {
         var sensors_api_url = API_SENSORS + "get_floor_number/" +
             parent.floor_coordinate_system + "/" + parent.floor_number + '/';
 
-            console.log('sensor url', sensors_api_url)
+        console.log('sensor url', sensors_api_url)
 
         console.log("get_sensors_metadata() ", sensors_api_url);
         request.open("GET", sensors_api_url);
@@ -542,7 +542,22 @@ class SpaceFloor {
     //displays sensor metadata on the side, when loaded a floorspace page
     show_sensor_metadata(parent) {
         let sensors = parent.sensor_metadata;
-        let txt = JSON.stringify(sensors, null, 2);
+        let sensor_list = {};
+
+        //trycatch in case some sensors don't have crate ids...
+        try {
+             //iterate through all sensors and only get crate-relevant ones
+        for (let acp_id in sensors) {
+            if (sensors[acp_id].crate_id == CRATE_ID) {
+                sensor_list[acp_id] = sensors[acp_id]
+            }
+        }
+  
+        } catch (error) {
+            console.log('error, no crate detected', error)
+        }
+     
+        let txt = JSON.stringify(sensor_list, null, 2);
 
         if (sensors == {}) {
             txt = 'no sensors are present in this crate';
