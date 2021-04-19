@@ -1,14 +1,9 @@
 "use strict"
 
 // Template provides:
-//   API_SENSORS - url for the sensors API
-//   SENSOR_LINK - page link for the "sensor" page, with string "acp_id" where the acp_id should go (see code below).
-//   SENSOR_LIST_LINK - page link for the "sensor list" page
+//   API_SENSOR_TYPES_INFO - all sensor type metadata
+//  { 'types': [ list of sensor type info for the sensors returned ] }
 //
-// Note the API call returns { 'types': [ list of sensor type info for the sensors returned ]
-//                           }
-// Currently the /list/ API is designed to return *all* the sensors, which will be fine for <1000 sensors, but
-// in future we will add a filter capability to the API.
 
 class SensorTypes {
 
@@ -30,22 +25,7 @@ class SensorTypes {
         });
 
         // Now we make the Sensors API call, to get the required data
-        parent.get_sensor_types(parent);
-    }
-
-    // Use API_SENSORS to retrieve requested sensor metadata
-    get_sensor_types(parent) {
-        let sensor_types_url = API_SENSORS + 'list_types/';
-        let request = new XMLHttpRequest();
-        request.overrideMimeType('application/json');
-
-        request.addEventListener("load", function () {
-          let sensor_types = JSON.parse(request.responseText)
-          parent.handle_sensor_types(parent, sensor_types);
-        });
-        console.log("sensor_types.js requesting "+sensor_types_url);
-        request.open("GET", sensor_types_url);
-        request.send();
+        parent.handle_sensor_types(parent, API_SENSOR_TYPES_INFO);
     }
 
     // Will handle the return jsonobject from the sensors API request

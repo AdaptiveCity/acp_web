@@ -2,20 +2,6 @@
 {% load static %}
 {% block title %}CDBB Sensor Type{% endblock %}
 
-{% block head %}
-    <!-- Our style sheets -->
-    <link rel="stylesheet" type="text/css" href="{% static 'sensor/css/sensor_type.css' %}" />
-
-    <!-- chart.js defines class SensorChart-->
-    <script type='text/javascript' src="{% static 'sensor/js/sensor_type.js' %}"></script>
-
-    <!-- Page local script -->
-    <script type="text/javascript">
-        var API_SENSORS = '{{ API_SENSORS }}';
-        var ACP_TYPE_ID = '{{ ACP_TYPE_ID }}'; // e.g. 'rad-ath'
-    </script>
-{% endblock %}
-
 {% block header_title %}
 Sensor Type {{ ACP_TYPE_ID }}
 {% endblock %}
@@ -28,26 +14,23 @@ Sensor Type {{ ACP_TYPE_ID }}
         </a>
     </div>
     <div class="breadcrumb">
-        &gt; <a href="{% url 'sensor_home' %}">Sensors</a>
+        &gt; <a href="{% url 'dm_home' %}">Data Management</a>
+    </div>
+    <div class="breadcrumb">
+        &gt; <a href="{% url 'dm_sensor_types' %}">Sensor Types</a>
     </div>
     <div class="breadcrumb">
         &gt; Sensor Type {{ ACP_TYPE_ID }}
     </div>
+    {% block sensor_type_breadcrumbs %}
+    {% endblock %}
 </div>
 {% endblock %}
 
 {% block content %}
+<!-- in block content of sensor_type.html -->
+{% include "data_management/includes/sensor_type_tabs.html" %}
 
-<div id="type_info">
-</div>
-
+    {% block sensor_type_content %}
+    {% endblock %}
 {% endblock %} <!-- end content -->
-
-<!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
-{% block lazy_script %}
-<script>
-    console.log('lazy_script');
-    let sensor_type = new SensorType();
-    sensor_type.init();
-</script>
-{% endblock %} <!-- lazy_script -->

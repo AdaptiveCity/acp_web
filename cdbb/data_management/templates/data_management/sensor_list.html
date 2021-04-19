@@ -4,18 +4,18 @@
 
 {% block head %}
     <!-- Our style sheets -->
-    <link rel="stylesheet" type="text/css" href="{% static 'sensor/css/sensor_list.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/sensor_list.css' %}" />
 
     <!-- chart.js defines class SensorChart-->
-    <script type='text/javascript' src="{% static 'sensor/js/sensor_list.js' %}"></script>
+    <script type='text/javascript' src="{% static 'data_management/js/sensor_list.js' %}"></script>
 
     <!-- Page local script -->
     <script type="text/javascript">
-        var API_SENSORS = "{{ API_SENSORS }}";
         var FEATURE = '{{ FEATURE }}'; // e.g. 'temperature'
         var SENSOR_LINK = "{% url 'dm_sensor' 'acp_id' %}"; // we will replace id as required
         var SENSOR_TYPE_LINK = "{% url 'dm_sensor_type' 'acp_type_id' %}";
-        var SENSOR_CHART_LINK = "{% url 'sensor_chart' 'acp_id' %}";
+        var API_SENSORS_INFO = JSON.parse('{{ API_SENSORS_INFO | escapejs }}');
+
     </script>
 {% endblock %}
 

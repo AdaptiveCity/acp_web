@@ -4,17 +4,17 @@
 
 {% block head %}
     <!-- Our style sheets -->
-    <link rel="stylesheet" type="text/css" href="{% static 'sensor/css/sensor_types.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/sensor_types.css' %}" />
 
     <!-- chart.js defines class SensorChart-->
-    <script type='text/javascript' src="{% static 'sensor/js/sensor_types.js' %}"></script>
+    <script type='text/javascript' src="{% static 'data_management/js/sensor_types.js' %}"></script>
 
     <!-- Page local script -->
     <script type="text/javascript">
         var API_SENSORS = "{{ API_SENSORS }}";
-        var SENSOR_LIST_LINK = "{% url 'sensor_list' %}";
-        var SENSOR_TYPE_LINK = "{% url 'sensor_type' 'acp_type_id' %}";
+        var SENSOR_TYPE_LINK = "{% url 'dm_sensor_type' 'acp_type_id' %}";
         var FEATURE = '{{ FEATURE }}'; // e.g. 'temperature'
+        var API_SENSOR_TYPES_INFO = JSON.parse('{{ API_SENSOR_TYPES_INFO | escapejs }}');
     </script>
 {% endblock %}
 

@@ -31,22 +31,7 @@ class SensorList {
         });
 
         // Now we make the Sensors API call, to get the required data
-        parent.get_sensor_list(parent);
-    }
-
-    // Use API_SENSORS to retrieve requested sensor metadata
-    get_sensor_list(parent) {
-        let sensor_list_url = API_SENSORS + 'list/?type_metadata=true';
-        let request = new XMLHttpRequest();
-        request.overrideMimeType('application/json');
-
-        request.addEventListener("load", function () {
-          let sensor_list = JSON.parse(request.responseText)
-          parent.handle_sensor_list(parent, sensor_list);
-        });
-        console.log("sensor_list.js requesting "+sensor_list_url);
-        request.open("GET", sensor_list_url);
-        request.send();
+        parent.handle_sensor_list(parent, API_SENSORS_INFO);
     }
 
     // Will handle the return jsonobject from the sensors API request

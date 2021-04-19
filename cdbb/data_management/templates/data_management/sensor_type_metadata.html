@@ -1,0 +1,44 @@
+{% extends "data_management/sensor_type.html" %}
+{% load static %}
+{% block title %}CDBB Sensor Type{% endblock %}
+
+{% block head %}
+    <!-- Our style sheets -->
+    <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/sensor_type.css' %}" />
+
+    <script type='text/javascript' src="{% static 'data_management/js/sensor_type.js' %}"></script>
+
+    <!-- Page local script -->
+    <script type="text/javascript">
+        var ACP_TYPE_ID = '{{ ACP_TYPE_ID }}'; // e.g. 'rad-ath'
+        var API_SENSOR_TYPE_INFO = JSON.parse('{{ API_SENSOR_TYPE_INFO | escapejs }}');
+
+    </script>
+{% endblock %}
+
+{% block header_title %}
+Sensor Type {{ ACP_TYPE_ID }}
+{% endblock %}
+
+{% block sensor_type_breadcrumbs %}
+    <div class="breadcrumb">
+        &gt; Metadata
+    </div>
+{% endblock %} <!-- end sensor_type_breadcrumbs -->
+
+
+{% block sensor_type_content %}
+<!-- in block sensor_type_content of sensor_type_metadata -->
+<div id="type_info">
+</div>
+
+{% endblock %} <!-- end content -->
+
+<!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
+{% block lazy_script %}
+<script>
+    console.log('lazy_script');
+    let sensor_type = new SensorType();
+    sensor_type.init();
+</script>
+{% endblock %} <!-- lazy_script -->

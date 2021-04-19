@@ -1,53 +1,53 @@
-{% extends "cdbb.html" %}
+{% extends "data_management/sensor_type.html" %}
 {% load static %}
-{% block title %}CDBB Sensor Type{% endblock %}
+{% block title %}{{ ACP_TYPE_ID }} History{% endblock %}
 
 {% block head %}
     <!-- Our style sheets -->
-    <link rel="stylesheet" type="text/css" href="{% static 'sensor/css/sensor_type.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/sensor_history.css' %}" />
 
-    <!-- chart.js defines class SensorChart-->
-    <script type='text/javascript' src="{% static 'sensor/js/sensor_type.js' %}"></script>
+    <script type='text/javascript' src="{% static 'data_management/js/sensor_type_history.js' %}"></script>
 
     <!-- Page local script -->
     <script type="text/javascript">
-        var API_SENSORS = '{{ API_SENSORS }}';
-        var ACP_TYPE_ID = '{{ ACP_TYPE_ID }}'; // e.g. 'rad-ath'
+        var ACP_TYPE_ID = '{{ ACP_TYPE_ID }}'; // e.g. 'elsys-co2'
+        var API_SENSOR_TYPE_HISTORY = JSON.parse('{{ API_SENSOR_TYPE_HISTORY|escapejs }}');
+
     </script>
 {% endblock %}
 
 {% block header_title %}
-Sensor Type {{ ACP_TYPE_ID }}
+Sensor Type History {{ ACP_TYPE_ID }}
 {% endblock %}
 
-{% block breadcrumbs %}
-<div class="breadcrumbs">
+{% block sensor_type_breadcrumbs %}
     <div class="breadcrumb">
-        <a href="{% url 'home' %}">
-            <img src="{% static 'images/home_icon.png' %}" />
-        </a>
+        &gt; History
     </div>
-    <div class="breadcrumb">
-        &gt; <a href="{% url 'sensor_home' %}">Sensors</a>
-    </div>
-    <div class="breadcrumb">
-        &gt; Sensor Type History {{ ACP_TYPE_ID }}
-    </div>
-</div>
-{% endblock %}
+{% endblock %} <!-- end sensor_breadcrumbs -->
 
-{% block content %}
+{% block sensor_type_content %}
 
-<div id="type_info">
+<div id="history">
+    <h2>Sensor Type History</h2>
+    <!-- javascript will add  sensor type history data -->
 </div>
 
-{% endblock %} <!-- end content -->
+<div id="popup">
+    <div id="popup_close">
+        <img src="{% static 'images/popup_close.png' %}"/>
+    </div>
+    <pre id="popup_content">
+    </pre>
+</div>
+
+{% endblock %} <!-- end sensor_content -->
 
 <!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
 {% block lazy_script %}
 <script>
     console.log('lazy_script');
-    let sensor_type = new SensorType();
-    sensor_type.init();
+    var sensor_type_history = new SensorTypeHistory();
+    sensor_type_history.init();
 </script>
 {% endblock %} <!-- lazy_script -->
