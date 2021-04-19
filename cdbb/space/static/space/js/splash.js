@@ -40,6 +40,8 @@ class SplashMap {
         parent.timer_short; //the socket has been unactive for a while -- color yellow
         parent.timer_long; //assume the socket connection was lost -- color red
 
+        parent.chrono_timer; //timer for chrono keeper that checks time since last msg received for all sensors
+
         //separate animation to see how long the 'raindrop' or 'splash' remains visible
         parent.ripple_duration = 3500;
 
@@ -52,6 +54,15 @@ class SplashMap {
         //get the contextual scaling for ripples
         parent.circle_radius = parent.master.sensor_radius;
         parent.svg_scale = parent.master.svg_scale;
+
+        //get the current time
+        parent.ts_initialised = Math.floor(Date.now() / 1000); //we need seconds so divide by thousant
+
+        //initialise the data structure that tracks time since last message
+        parent.init_chrono_keep(parent)
+
+        //make all sensors white by default
+        d3.selectAll('.sensor_node').style('fill', 'white')
     }
 
     //-----------------------------------------------------------------//
@@ -99,8 +110,12 @@ class SplashMap {
                 //Message successfully received
             case '2':
                 try {
-                    console.log('new_msg', msg)
                     let acp_id = msg.acp_id;
+
+                    //update chrono keeper
+                    //probably should be another function that simultaneoulsy changes the color of sensor if needed
+                    parent.update_chrono_keeper(parent, acp_id)
+                    //parent.chrono_keep[acp_id].last_msg = parseInt(msg.acp_ts);
 
                     //check if the new message only contains a "motion" trigger event
                     let motion_trigger = true;
@@ -115,6 +130,9 @@ class SplashMap {
                     }
 
                     parent.draw_splash(parent, acp_id, motion_trigger)
+
+                    console.log(acp_id, msg.payload_cooked)
+
                 } catch (err) {
                     console.log('something went wrong', err)
                 }
@@ -143,11 +161,86 @@ class SplashMap {
 
                 break;
 
+                //latest messages
+            case '3':
+                console.log('latest_messages', msg)
+
+                for (let i = 0; i < msg.length; i++) {
+                    let acp_ts = parseInt(msg[i].acp_ts);
+                    let acp_id = msg[i].acp_id;
+                    parent.chrono_keep[msg[i].acp_id] = {
+                        'acp_id': acp_id,
+                        'last_msg': acp_ts
+                    }
+                    let time_since_last = (parent.ts_initialised - acp_ts);
+                    //console.log(msg[i].acp_id, time_since_last, parent.ts_initialised, acp_ts)
+                }
+
+                //fill most recent data
+                parent.periodic_chrono_keeper(parent);
+                //set a an interval timer to know how long the messages haven't been coming in for
+                parent.chrono_timer = setInterval(function () {
+
+                    console.log('periodic check', new Date())
+                    parent.periodic_chrono_keeper(parent)
+
+                }, 1000 * 10); //every 30 seconds
+
             default:
                 break;
         }
     }
 
+    init_chrono_keep(parent) {
+        parent.chrono_keep = {}
+
+        //ignore if no predefined sensors list
+        if (parent.sub_list != undefined || parent.sub_list.length == 0) {
+            return
+        }
+
+        for (let i = 0; i < parent.sub_list; i++) {
+            parent.chrono_keep[parent.sub_list[i]] = {
+                'acp_id': parent.sub_list[i],
+                'last_msg': null
+            }
+        }
+
+
+    }
+
+    //chrono keeper should be an interval that routinely checks the list if msgs
+
+    update_chrono_keeper(parent, acp_id) {
+        let current_time = Math.floor(Date.now() / 1000);
+        parent.chrono_keep[acp_id].last_msg = current_time;
+
+        //update styling
+        d3.select('#' + acp_id + '_bim').transition().duration(1000).style('fill', 'green');
+
+
+    }
+
+    periodic_chrono_keeper(parent) {
+        let current_time = Math.floor(Date.now() / 1000);
+
+        for (let sensor_id in parent.chrono_keep) {
+            let last_message = parent.chrono_keep[sensor_id].last_msg;
+
+            let time_elapsed = current_time - last_message;
+
+            if (time_elapsed <= 10) {
+                d3.select('#' + sensor_id + '_bim').transition().duration(1000).style('fill', 'green');
+            } else if (time_elapsed > 10 && time_elapsed <= 180) {
+                d3.select('#' + sensor_id + '_bim').transition().duration(1000).style('fill', 'yellow');
+            } else if (time_elapsed > 180 && time_elapsed <= 300) {
+                d3.select('#' + sensor_id + '_bim').transition().duration(1000).style('fill', 'red');
+            } else {
+                console.log('something went wrong', time_elapsed)
+                d3.select('#' + sensor_id + '_bim').transition().duration(1000).style('fill', 'black');
+            }
+        }
+    }
     //------------------------------------------------------------------//
     //----------SVG modifications and drawing animations----------------//
     //------------------------------------------------------------------//

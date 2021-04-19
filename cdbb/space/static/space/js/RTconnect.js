@@ -21,11 +21,20 @@ class RTconnect {
             }
         };
 
-        this.connect_filter = {
+        this.subscribe_id = "subscribe_all";
+        this.req_latest_id = "request_all";
+
+        this.subscribe_msg = {
             "msg_type": "rt_subscribe",
-            "request_id": "abc",
-            "options": [ "previous_msg", "latest_msg" ]
+            "request_id": this.subscribe_id
         };
+
+        this.request_msg = {
+            "msg_type": "rt_request",
+            "request_id": this.req_latest_id,
+            "options": ["latest_records"]
+        };
+
 
         this.sub_list;
         this.parent_callback;
@@ -63,7 +72,13 @@ class RTconnect {
             self.sub_list = sensor_list
 
             //else filter it based on the selected sensors from the list
-            self.connect_filter['filters'] = [{
+            self.subscribe_msg['filters'] = [{
+                "key": "acp_id",
+                "test": "in",
+                "values": self.sub_list
+            }];
+
+            self.request_msg['filters'] = [{
                 "key": "acp_id",
                 "test": "in",
                 "values": self.sub_list
@@ -94,7 +109,8 @@ class RTconnect {
         self.socket.onmessage = function (e) {
             //console.log('new message');
             let msg = JSON.parse(e.data);
-            if (msg.msg_type != null && msg.msg_type == "rt_nok") {
+            let msg_type = msg.msg_type != null ? true : false;
+            if (msg_type && msg.msg_type == "rt_nok") {
                 console.log('Error', e.data);
                 //-------------------------------//
                 //----------do reconnect---------//
@@ -104,9 +120,14 @@ class RTconnect {
             //-------------------------------//
             //-----on successful connect-----//
             //-------------------------------//
-            if (msg.msg_type != null && msg.msg_type == "rt_connect_ok") {
-                console.log("Connected", self.connect_filter)
-                self.socket.send(JSON.stringify(self.connect_filter))
+            if (msg_type && msg.msg_type == "rt_connect_ok") {
+                console.log("Connected", self.subscribe_msg)
+
+                //ask for latest
+                self.socket.send(JSON.stringify(self.request_msg))
+                //subscribe to all incoming
+                self.socket.send(JSON.stringify(self.subscribe_msg))
+
                 callback && callback('1');
 
                 //after the connection was successful, we want to check that 
@@ -117,7 +138,7 @@ class RTconnect {
             //-------------------------------//
             //---------on regular msg--------//
             //-------------------------------//
-            if (msg.msg_type != null && msg.msg_type == "rt_data") {
+            if (msg_type && msg.msg_type == "rt_data" && msg.request_id == self.subscribe_id) {
                 let msg_data = JSON.parse(e.data).request_data[0]
 
                 //report the data back to the master
@@ -129,6 +150,18 @@ class RTconnect {
                 //launch a new timer to check if new messages have arrived in the window of 5 mins
                 self.check_since_last(self)
             }
+
+            //-----------------------------------//
+            //---------on request latest--------//
+            //----------------------------------//
+            if (msg_type && msg.msg_type == "rt_data" && msg.request_id == self.req_latest_id) {
+                //get the latest data
+                let all_request_data = JSON.parse(e.data).request_data
+
+                //report the data back to the master
+                callback && callback('3', all_request_data);
+            }
+
         };
     }
 
