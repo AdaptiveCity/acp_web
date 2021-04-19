@@ -103,7 +103,7 @@ class HeatMap {
 
         //declare the main colorscheme for the heatmap
         //https://observablehq.com/@d3/color-schemes ; set by 'd3.interpolate'+color-scheme
-        parent.color_scheme = d3.scaleSequential(d3.interpolateViridis) //interpolatePlasma//interpolateInferno
+        parent.color_scheme = d3.scaleSequential(d3.interpolatePlasma) //interpolateViridis//interpolatePlasma//interpolateInferno
 
         //make a global c_conf reference from the parent class;
         //this creates a colorbar svg on the right side of the screen
@@ -402,9 +402,9 @@ class HeatMap {
 
     //creates a sublayer of masks so that splashes 
     //do not cross crate boundaries
-    make_masks(parent) {
+    make_clips(parent) {
 
-        //get the app_overlay layer and append a new sublayer for masks
+        //get the app_overlay layer and append a new sublayer for clippaths and splash animations
         const splash_canvas = d3.select("#app_overlay")
             .append("g")
             .attr('id', 'heatmap_splash_layer')
@@ -415,29 +415,33 @@ class HeatMap {
         //add a mask for every crate;
         //here we iterate ovre all drawn BIM polygons and make 
         //a copy for each one as a mask polygon
-        d3.selectAll('polygon').nodes().forEach(crate => {
+        d3.selectAll('.crate').select('polygon').nodes().forEach(crate => {
 
-            //append masks to the defs layer
-            let mask = defs.append("mask")
+            //append clip paths to the defs layer
+            let clip_def = defs.append("clipPath")
                 .attr('pointer-events', 'none')
-                .attr("id", "mask_" + crate.id);
+                .attr("id", "clip_" + crate.id);
 
-            //copy current polygon infornation and save it be reused for mask polygons
+            //copy current polygon infornation and save it be reused for clip path polygons
             let polygon_points = crate.attributes.points.value.split(' '); //this creates a list of coordinates
             let polygon_transform = crate.attributes.transform.value;
             //the last element in the the list of polygon coordinates is an empty string, so we remove it
             polygon_points.pop();
 
-            //with the previous BIM polygon information, make its copy as a mask
+            //with the previous BIM polygon information, make its copy as a polygon clippath
             let crate_polygon =
-                splash_canvas.append("polygon")
+                clip_def.append("polygon")
                 .attr("points", polygon_points)
                 .attr("transform", polygon_transform)
                 .attr('pointer-events', 'none')
                 .attr('stroke-width', 0.01)
                 .attr("stroke", "black")
-                .attr("mask", "url(#mask_" + crate.id + ")") //pass the mask reference from above
-                .attr("fill", parent.splash_color) //determines what color the splash will look like
+
+            //g references for the layer that we will append drawn circles to
+            let clippy = splash_canvas
+                .append('g')
+                .attr("id", 'clipped_' + crate.id)
+                .attr("clip-path", "url(#clip_" + crate.id + ")") //pass the mask reference from above
         })
     }
 
@@ -474,35 +478,49 @@ class HeatMap {
             //calculate the finishing stroke for the splash's circle
             let stroke_finish = 1.5 / (parent.svg_scale * splash_index); //strokes take into account the svg scale
 
-            //create an expanding circle that will disappear when it finishes the animation
-            let circle =
-                d3.select("#mask_" + crate_id) //target the mask
-                .append("circle")
-                .attr("pointer-events", "none")
-                .attr("cx", position.x)
-                .attr("cy", position.y)
-                .attr("r", 0) //start as a circle with 0 radius
-                .style("stroke-width", stroke_start)
-                .style("fill", 'none')
-                .style('stroke', 'white') //I think this is optional as the color is determined by the mask
-                .transition() //initiate the transition
-                .delay(splash_index * 400)
-                .duration(parent.ripple_duration)
-                .ease(d3.easeSin)
-                .attr("r", final_radius) //the final circle radius before dissapearing
-                .style("stroke-opacity", 0)
-                .style("stroke-width", stroke_finish)
-                .on("interrupt", function () {
-                    d3.select(this).remove(); //in case of an interrupt, cancel all and delete the circle
-                })
-                .on("end", function () {
-                    d3.select(this).remove(); //remove ripples
-                });
+            //create two separate delays for pairs of circles that create ripples
+            let ms_delay = splash_index * 400;
+            let ms_delay2 = splash_index * 440;
+
+            //two colors, each opposite end of the colorscheme
+            let colorA = parent.color_scheme(-Infinity);
+            let colorB = parent.color_scheme(Infinity);
+
+            //inline function definition for circles
+            let create_circle = function (delay_sample, color_sample) {
+                d3.select("#clipped_" + crate_id) //target the mask
+                    .append("circle")
+                    .attr("pointer-events", "none")
+                    .attr("cx", position.x)
+                    .attr("cy", position.y)
+                    .attr("r", 0) //start as a circle with 0 radius
+                    .style("stroke-width", stroke_start)
+                    .style("fill", 'none')
+                    .style('stroke', color_sample) //defines the colors of the circle for splash animation
+                    .attr('transform', position.transf)
+                    .transition() //initiate the transition
+                    .delay(delay_sample)
+                    .duration(parent.ripple_duration)
+                    .ease(d3.easeSin)
+                    .attr("r", final_radius) //the final circle radius before dissapearing
+                    .style("stroke-opacity", 0)
+                    .style("stroke-width", stroke_finish)
+                    .on("interrupt", function () {
+                        d3.select(this).remove(); //in case of an interrupt, cancel all and delete the circle
+                    })
+                    .on("end", function () {
+                        d3.select(this).remove(); //remove ripples
+                    });
+            }
+            //create circles by passing different delays and colors
+            create_circle(ms_delay, colorA)
+            create_circle(ms_delay2, colorB)
         }
 
         //change the crate's heatmap by recoloring the cells in based on the new readings
         parent.update_crate_heatmap(parent, crate_id, acp_id);
     }
+
 
     //API requests to get sensors per crate
     //THIS IS DONE FOR THE INITIAL CONNECTION
@@ -630,7 +648,7 @@ class HeatMap {
 
                 if (new_value != old_value) {
                     any_updates = true;
-                    console.log('new', feature, 'is', new_value, '(was '+old_value+')')
+                    console.log('new', feature, 'is', new_value, '(was ' + old_value + ')')
                 }
 
                 parent.sensor_data[acp_id].payload[feature] = new_payload[feature];
@@ -890,9 +908,8 @@ class HeatMap {
     show_heatmap_original(parent) {
         console.time('[TOTAL TIME LAPSED ]');
 
-
-        let selected_feature = document.getElementById('features_list').value;
-        parent.get_min_max(parent, selected_feature);
+        //get the most recent minmax value range 
+        parent.get_min_max(parent, parent.feature);
 
         //make all polygons white so the underlying color does not interfere with the heatmap
         d3.selectAll('polygon').attr('class', 'g0-9')
@@ -926,39 +943,46 @@ class HeatMap {
         parent.consolidated_svg = consolidated_svg;
         //-----------------END-------------------//
 
-        let counter = 0;
         let crates_with_sensors_list = Object.keys(parent.crates_with_sensors);
 
         let rect_count = 0;
 
         //iterate through a list of polygons aka rooms and fill them with individual heatmaps
         d3.selectAll('polygon').nodes().forEach(element => {
-            // let bbox = element.getBoundingClientRect();
+
+            //check that the crate in question has sensors
             let has_sensors = crates_with_sensors_list.includes(element.id);
+
+            //if a crate has sensors and is not of type building or floor, then we fill it with cells(or mini rects)
+            //that will make up the pixels of our heatmap 
             if (element.dataset.crate_type != 'building' && element.dataset.crate_type != 'floor' && has_sensors) {
+
+                ///class name for cells follows the standart of CRATE_ID + _rect
                 let class_name = element.id + '_rect';
 
+                //get the bounding box for a crate polygon
                 let bbox = element.getBBox();
 
+                //acquire all points that make up the polygon
                 let polygon_points = element.points;
 
+                //get the coordinates (top left) and size (width, height)
                 let pol_h = bbox.height * scale;
                 let pol_w = bbox.width * scale;
                 let pol_top = bbox.y * scale;
                 let pol_left = bbox.x * scale;
 
-                let offset = 0;
+                let cell_spacing = -0.1; //spacing inbetween cells
 
                 //create a parent div for all crate lvl heatmaps
                 let crate_div = main_svg.append('g').attr('id', element.id + '_heatmap').attr('class', 'heatmap_crates')
+                //let crate_div = d3.select("#heatmap_clipped_" + element.id)
 
-                counter++;
                 //iterate throught rows and columns and fill in the selected polygon with rectangles representing heatmap cells
-                for (let i = pol_left; i < pol_w + pol_left; i += parent.rect_size) {
-                    for (let u = pol_top; u < pol_h + pol_top; u += parent.rect_size) {
+                for (let i = pol_left; i <= pol_left+pol_w+parent.rect_size; i += parent.rect_size) {
+                    for (let u = pol_top; u <=  pol_top +pol_h+parent.rect_size; u += parent.rect_size) {
 
-                        rect_count++;
-
+                        //declare the coordinates for a new cell
                         let coords = {
                             'x': i / scale,
                             'y': u / scale,
@@ -966,14 +990,18 @@ class HeatMap {
                             'width': w
                         };
 
+                        //determine if the cell is inside the polygon boundaries
+                        //if(true){//defaulting to true
                         if (parent.jb_tools.inside(coords, polygon_points)) {
+
+                            rect_count++;
 
                             let selected_crate = element.id;
 
-                            //get the location data + an offset so that the reactangle's coords are in the middle
+                            //get the location data + an offset so that the heatmap is aligned with master_svg
                             let loc = {
-                                x: ((i - parent.rect_size / 2) + x_offset).toFixed(1), //round
-                                y: ((u - parent.rect_size / 2) + y_offset).toFixed(1), //round
+                                x: (i - parent.rect_size / 2 + x_offset).toFixed(1), //round (i + x_offset).toFixed(1)
+                                y: (u - parent.rect_size / 2 + y_offset).toFixed(1), //round (u + y_offset).toFixed(1)
                                 cons_svg: consolidated_svg,
                                 scale: scale.toFixed(1) //round 
                             }
@@ -986,22 +1014,21 @@ class HeatMap {
                                 .append("rect")
                                 //.style('pointer-events', 'none')
                                 .attr('class', class_name)
-                                //.attr('id', element.id+'_'+loc.x+'_'+loc.y)
                                 .attr("x", function (d) {
                                     return loc.x;
                                 })
                                 .attr("y", function (d) {
                                     return loc.y;
                                 })
-                                .attr("width", parent.rect_size - offset)
-                                .attr("height", parent.rect_size - offset)
+                                .attr("width", parent.rect_size - cell_spacing)
+                                .attr("height", parent.rect_size - cell_spacing)
                                 .style('opacity', 0)
                                 .attr('stroke', 'none')
 
                                 //metadata attributes
                                 .attr('data-crate', selected_crate)
                                 .attr('data-loc', [loc.x, loc.y, loc.scale])
-                                .attr('data-type', selected_feature)
+                                .attr('data-type', parent.feature)
                                 .attr('data-value', cell_value)
 
                                 //mouse interactions
@@ -1036,15 +1063,16 @@ class HeatMap {
         //mandatory passing the consolidated svg object due to svg offsetting
         parent.attach_sensors(parent, results, consolidated_svg)
 
-        console.log('results', results)
+        //console.log('results', results)
 
         //debug only, "parent" now working somehow
         parent.set_colorbar(parent);
 
         console.timeEnd('[TOTAL TIME LAPSED ]');
+        console.log('total cells', rect_count)
 
         //adding another mask layer on top
-        parent.make_masks(parent);
+        parent.make_clips(parent);
     }
 
     hide_heatmap(parent) {
@@ -1244,7 +1272,7 @@ class HeatMap {
             }
         }
 
-        //console.log('value arr', value_array)
+        //console.log('value arr', value_array, feature, parent.feature)
 
         //reset the main variable
         parent.min_max_range = {
