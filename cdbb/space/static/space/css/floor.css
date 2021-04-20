@@ -1,4 +1,3 @@
-
 /* CSS for 'building' drawing */
 
 html {
@@ -11,11 +10,141 @@ body {
     margin: 0px;
 }
 
+a.button1 {
+    width: 75%;
+    height: auto;
+
+    display: block;
+    padding: 0.15em 0.5em;
+    border: 0.1em solid #FFFFFF;
+    margin: 0 0.3em 0.3em 0;
+    border-radius: 0.12em;
+    box-sizing: border-box;
+    text-decoration: none;
+    font-family: 'Roboto', sans-serif;
+    color: #FFFFFF;
+    font-size: 0.8em;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+a.button1:hover {
+    color: black;
+    /* #000000; */
+    background-color: rgb(241, 190, 72);
+}
+
+@media all and (max-width:30em) {
+    a.button1 {
+        display: block;
+        margin: 0.4em auto;
+    }
+}
+
+/* STYLING FOR SSD FORM ON THE FLOOR PAGE */
+.ssd_view_form {
+    margin: 0.1em 0em;
+}
+
+
+.ssd_view_form label {
+    font-family: 'Roboto', sans-serif;
+    font-style: normal;
+    font-size: 0.7em;
+    border-radius: 5%;
+}
+
+.ssd_view_form input {
+    opacity: 0.5;
+    width: 0.75em;
+    height: 0.75em;
+}
+
+/* SSD BUTTONS STYLING END */
+
+.slidecontainer {
+    font: 0.7em sans-serif;
+    width: 75%;
+}
+
+.slider {
+    margin: 0.35em 0em;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 7.5px;
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.5;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+}
+
+.slider:hover {
+    opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    background: rgb(241, 190, 72);
+    cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+    width: 15px;
+    height: 15px;
+    background: rgb(241, 190, 72);
+    cursor: pointer;
+}
+
+.hidden_divs {
+    width: 100%;
+    padding: 0em 0em 0em 2em;
+
+}
+
+select {
+    width: 75%;
+    padding: 0.35em 1.2em;
+    border: 0.1em solid #FFFFFF;
+    background-color: transparent;
+    margin: 0 0.3em 0.3em 0;
+    border-radius: 0.12em;
+    box-sizing: border-box;
+    text-decoration: none;
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.6em;
+    color: white;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+select:hover {
+    color: black;
+    /* #000000; */
+    background-color: rgb(241, 190, 72);
+}
+
+
 .drawing_div {
-    height: 90%;
-    width: 60%;
+    margin: 0em 0.25em 0em 1em;
     display: inline-block;
-    border: black dashed 1px;
+    height: 98%;
+    width: 86%;
+    display: inline-block;
+    border: Gray dashed 1px;
+}
+
+.main_content {
+    width: 100%;
+    /* matches the predefined height of drawing_div */
+    height: 86%;
+}
+
+#drawing_coords {
+    margin: 0em 1em 0em 1em;
 }
 
 .drawing_svg {
@@ -24,11 +153,124 @@ body {
     height: 100%;
 }
 
-#legend_and_buttons{
+#legend_and_buttons {
     display: inline-block;
     vertical-align: top;
 }
 
 .tooltip {
-    display: none;
+    position: absolute;
+    /* width: 100%; */
+    /* height: 28px; */
+    text-align: center;
+    padding: 2px;
+    font: 12px sans-serif;
+    background: rgb(108, 172, 228);
+    border: 0px;
+    border-radius: 8px;
+    pointer-events: none;
+    opacity: 0;
+    /* start with div invisible */
+}
+
+.rt_status {
+    margin: 0px;
+    padding: 0px;
+    font: 8px sans-serif;
+    /* background: rgb(108, 172, 228); */
+}
+
+.rt_state {
+    margin: 0px 2px 1px 6px;
+    /* padding: 1px 2px 1px 6px; */
+    font: 4px sans-serif;
+    /* background: rgb(108, 255, 150); green*/
+    background: rgb(255, 108, 150);
+}
+
+.form_label {
+    margin: 1px;
+    /* padding: 1px 2px 1px 6px; */
+    font: 0.7em sans-serif;
+}
+
+/* SIDE BAR CSS STYLING */
+/* The side navigation menu */
+.sidenav {
+    height: 100%;
+    /* 100% Full-height */
+    width: 0;
+    /* 0 width - change this with JavaScript */
+    position: fixed;
+    /* Stay in place */
+    z-index: 1;
+    /* Stay on top */
+    top: 0;
+    /* Stay at the top */
+    right: 0;
+    background-color: rgba(17, 94, 103, 0.5);
+
+    /* rgba(23, 76, 80, 0.486); Black */
+    overflow-x: hidden;
+    /* Disable horizontal scroll */
+    padding-top: 60px;
+    /* Place content 60px from the top */
+    transition: 0.5s;
+    /* 0.5 second transition effect to slide in the sidenav */
+}
+
+/* The navigation menu links */
+.closebtn {
+    position: absolute;
+    top: 0;
+    margin-right: 50px;
+    padding: 0.5em 0.5em;
+    font-size: 36px;
+    color: #f1f1f1;
+    display: block;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+/* When you mouse over the navigation links, change their color */
+.closebtn:hover {
+    color: rgb(241, 190, 72);
+}
+
+#hamburger_link:hover {
+    -webkit-transition: opacity 0.5s ease-in-out;
+    -moz-transition: opacity 0.5s ease-in-out;
+    transition: opacity 0.5s ease-in-out;
+    opacity: 1;
+}
+
+#hamburger_link {
+    opacity: 0.25;
+}
+
+.all_buttons {
+    margin: 1em;
+    bottom: 0;
+}
+
+/* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+@media screen and (max-height: 450px) {
+    .sidenav {
+        padding-top: 15px;
+    }
+
+    .sidenav a {
+        font-size: 18px;
+    }
+}
+
+#hamburger_img {
+    height: 2em;
+    width: 2em;
+}
+
+#wrapped_ham {
+    display: inline-block;
+    float: right;
+    margin: 0.25em;
 }
