@@ -17,7 +17,7 @@ class DMHomeView(TemplateView):
 ###############################################################
 
 class DMSensorView(LoginRequiredMixin, TemplateView):
-    template_name = 'data_management/sensor_chart.html'
+    template_name = 'data_management/sensor/sensor_chart.html'
 
     # We override get_context_data to return the vars to embed in the template
     # Positional args are in self.args.
@@ -61,7 +61,7 @@ class DMSensorView(LoginRequiredMixin, TemplateView):
             return context
 
 class DMSensorMetadataView(LoginRequiredMixin, TemplateView):
-    template_name = 'data_management/sensor_metadata.html'
+    template_name = 'data_management/sensor/sensor_metadata.html'
 
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
@@ -79,7 +79,7 @@ class DMSensorMetadataView(LoginRequiredMixin, TemplateView):
             return context
 
 class DMSensorHistoryView(LoginRequiredMixin, TemplateView):
-    template_name = 'data_management/sensor_history.html'
+    template_name = 'data_management/sensor/sensor_history.html'
 
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
@@ -103,7 +103,7 @@ class DMSensorHistoryView(LoginRequiredMixin, TemplateView):
 
 class DMSensorLocationView(LoginRequiredMixin, TemplateView):
 
-    template_name = 'data_management/sensor_location.html'
+    template_name = 'data_management/sensor/sensor_location.html'
 
     def get_context_data(self, **kwargs):
             acp_id = self.kwargs['acp_id']
@@ -154,7 +154,7 @@ class DMSensorLocationView(LoginRequiredMixin, TemplateView):
             return context
 
 class DMSensorEditView(LoginRequiredMixin, TemplateView):
-    template_name = 'data_management/sensor_edit.html'
+    template_name = 'data_management/sensor/sensor_edit.html'
 
     def post(self, request, acp_id):
             sensor_metadata_str = request.POST.get('plain_text_value','{ "msg": "get failed" }')
@@ -223,7 +223,7 @@ class DMSensorListView(LoginRequiredMixin, TemplateView):
 ###############################################################
 
 class DMSensorTypeView(LoginRequiredMixin, TemplateView):
-    template_name = 'data_management/sensor_type_metadata.html'
+    template_name = 'data_management/sensor_type/sensor_type_metadata.html'
 
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
@@ -241,7 +241,7 @@ class DMSensorTypeView(LoginRequiredMixin, TemplateView):
             return context
 
 class DMSensorTypeHistoryView(LoginRequiredMixin, TemplateView):
-    template_name = 'data_management/sensor_type_history.html'
+    template_name = 'data_management/sensor_type/sensor_type_history.html'
 
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
@@ -259,7 +259,7 @@ class DMSensorTypeHistoryView(LoginRequiredMixin, TemplateView):
             return context
 
 class DMSensorTypeEditView(LoginRequiredMixin, TemplateView):
-    template_name = 'data_management/sensor_type_edit.html'
+    template_name = 'data_management/sensor_type/sensor_type_edit.html'
 
     def post(self, request, acp_type_id):
             sensor_type_metadata_str = request.POST.get('plain_text_value','{ "msg": "get failed" }')

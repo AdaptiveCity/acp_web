@@ -1,6 +1,6 @@
-{% extends "data_management/sensor_type.html" %}
+{% extends "data_management/sensor/sensor.html" %}
 {% load static %}
-{% block title %}{{ ACP_TYPE_ID }} Edit{% endblock %}
+{% block title %}{{ ACP_ID }} Edit{% endblock %}
 
 {% block head %}
     <!-- Our style sheets -->
@@ -8,41 +8,41 @@
 
     <!-- JS files -->
     <script src="{% static 'js/jsonpath.js' %}" charset="utf-8"></script>
-    <script type='text/javascript' src="{% static 'data_management/js/sensor_type_edit.js' %}"></script>
+    <script type='text/javascript' src="{% static 'data_management/js/sensor_edit.js' %}"></script>
 
     <!-- Page local script -->
     <script type="text/javascript">
-        var ACP_TYPE_ID = '{{ ACP_TYPE_ID }}'; // e.g. 'elsys-co2'
+        var ACP_ID = '{{ ACP_ID }}'; // e.g. 'temperature'
         var ACP_PERSON_ID = '{{ user.get_username }}';
         var ACP_PERSON_NAME = '{{ user.get_full_name }}';
         // This link will embed the correct acp_id value as was given for this page
-        var SENSOR_TYPE_METADATA = JSON.parse('{{ SENSOR_TYPE_METADATA|escapejs }}');
+        var SENSOR_METADATA = JSON.parse('{{ SENSOR_METADATA|escapejs }}');
     </script>
 {% endblock %}
 
 {% block header_title %}
-Sensor Type Edit {{ ACP_TYPE_ID }}
+Sensor Edit {{ ACP_ID }}
 {% endblock %}
 
-{% block sensor_type_breadcrumbs %}
+{% block sensor_breadcrumbs %}
     <div class="breadcrumb">
         &gt; Edit
     </div>
 {% endblock %} <!-- end sensor_breadcrumbs -->
 
-{% block sensor_type_content %}
-<h2>Edit Sensor Type Metadata: {{ ACP_TYPE_ID }}. Editor {{ user.get_full_name }} ({{ user.get_username }})</h2>
+{% block sensor_content %}
+<h2>Edit Sensor Metadata: {{ ACP_ID }}. Editor {{ user.get_full_name }} ({{ user.get_username }})</h2>
 
 <form name="edit_form" id="edit_form"
     method="post"
-    action="{{ SENSOR_TYPE_METADATA_SAVE_URL }}"
+    action="{{ SENSOR_METADATA_SAVE_URL }}"
     spellcheck="false"
 >
 <!--    onsubmit="if(sensor.validate()){this.myDoc.value=oDoc.innerHTML;return true;}return false;"> -->
 {% csrf_token %}
     <input type="hidden" name="plain_text_value" id="plain_text_value" value='{"foo": "bar"}'>
     <div id="edit_box" contenteditable="true">
-        <p>No sensor type metadata available</p>
+        <p>No sensor metadata available</p>
     </div>
     <p>
         <button type="button" id="cancel_button">Cancel</button>
@@ -72,7 +72,7 @@ Sensor Type Edit {{ ACP_TYPE_ID }}
 {% block lazy_script %}
 <script>
     console.log('lazy_script');
-    var sensor_type = new SensorTypeEdit();
-    sensor_type.init();
+    var sensor = new SensorEdit();
+    sensor.init();
 </script>
 {% endblock %} <!-- lazy_script -->
