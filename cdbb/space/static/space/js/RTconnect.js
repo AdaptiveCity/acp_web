@@ -9,14 +9,14 @@ class RTconnect {
         //initiate socket
         this.socket;
 
-        this.connect_url = 'https://tfc-app9.cl.cam.ac.uk/rtmonitor/A/mqtt_acp' //'https://tfc-app6.cl.cam.ac.uk/rtmonitor/A/mqtt_acp';
+        this.connect_url = RTMONITOR_URI; // Served in Django template
 
         this.connect_msg = {
             "msg_type": "rt_connect",
             "client_data": {
-                "rt_client_name": "Socket Client",
-                "rt_client_id": "socket_client",
-                "rt_client_url": "https://tfc-app4.cl.cam.ac.uk/backdoor/socket-client/index.html",
+                "rt_client_name": "splash_rain",
+                "rt_client_id": "splash_rain",
+                "rt_client_url": window.location,
                 "rt_token": "888"
             }
         };
