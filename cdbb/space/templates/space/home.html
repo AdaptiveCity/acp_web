@@ -1,0 +1,60 @@
+{% extends "cdbb.html" %}
+{% load static %}
+{% block title %}CDBB Space Home{% endblock %}
+
+{% block head %}
+
+{% endblock %}
+
+{% block header_title %}
+Space
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <div class="breadcrumb">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/home_icon.png' %}" />
+        </a>
+    </div>
+    <div class="breadcrumb">
+         &gt; Space
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+        <div class="card_title">
+            Space
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'space_map' %}">
+                <img src="{% static 'space/images/space.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                Navigate a spatial view of our data starting with a map.
+            </div>
+        </div>
+</div>
+
+<div class="card">
+        <div class="card_title">
+            Rain
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'space_rain_home' %}">
+                <img src="{% static 'space/images/floor_rain.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                View real-time heatmaps updating with live sensor data.
+            </div>
+        </div>
+</div>
+
+{% endblock %}

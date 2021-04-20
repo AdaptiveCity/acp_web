@@ -9,14 +9,14 @@ class RTconnect {
         //initiate socket
         this.socket;
 
-        this.connect_url = 'https://tfc-app9.cl.cam.ac.uk/rtmonitor/A/mqtt_acp' //'https://tfc-app6.cl.cam.ac.uk/rtmonitor/A/mqtt_acp';
+        this.connect_url = RTMONITOR_URI; // Served in Django template
 
         this.connect_msg = {
             "msg_type": "rt_connect",
             "client_data": {
-                "rt_client_name": "Socket Client",
-                "rt_client_id": "socket_client",
-                "rt_client_url": "https://tfc-app4.cl.cam.ac.uk/backdoor/socket-client/index.html",
+                "rt_client_name": "rain",
+                "rt_client_id": "rain",
+                "rt_client_url": window.location,
                 "rt_token": "888"
             }
         };
@@ -109,7 +109,7 @@ class RTconnect {
                 self.socket.send(JSON.stringify(self.connect_filter))
                 callback && callback('1');
 
-                //after the connection was successful, we want to check that 
+                //after the connection was successful, we want to check that
                 //that the connection is stable every 15(?) minutes
                 self.check_periodic(self);
             }
@@ -160,7 +160,7 @@ class RTconnect {
 
     check_periodic(self) {
 
-        //check state of the connection 
+        //check state of the connection
         let socket_state = self.socket.readyState;
 
         console.log('connection state is', self.state_dict[socket_state], '(' + socket_state + ')');
@@ -175,7 +175,7 @@ class RTconnect {
             self.connect(self.parent_callback, self.sub_list)
         }
 
-        //else we continue as usual 
+        //else we continue as usual
 
         //set a periodic timer to check the state every 15mins
         self.periodic_timer = setTimeout(function () {
@@ -192,7 +192,7 @@ class RTconnect {
         self.last_msg_received = setTimeout(function () {
 
             console.log('5 mins passed since last msd, checking connection status', new Date())
-            //check state of the connection 
+            //check state of the connection
             let socket_state = self.socket.readyState;
 
             console.log('connection state is', self.state_dict[socket_state], '(' + socket_state + ')');

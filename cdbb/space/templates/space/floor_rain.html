@@ -41,6 +41,7 @@
     var CRATE_ID = '{{ CRATE_ID }}';
     var FLOORSPACE_LINK = '{% url "space_floorspace" "crate_id" %}';
     var SENSOR_LINK = "{% url 'sensor' 'acp_id' %}"; // we will replace id as required
+    var RTMONITOR_URI = '{{ RTMONITOR_URI }}';
 </script>
 {% endblock %}
 
@@ -56,10 +57,10 @@ Rain app
         </a>
     </div>
     <div class="breadcrumb">
-        &gt; <a href="{% url 'space_map' %}">Map</a>
+        &gt; <a href="{% url 'space_home' %}">Space</a>
     </div>
     <div class="breadcrumb">
-        &gt; Building
+        &gt; <a href="{% url 'space_rain_home' %}">Rain</a>
     </div>
     <div class="breadcrumb">
         &gt; Floor {{ CRATE_ID }}
@@ -190,7 +191,7 @@ Rain app
 
 
     <script>
-       
+
 
     </script>
     <!-- end MAIN CONTENT -->
