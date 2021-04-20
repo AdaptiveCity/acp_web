@@ -24,13 +24,28 @@ class SplashMap {
         parent.splash_color = 'red';
 
         //--------------------------------------//
-        //--------SET UP EVENT LISTENERS--------//
+        //-------TIME PERIODS AND COLORS--------//
         //--------------------------------------//
 
-        //connect to rt monitor
-        document.getElementById('rain_rt_connect').addEventListener('click', () => {
-            parent.disconnect_rt(parent)
-        });
+        //all time periods are in seconds, e.g. 5mins*60s=300s, 1*h *60mins *60s=3600s aka 1 hour.
+        parent.time_preset = {
+            'period_a': 0,
+            'period_b': 5 * 60, //5 minutes
+            'period_c': 1 * 60 * 60, //60minutes
+            'period_d': 24 * 60 * 60 //24 hours (or 86400 seconds to be precise)            
+        }
+
+        parent.color_preset = {
+            'period_ab': 'green', //most recent message <5mins
+            'period_bc': 'yellow', //message has arrive within 5-60mins
+            'period_cd': 'black', //message has arrived withing 1h-24hours
+            'period_dd': 'white' //unheard from for more than 24hours
+        }
+
+        //--------------------------------------//
+        //--------SET UP EVENT LISTENERS--------//
+        //--------------------------------------//
+        parent.setup_buttons(parent);
 
     }
 
@@ -62,7 +77,31 @@ class SplashMap {
         parent.init_chrono_keep(parent)
 
         //make all sensors white by default
-        d3.selectAll('.sensor_node').style('fill', 'white')
+        d3.selectAll('.sensor_node').style('fill', parent.color_preset['period_dd']) //make all sensors white
+    }
+
+    //--------------------------------------//
+    //--------SET UP EVENT LISTENERS--------//
+    //--------------------------------------//
+    setup_buttons(parent) {
+        //connect to rt monitor
+        document.getElementById('rain_rt_connect').addEventListener('click', () => {
+            parent.disconnect_rt(parent)
+        });
+
+        //create a legend
+        document.getElementById('toggle_legend').addEventListener('click', () => {
+            parent.set_legend(parent);
+
+            //change the inner html property of the button
+            document.getElementById('toggle_legend').innerHTML = 'Hide Legend'
+            //change the button so you toggle back
+            document.getElementById('toggle_legend').addEventListener('click', () => {
+                d3.select("#legend_svg").remove();
+            });
+
+
+        });
     }
 
     //-----------------------------------------------------------------//
@@ -178,48 +217,59 @@ class SplashMap {
 
                 //fill most recent data
                 parent.periodic_chrono_keeper(parent);
+
                 //set a an interval timer to know how long the messages haven't been coming in for
                 parent.chrono_timer = setInterval(function () {
 
-                    console.log('periodic check', new Date())
+                    console.log('updating sensor colors', new Date())
                     parent.periodic_chrono_keeper(parent)
 
-                }, 1000 * 10); //every 30 seconds
+                }, 1000 * parent.periodic_timer); //every 30 seconds
 
             default:
                 break;
         }
     }
 
+    //initialises the chrono_keeper data structure that tracks time for each sensor since its last message has been received
     init_chrono_keep(parent) {
-        parent.chrono_keep = {}
+
+        //create an empty object
+        parent.chrono_keep = {};
+
+        //declare how often we want to check for changes in the chrono_keep data structure
+        parent.periodic_timer = 30; //in seconds
 
         //ignore if no predefined sensors list
         if (parent.sub_list != undefined || parent.sub_list.length == 0) {
             return
         }
 
+        //iterate over the list of rt_con subscribtions 
+        //and fill a dict with acp_id and last_msg value(time elapsed since last msg)
         for (let i = 0; i < parent.sub_list; i++) {
             parent.chrono_keep[parent.sub_list[i]] = {
                 'acp_id': parent.sub_list[i],
                 'last_msg': null
             }
         }
-
-
     }
 
-    //chrono keeper should be an interval that routinely checks the list if msgs
-
+    //update the chrono keepr for a selected (acp_id) sensor
     update_chrono_keeper(parent, acp_id) {
+
+        //get the current time
         let current_time = Math.floor(Date.now() / 1000);
+
+        //update the dictionary entry related to the acp_id sensor with the most recent timestamp
         parent.chrono_keep[acp_id].last_msg = current_time;
 
-        //update styling
-        d3.select('#' + acp_id + '_bim').transition().duration(1000).style('fill', 'green');
+        //update styling to look green, or set to period color to be less than 5mins
+        d3.select('#' + acp_id + '_bim').transition().duration(1000).style('fill', parent.color_preset['period_ab']);
 
 
     }
+    //chrono keeper should be an interval that routinely checks the list if msgs
 
     periodic_chrono_keeper(parent) {
         let current_time = Math.floor(Date.now() / 1000);
@@ -227,17 +277,36 @@ class SplashMap {
         for (let sensor_id in parent.chrono_keep) {
             let last_message = parent.chrono_keep[sensor_id].last_msg;
 
+            //calculate the time since the last message has been received
             let time_elapsed = current_time - last_message;
 
-            if (time_elapsed <= 10) {
-                d3.select('#' + sensor_id + '_bim').transition().duration(1000).style('fill', 'green');
-            } else if (time_elapsed > 10 && time_elapsed <= 180) {
-                d3.select('#' + sensor_id + '_bim').transition().duration(1000).style('fill', 'yellow');
-            } else if (time_elapsed > 180 && time_elapsed <= 300) {
-                d3.select('#' + sensor_id + '_bim').transition().duration(1000).style('fill', 'red');
-            } else {
-                console.log('something went wrong', time_elapsed)
-                d3.select('#' + sensor_id + '_bim').transition().duration(1000).style('fill', 'black');
+            //time elapsed is more than (OR EQUAL TO) 0s and less than (OR EQUAL TO) 5minutes
+            if (time_elapsed >= parent.time_preset['period_a'] && time_elapsed <= parent.time_preset['period_b']) {
+                //color the sensor the preset for period_ab, aka green
+                d3.select('#' + sensor_id + '_bim').transition().duration(1000).style('fill', parent.color_preset['period_ab']);
+            }
+
+            //time elapsed is more than 5mins and less than 1 hour
+            else if (time_elapsed > parent.time_preset['period_b'] && time_elapsed <= parent.time_preset['period_c']) {
+                //color the sensor the preset for period_bc, aka yellow
+                d3.select('#' + sensor_id + '_bim').transition().duration(1000).style('fill', parent.color_preset['period_bc']);
+            }
+
+            //time elapsed is more than 1hour and less than 24hours
+            else if (time_elapsed > parent.time_preset['period_c'] && time_elapsed <= parent.time_preset['period_d']) {
+                //color the sensor the preset for period_cd, aka black
+                d3.select('#' + sensor_id + '_bim').transition().duration(1000).style('fill', parent.color_preset['period_cd']);
+            }
+
+            //time elapsed is more than 24hours
+            else if (time_elapsed > parent.time_preset['period_d']) {
+                console.log(sensor_id, 'is possibly dead, last heard ', time_elapsed, ' seconds ago')
+                //color the sensor the preset for period_dd, aka white
+                d3.select('#' + sensor_id + '_bim').transition().duration(1000).style('fill', parent.time_preset['period_dd']);
+            }
+            //something went wrong
+            else {
+                console.log('something went wrong', sensor_id, time_elapsed)
             }
         }
     }
@@ -362,6 +431,85 @@ class SplashMap {
 
 
     }
+
+    //---------------------------------//
+    //-------CREATE A LEGEND-----------//
+    //---------------------------------//
+
+    //--------------LEGEND definition---------------//
+    set_legend(parent) {
+
+        d3.select("#legend_svg").remove();
+
+        //Defines legend container size, appends it
+        parent.legend_svg = d3.select("#legend_container")
+            .append("svg")
+            .attr("id", "legend_svg")
+            .style("width", 100)
+            .style("height", 225);
+
+        parent.legend = parent.legend_svg.selectAll('g.legendEntry')
+            .data(Object.values(parent.color_preset)) //a list of color presets
+            .enter()
+            .append('g').attr('class', 'legendEntry');
+
+        //Adds small rectangles to the legend
+        parent.legend
+            .append('rect')
+            .attr("x", 20)
+            .attr("y", function (d, i) {
+                return i * 25 + 5;
+            })
+            .attr("width", 15)
+            .attr("height", 15)
+            .style("fill-opacity", parent.master.sensor_opacity)
+            .style("fill", function (d, i) {
+                //color rectangles based on the order provided in the color_preset variable
+                return Object.values(parent.color_preset)[i]
+            })
+            .style("stroke", "black")
+            .style("stroke-width", 0.5)
+
+
+        //Adds text to legend to show the extent
+        parent.legend
+            .append('text')
+            .attr("x", 40) //leaves space after the <rect>
+            .attr("y", function (d, i) {
+                return i * 25 + 5;
+            })
+            .attr("dy", "0.8em") //place text one line *below* the x,y point
+            .text(function (d, i) {//determines the legend values
+                //get a list of time presets corresponding to diffferent colors in color_preset
+                let time_preset_list = Object.values(parent.time_preset);
+
+                //determine if hours or minutes
+                let time_notation = time_preset_list[i] / 60 >= 60 ? 'h' : 'm';
+                let time_divider = time_preset_list[i] / 60 >= 60 ? 3600 : 60;
+
+                //first case will usually be in minutes
+                if (i == 0) {
+                    return '< ' + time_preset_list[i + 1] / time_divider + time_notation;
+                }
+                //last one will probably be in hours
+                else if (i == time_preset_list.length - 1) {
+                    return '> ' + time_preset_list[i] / time_divider + time_notation;
+                } 
+                //all the rest can vary between minutes and hours
+                else {
+                    //determine if hours or minutes for a range of data
+                    let time_notation_sec = time_preset_list[i] / 60 >= 60 ? 'h' : 'm';
+                    let time_divider_sec = time_preset_list[i] / 60 >= 60 ? 3600 : 60;
+
+                    return time_preset_list[i] / time_divider + time_notation + ' - ' + time_preset_list[i + 1] / time_divider_sec + time_notation_sec;
+                }
+
+            })
+            .style("font-family", "sans-serif")
+            .style("font-size", "10px");
+    } // end set_legend
+
+
 
     //-----------------------------------------------------------------//
     //------------------------FAKE DEPLOYMENT--------------------------//
