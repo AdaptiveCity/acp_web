@@ -74,6 +74,7 @@ class RainView(LoginRequiredMixin, TemplateView):
             context['API_SPACE'] = settings.API_SPACE
             context['CRATE_IDS'] = settings.CRATE_IDS
             context['CRATE_ID'] = self.kwargs['crate_id']
+            context['RTMONITOR_URI'] = 'https://cdbb.uk/rtmonitor/A/mqtt_acp' #DEBUG this will move to settings.py
             return context
 
 class SplashView(LoginRequiredMixin, TemplateView):
@@ -87,8 +88,8 @@ class SplashView(LoginRequiredMixin, TemplateView):
             context['API_SENSORS'] = settings.API_SENSORS
             context['API_READINGS'] = settings.API_READINGS
             context['API_SPACE'] = settings.API_SPACE
-            context['CRATE_IDS'] = settings.CRATE_IDS
             context['CRATE_ID'] = self.kwargs['crate_id']
+            context['RTMONITOR_URI'] = 'https://cdbb.uk/rtmonitor/A/mqtt_acp' #DEBUG this will move to settings.py
             return context
 
 
@@ -103,6 +104,5 @@ class FloordebugView(LoginRequiredMixin, TemplateView):
             context['API_SENSORS'] = settings.API_SENSORS
             context['API_READINGS'] = settings.API_READINGS
             context['API_SPACE'] = settings.API_SPACE
-            context['CRATE_IDS'] = settings.CRATE_IDS
             context['CRATE_ID'] = self.kwargs['crate_id']
             return context
