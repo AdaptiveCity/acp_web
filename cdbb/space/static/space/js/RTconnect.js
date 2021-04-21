@@ -130,7 +130,7 @@ class RTconnect {
 
                 callback && callback('1');
 
-                //after the connection was successful, we want to check that 
+                //after the connection was successful, we want to check that
                 //that the connection is stable every 15(?) minutes
                 self.check_periodic(self);
             }
@@ -193,7 +193,7 @@ class RTconnect {
 
     check_periodic(self) {
 
-        //check state of the connection 
+        //check state of the connection
         let socket_state = self.socket.readyState;
 
         console.log('connection state is', self.state_dict[socket_state], '(' + socket_state + ')');
@@ -208,7 +208,7 @@ class RTconnect {
             self.connect(self.parent_callback, self.sub_list)
         }
 
-        //else we continue as usual 
+        //else we continue as usual
 
         //set a periodic timer to check the state every 15mins
         self.periodic_timer = setTimeout(function () {
@@ -225,7 +225,7 @@ class RTconnect {
         self.last_msg_received = setTimeout(function () {
 
             console.log('5 mins passed since last msd, checking connection status', new Date())
-            //check state of the connection 
+            //check state of the connection
             let socket_state = self.socket.readyState;
 
             console.log('connection state is', self.state_dict[socket_state], '(' + socket_state + ')');

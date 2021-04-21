@@ -1,0 +1,66 @@
+{% extends "cdbb.html" %}
+{% load static %}
+{% block title %}CDBB Rain Home{% endblock %}
+
+{% block head %}
+
+{% endblock %}
+
+{% block header_title %}
+Space
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <div class="breadcrumb">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/home_icon.png' %}" />
+        </a>
+    </div>
+    <div class="breadcrumb">
+         &gt;
+        <a href="{% url 'space_home' %}">
+            Space
+        </a>
+    </div>
+    <div class="breadcrumb">
+         &gt; Rain
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+        <div class="card_title">
+            WGB Ground Floor
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'space_rain' 'GF' %}">
+                <img src="{% static 'space/images/floor_rain.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                View real-time heatmaps updating with live sensor data.
+            </div>
+        </div>
+</div>
+
+<div class="card">
+        <div class="card_title">
+            WGB First Floor
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'space_rain' 'FF' %}">
+                <img src="{% static 'space/images/floor_rain.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                View real-time heatmaps updating with live sensor data.
+            </div>
+        </div>
+</div>
+
+{% endblock %}
