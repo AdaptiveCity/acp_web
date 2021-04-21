@@ -73,11 +73,6 @@ class RainHomeView(TemplateView):
     # Template "acp_web/cdbb/space/templates/space/rain_home.html"
     template_name = 'space/rain_home.html'
 
-    # We override get_context_data to return the vars to embed in the template
-    def get_context_data(self, **kwargs):
-            context = super().get_context_data(**kwargs)
-            return context
-
 #Heatmap view aka Rain
 class RainView(LoginRequiredMixin, TemplateView):
     # Template from "acp_web/cdbb/space/templates/space/"
@@ -93,6 +88,10 @@ class RainView(LoginRequiredMixin, TemplateView):
             context['CRATE_ID'] = self.kwargs['crate_id']
             context['RTMONITOR_URI'] = 'https://cdbb.uk/rtmonitor/A/mqtt_acp' #DEBUG this will move to settings.py
             return context
+
+class SplashHomeView(TemplateView):
+    # Template "acp_web/cdbb/space/templates/space/splash_home.html"
+    template_name = 'space/splash_home.html'
 
 #Splash view aka draw ripples and check which sensors are (in)active
 class SplashView(LoginRequiredMixin, TemplateView):

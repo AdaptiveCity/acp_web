@@ -1,0 +1,98 @@
+{% extends "cdbb.html" %}
+{% load static %}
+{% block title %}CDBB Splash Home{% endblock %}
+
+{% block head %}
+
+{% endblock %}
+
+{% block header_title %}
+Space
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <div class="breadcrumb">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/home_icon.png' %}" />
+        </a>
+    </div>
+    <div class="breadcrumb">
+         &gt;
+        <a href="{% url 'space_home' %}">
+            Space
+        </a>
+    </div>
+    <div class="breadcrumb">
+         &gt; Splash
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+        <div class="card_title">
+            WGB Ground Floor
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'space_splash' 'GF' %}">
+                <img src="{% static 'space/images/floor_splash.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                View sensor status with live sensor data.
+            </div>
+        </div>
+</div>
+
+<div class="card">
+        <div class="card_title">
+            WGB First Floor
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'space_splash' 'FF' %}">
+                <img src="{% static 'space/images/floor_splash.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                View sensor status with live sensor data.
+            </div>
+        </div>
+</div>
+
+<div class="card">
+        <div class="card_title">
+            Lockdown Lab
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'space_splash' 'll_0' %}">
+                <img src="{% static 'space/images/floor_splash.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                View sensor status with live sensor data.
+            </div>
+        </div>
+</div>
+
+<div class="card">
+        <div class="card_title">
+            VLAB
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'space_splash' 'VL0' %}">
+                <img src="{% static 'space/images/floor_splash.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                View sensor status with live sensor data.
+            </div>
+        </div>
+</div>
+
+{% endblock %}
