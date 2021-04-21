@@ -1,0 +1,44 @@
+{% extends "data_management/bim/bim.html" %}
+{% load static %}
+{% block title %}CDBB BIM Object{% endblock %}
+
+{% block head %}
+    <!-- Our style sheets -->
+    <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/metadata.css' %}" />
+
+    <script type='text/javascript' src="{% static 'data_management/js/bim_metadata.js' %}"></script>
+
+    <!-- Page local script -->
+    <script type="text/javascript">
+        var CRATE_ID = '{{ CRATE_ID }}'; // e.g. 'FE11'
+        var API_BIM_CRATE_INFO = JSON.parse('{{ API_BIM_CRATE_INFO | escapejs }}');
+
+    </script>
+{% endblock %}
+
+{% block header_title %}
+BIM Object {{ CRATE_ID }}
+{% endblock %}
+
+{% block bim_breadcrumbs %}
+    <div class="breadcrumb">
+        &gt; Metadata
+    </div>
+{% endblock %} <!-- end bim_breadcrumbs -->
+
+
+{% block bim_content %}
+<!-- in block bim_content of bim_metadata -->
+<div id="metadata">
+</div>
+
+{% endblock %} <!-- end content -->
+
+<!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
+{% block lazy_script %}
+<script>
+    console.log('lazy_script');
+    let bim_metadata = new BIMMetadata();
+    bim_metadata.init();
+</script>
+{% endblock %} <!-- lazy_script -->

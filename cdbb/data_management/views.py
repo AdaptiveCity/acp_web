@@ -320,3 +320,66 @@ class DMSensorTypesView(TemplateView):
                 print("DMSensorTypesView no feature",kwargs)
 
             return context
+
+###############################################################
+###############################################################
+#           BIM Objects                                       #
+###############################################################
+###############################################################
+
+class DMBIMHomeView(TemplateView):
+    template_name = 'data_management/bim/bim_home.html'
+
+class DMBIMMetadataView(LoginRequiredMixin, TemplateView):
+    template_name = 'data_management/bim/bim_metadata.html'
+
+    def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            crate_id = self.kwargs['crate_id']
+            context['CRATE_ID'] = crate_id
+
+            response = requests.get(settings.API_BIM + 'get/' + crate_id + '/')
+            try:
+                bim_metadata = response.json()
+            except json.decoder.JSONDecodeError:
+                context["API_BIM_CRATE_INFO"] = f'{{ "acp_error": "BIM metadata for {crate_id} unavailable" }}'
+                return context
+
+            context['API_BIM_CRATE_INFO'] = json.dumps(bim_metadata)
+            return context
+
+
+class DMBIMLocationView(TemplateView):
+    template_name = 'data_management/bim/bim_location.html'
+
+    def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            crate_id = self.kwargs['crate_id']
+
+            # Get crate floor_number and system
+            response = requests.get(settings.API_BIM+f'get_xyzf/{crate_id}/0/')
+            bim_info = response.json()
+
+            floor_number = bim_info[crate_id]["acp_location_xyz"]["f"];
+            system = bim_info[crate_id]["acp_location"]["system"]
+
+            # Get metadata for all sensors in the same crate (including selected sensor)
+            response = requests.get(settings.API_SENSORS+f'get_bim/{system}/{crate_id}/')
+            sensors_info = response.json()
+
+            # Get floor SVG
+            response = requests.get(settings.API_SPACE+f'get_floor_number_json/{system}/{floor_number}/')
+            space_info = response.json()
+
+            context['CRATE_ID'] = crate_id
+            context['API_BIM_INFO'] = json.dumps(bim_info)
+            context['API_SENSORS_INFO'] = json.dumps(sensors_info)
+            context['API_SPACE_INFO'] = json.dumps(space_info)
+
+            return context
+
+class DMBIMHistoryView(TemplateView):
+    template_name = 'data_management/bim/bim_home.html'
+
+class DMBIMEditView(TemplateView):
+    template_name = 'data_management/bim/bim_home.html'

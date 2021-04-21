@@ -1,0 +1,14 @@
+<div class="contextual_links">
+    {% if '/bim/' in request.path %}<div class="contextual_link_active">{% else %}<div class="contextual_link">{% endif %}
+        <a href="{% url 'dm_bim' crate_id %}">BIM Object</a>
+    </div>
+    {% if '/bim_location/' in request.path %}<div class="contextual_link_active">{% else %}<div class="contextual_link">{% endif %}
+        <a href="{% url 'dm_bim_location' crate_id %}">Location</a>
+    </div>
+    {% if '/bim_history/' in request.path %}<div class="contextual_link_active">{% else %}<div class="contextual_link">{% endif %}
+        <a href="{% url 'dm_bim_history' crate_id %}">History</a>
+    </div>
+    {% if '/bim_edit/' in request.path %}<div class="contextual_link_active">{% else %}<div class="contextual_link">{% endif %}
+        <a href="{% url 'dm_bim_edit' crate_id %}">Edit</a>
+    </div>
+</div><!-- end contextual_links -->

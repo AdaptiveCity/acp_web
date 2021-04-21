@@ -1,0 +1,50 @@
+{% extends "cdbb.html" %}
+{% load static %}
+{% block title %}CDBB Data Management BIM{% endblock %}
+
+{% block head %}
+
+{% endblock %}
+
+{% block header_title %}
+Data Management BIM
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <div class="breadcrumb">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/home_icon.png' %}" />
+        </a>
+    </div>
+    <div class="breadcrumb">
+        <a href="{% url 'dm_home' %}">
+            &gt; Data Management
+        </a>
+    </div>
+    <div class="breadcrumb">
+         &gt; BIM Objects
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+        <div class="card_title">
+            BIM Object Test: FE11
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'dm_bim' 'FE11' %}">
+                <img src="{% static 'data_management/images/sensor_data_management.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                This is just a test
+            </div>
+        </div>
+</div>
+
+
+{% endblock %}

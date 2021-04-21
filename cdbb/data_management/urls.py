@@ -2,8 +2,12 @@
 from django.urls import path
 
 from .views import DMHomeView
+# Sensors:
 from .views import DMSensorListView, DMSensorView, DMSensorLocationView, DMSensorMetadataView, DMSensorEditView, DMSensorHistoryView
+# Sensor Types:
 from .views import DMSensorTypeView, DMSensorTypesView, DMSensorTypeEditView, DMSensorTypeHistoryView
+# BIM Objects
+from .views import DMBIMHomeView, DMBIMMetadataView, DMBIMLocationView, DMBIMHistoryView, DMBIMEditView
 
 urlpatterns = [
     path('home/', DMHomeView.as_view(), name='dm_home'),
@@ -18,5 +22,13 @@ urlpatterns = [
     path('sensor_type/<acp_type_id>/', DMSensorTypeView.as_view(), name='dm_sensor_type'),
     path('sensor_type_edit/<acp_type_id>/', DMSensorTypeEditView.as_view(), name='dm_sensor_type_edit'),
     path('sensor_type_history/<acp_type_id>/', DMSensorTypeHistoryView.as_view(), name='dm_sensor_type_history'),
-    path('sensor_types/', DMSensorTypesView.as_view(), name='dm_sensor_types')
+    path('sensor_types/', DMSensorTypesView.as_view(), name='dm_sensor_types'),
+
+    path('bim_home/', DMBIMHomeView.as_view(), name='dm_bim_home'),
+    path('bim/<crate_id>/', DMBIMMetadataView.as_view(), name='dm_bim'),
+    path('bim_location/<crate_id>/', DMBIMLocationView.as_view(), name='dm_bim_location'),
+    path('bim_history/<crate_id>/', DMBIMHistoryView.as_view(), name='dm_bim_history'),
+    path('bim_edit/<crate_id>/', DMBIMEditView.as_view(), name='dm_bim_edit')
+
+
 ]
