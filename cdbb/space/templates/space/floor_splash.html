@@ -1,0 +1,181 @@
+{% extends "cdbb.html" %}
+{% load static %}
+{% block title %}CDBB Floor {{ CRATE_ID }}{% endblock %}
+
+{% block head %}
+<!-- Our style sheets -->
+<link rel="stylesheet" href="{% static 'space/css/space.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'space/css/floor.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'space/css/style.css' %}" />
+
+<!-- Local copy of d3 -->
+<script type="text/javascript" src="{% static 'js/d3.v6_5.min.js' %}"></script>
+<!-- <script type="text/javascript" src="{% static 'js/d3.v5.min.js' %}"></script> -->
+
+<!-- JS SCRIPT for space snd building -->
+<script type="text/javascript" src="{% static 'space/js/space.js' %}"></script>
+
+<!-- viz_tools contains some common rendering functions, uses parse_readings, jsonpath -->
+<script type="text/javascript" src="{% static 'js/jsonpath.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/parse_readings.js' %}"></script>
+<script type="text/javascript" src="{% static '/js/VizTools2.js' %}"></script>
+<script type="text/javascript" src="{% static '/js/TemplateTools.js' %}"></script>
+<script type="text/javascript" src="{% static '/js/maths.js' %}"></script>
+
+<!-- LOAD APP SCRIPTS -->
+
+<!-- ssd files -->
+<!-- <link rel="stylesheet" type="text/css" href="{% static 'space/css/ssd_style.css' %}" />
+<script type="text/javascript" src="{% static 'space/js/sensor_status.js' %}"></script>
+<script type="text/javascript" src="{% static 'space/js/sensor_circle.js' %}"></script> -->
+
+
+<!-- Rain class  -->
+<!-- <script type='text/javascript' src="{% static 'space/js/heatmap.js' %}"></script> -->
+
+<!-- Splash class  -->
+<script type='text/javascript' src="{% static 'space/js/splash.js' %}"></script>
+
+<!-- RTMonitor tests -->
+<script type='text/javascript' src="{% static 'space/js/RTconnect.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+
+<!-- building.js defines class SpaceBuilding -->
+<script type='text/javascript' src="{% static 'space/js/floor.js' %}"></script>
+
+<!-- Page local script -->
+<script type="text/javascript">
+    var API_BIM = '{{ API_BIM }}';
+    var API_SENSORS = '{{ API_SENSORS }}';
+    var API_READINGS = '{{ API_READINGS }}';
+    var API_SPACE = '{{ API_SPACE }}';
+    var CRATE_ID = '{{ CRATE_ID }}';
+    var FLOORSPACE_LINK = '{% url "space_floorspace" "crate_id" %}';
+    var SENSOR_LINK = "{% url 'sensor' 'acp_id' %}"; // we will replace id as required
+    var RTMONITOR_URI = '{{ RTMONITOR_URI }}';
+</script>
+{% endblock %}
+
+{% block header_title %}
+Splash app
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <div class="breadcrumb">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/home_icon.png' %}" />
+        </a>
+    </div>
+    <div class="breadcrumb">
+        &gt; <a href="{% url 'space_map' %}">Map</a>
+    </div>
+    <div class="breadcrumb">
+        &gt; Building
+    </div>
+    <div class="breadcrumb">
+        &gt; Floor {{ CRATE_ID }}
+    </div>
+
+    <div id='wrapped_ham'>
+        <a id='hamburger_link' onclick="ttools.openNav()">
+            <img id='hamburger_img' alt="hamburger_menu_icon" src="{% static 'images/burger.png' %}" />
+            <!-- burger.png -->
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div id="drawing_coords">0,0</div>
+
+<div class="main_content" id="main_content_id">
+
+    <div class="drawing_div" id="main_drawing_div">
+        <svg class="drawing_svg" id="drawing_svg">
+        </svg>
+    </div>
+
+    <div id="legend_and_buttons">
+        <div id="legend_container"></div>
+
+        <!-- close LEGEND AND BUTTONS -->
+    </div>
+
+    <div id="mySidenav" class="sidenav">
+        <a href="javascript:void(0)" class="closebtn" onclick="ttools.closeNav()">&times;</a>
+
+        <!-- OUTERMOST WRAPPER FOR ALL BUTTONS -->
+        <div class='all_buttons'>
+
+
+            <!-- MAIN SPLASH ACTIVATION -->
+            <div class="button_wrapper">
+                <a id="rain_rt_connect" class="button1">RT Disconnect</a>
+            </div>
+
+            <div id='splash_control' class='rt_status'><span id='splash_rt_state'
+                    class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='splash_rt'>RtM not connected</span></div>
+            <br>
+
+
+            <!-- TOGGLES LEGEND -->
+            <div class="button_wrapper">
+                <a id="toggle_legend" class="button1">Show Legend</a>
+            </div>
+
+            <!-- change sensor opacity slider -->
+            <div class="button_wrapper">
+                <div class="slidecontainer">
+                    <label for="opacity_slider">Sensor Opacity:</label>
+                    <br>
+                    <input type="range" min="0" max="100" value="50" name='opacity_slider' class="slider"
+                        id="sensor_opacity">
+                </div>
+            </div>
+
+            <br>
+
+            <!-- reset zoom -->
+            <div class="button_wrapper" id='reset_zoom_wrapper'>
+                <a id="reset_zoom" class="button1">Reset Zoom</a>
+            </div>
+
+            <!-- close ALL_BUTTONS -->
+        </div>
+    </div>
+
+
+    <!-- end MAIN CONTENT -->
+</div>
+
+<!-- </div> -->
+
+<!-- TOOLTIP - will be made visible/invisible as mouse moves over sensors -->
+<div id="tooltip" class="tooltip">
+</div>
+{% endblock %}
+<!-- content -->
+
+<!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
+{% block lazy_script %}
+<script>
+    //instantiate template tools (js functions that handle the navigation bar, etc)
+    let ttools=new TemplateTools();
+    
+    console.log('lazy_script');
+    var space_floor = new SpaceFloor();
+    space_floor.init();
+
+
+    let rt_splash = new SplashMap(space_floor);
+ 
+    //wait for the page to load
+    space_floor.loaded.then(function () {
+        rt_splash.init(rt_splash)
+    })
+
+</script>
+{% endblock %}
+<!-- lazy_script -->
