@@ -177,14 +177,15 @@ class DMSensorEditView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-            context['ACP_ID'] = self.kwargs['acp_id']
-            response = requests.get(settings.API_SENSORS+'get/'+self.kwargs['acp_id']+'/')
+            acp_id = self.kwargs['acp_id']
+            response = requests.get(settings.API_SENSORS+'get/'+acp_id+'/')
             try:
                 sensor_metadata = response.json()
             except json.decoder.JSONDecodeError:
                 context["SENSOR_METADATA"] = '{ "acp_error": "Sensor metadata unavailable" }'
                 return context
 
+            context['ACP_ID'] = acp_id
             context['SENSOR_METADATA'] = json.dumps(sensor_metadata)
 
             return context
@@ -194,7 +195,6 @@ class DMSensorListView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-            context['API_SENSORS'] = settings.API_SENSORS
 
             # Make Sensors API call to get sensor metadata for all sensors
             response = requests.get(settings.API_SENSORS + 'list/?type_metadata=true')
@@ -251,7 +251,7 @@ class DMSensorTypeHistoryView(LoginRequiredMixin, TemplateView):
             try:
                 history_obj = response.json()
             except json.decoder.JSONDecodeError:
-                context['API_SENSOR_TYPE_HISTORY'] = '[]'
+                context['API_SENSOR_TYPE_HISTORY'] = f'{{ "acp_error": "Sensor type history for {acp_type_id} unavailable" }}'
                 return context
 
             context['API_SENSOR_TYPE_HISTORY'] = json.dumps(history_obj)
@@ -282,8 +282,10 @@ class DMSensorTypeEditView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-            context['ACP_TYPE_ID'] = self.kwargs['acp_type_id']
-            response = requests.get(settings.API_SENSORS+'get_type/'+self.kwargs['acp_type_id']+'/')
+            acp_type_id = self.kwargs['acp_type_id']
+            context['ACP_TYPE_ID'] = acp_type_id
+
+            response = requests.get(settings.API_SENSORS+'get_type/'+acp_type_id+'/')
             try:
                 sensor_type_metadata = response.json()
             except json.decoder.JSONDecodeError:
@@ -299,7 +301,6 @@ class DMSensorTypesView(TemplateView):
 
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-            context['API_SENSORS'] = settings.API_SENSORS
 
             # Make Sensors API call to get sensor type metadata for all sensor type
             response = requests.get(settings.API_SENSORS  + 'list_types/')
@@ -379,7 +380,58 @@ class DMBIMLocationView(TemplateView):
             return context
 
 class DMBIMHistoryView(TemplateView):
-    template_name = 'data_management/bim/bim_home.html'
+    template_name = 'data_management/bim/bim_history.html'
+
+    def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            crate_id = self.kwargs['crate_id']
+            context['CRATE_ID'] = crate_id
+            response = requests.get(settings.API_BIM+'get_history/'+crate_id+'/')
+            try:
+                history_obj = response.json()
+            except json.decoder.JSONDecodeError:
+                context['API_BIM_HISTORY'] = f'{{ "acp_error": "BIM history for {crate_id} unavailable" }}'
+                return context
+
+            context['API_BIM_HISTORY'] = json.dumps(history_obj)
+
+            return context
+
 
 class DMBIMEditView(TemplateView):
-    template_name = 'data_management/bim/bim_home.html'
+    template_name = 'data_management/bim/bim_edit.html'
+
+    def post(self, request, crate_id):
+            bim_metadata_str = request.POST.get('plain_text_value','{ "msg": "get failed" }')
+            try:
+                bim_metadata_obj = json.loads(bim_metadata_str)
+            except json.decoder.JSONDecodeError:
+                print(f'bim_edit non-json in plain_text_value',file=sys.stderr)
+                #DEBUG can return bim_edit error message here
+                return redirect('dm_bim_edit',crate_id=crate_id)
+
+            res = requests.post(settings.API_BIM+'update/'+self.kwargs['crate_id']+'/',
+                                json=bim_metadata_obj)
+            if res.ok:
+                print(f'bim_edit wrote data to update',file=sys.stderr)
+                return redirect('dm_bim_history',crate_id=crate_id)
+            else:
+                print(f'bim_edit bad response from api/bim/update',file=sys.stderr)
+                #DEBUG will return to edit page here
+            return redirect('dm_bim_history',crate_id=crate_id)
+
+    def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            crate_id = self.kwargs['crate_id']
+            context['CRATE_ID'] = crate_id
+
+            response = requests.get(settings.API_BIM+'get/'+crate_id+'/')
+            try:
+                bim_metadata = response.json()
+            except json.decoder.JSONDecodeError:
+                context["API_BIM_METADATA"] = f'{{ "acp_error": "BIM  object {crate_id} metadata unavailable" }}'
+                return context
+
+            context['API_BIM_METADATA'] = json.dumps(bim_metadata)
+
+            return context

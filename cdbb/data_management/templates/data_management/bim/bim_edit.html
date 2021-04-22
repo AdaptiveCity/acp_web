@@ -1,0 +1,78 @@
+{% extends "data_management/bim/bim_template.html" %}
+{% load static %}
+{% block title %}{{ CRATE_ID }} Edit{% endblock %}
+
+{% block head %}
+    <!-- Our style sheets -->
+    <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/edit.css' %}" />
+
+    <!-- JS files -->
+    <script src="{% static 'js/jsonpath.js' %}" charset="utf-8"></script>
+    <script type='text/javascript' src="{% static 'data_management/js/bim_edit.js' %}"></script>
+
+    <!-- Page local script -->
+    <script type="text/javascript">
+        var CRATE_ID = '{{ CRATE_ID }}'; // e.g. 'FE11'
+        var ACP_PERSON_ID = '{{ user.get_username }}';
+        var ACP_PERSON_NAME = '{{ user.get_full_name }}';
+        // This link will embed the correct acp_id value as was given for this page
+        var API_BIM_METADATA = JSON.parse('{{ API_BIM_METADATA|escapejs }}');
+    </script>
+{% endblock %}
+
+{% block header_title %}
+BIM Object Edit {{ CRATE_ID }}
+{% endblock %}
+
+{% block bim_breadcrumbs %}
+    <div class="breadcrumb">
+        &gt; Edit
+    </div>
+{% endblock %} <!-- end bim_breadcrumbs -->
+
+{% block bim_content %}
+<h2>Edit BIM Object Metadata: {{ CRATE_ID }}. Editor {{ user.get_full_name }} ({{ user.get_username }})</h2>
+
+<form name="edit_form" id="edit_form"
+    method="post"
+    action=""
+    spellcheck="false"
+>
+<!--    onsubmit="if(sensor.validate()){this.myDoc.value=oDoc.innerHTML;return true;}return false;"> -->
+{% csrf_token %}
+    <input type="hidden" name="plain_text_value" id="plain_text_value" value='{"foo": "bar"}'>
+    <div id="edit_box" contenteditable="true">
+        <p>No bim object metadata for {{ CRATE_ID }} available</p>
+    </div>
+    <p>
+        <button type="button" id="cancel_button">Cancel</button>
+        <button type="button" id="save_button">Save</button>
+        <!--
+        <button type="button" onclick="sensor.format_selected('removeFormat')" >Clean</button>
+        <button type="button" onclick="sensor.format_selected('bold')">Bold</button>
+        <button type="button" name="switchMode" id="switchBox" onchange="sensor.showHTML(this.checked);">
+            Debug HTML
+        </button>
+        -->
+    </p>
+</form>
+
+<div id="error_box" class="error_box">
+    <div id="error_box_close" class="error_box_close">
+        <img src="{% static 'sensor/images/reading_close.png' %}" />
+    </div>
+    <div id="error_box_content" class="error_box_content">
+        foo
+    </div>
+</div>
+
+{% endblock %} <!-- end bim_content -->
+
+<!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
+{% block lazy_script %}
+<script>
+    console.log('lazy_script');
+    var bim_edit = new BIMEdit();
+    bim_edit.init();
+</script>
+{% endblock %} <!-- lazy_script -->

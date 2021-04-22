@@ -1,4 +1,4 @@
-{% extends "data_management/bim/bim.html" %}
+{% extends "data_management/bim/bim_template.html" %}
 {% load static %}
 {% block title %}{{ CRATE_ID }} Location{% endblock %}
 
@@ -21,6 +21,7 @@
 
         // Information for all sensors in BIM object (crate_id)
         var API_SENSORS_INFO = JSON.parse('{{ API_SENSORS_INFO | escapejs }}');
+        var API_READINGS_INFO = {}; //DEBUG not relevant, but floorspace.js needs it
         var ACP_ID=''; // dummy for floorspace.js
         var API_BIM_INFO = JSON.parse('{{ API_BIM_INFO | escapejs }}');
         var API_SPACE_INFO = JSON.parse('{{ API_SPACE_INFO | escapejs }}');
