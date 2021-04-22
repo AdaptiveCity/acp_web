@@ -927,7 +927,7 @@ function draw_chart(readings, feature, feature2) {
     chart_graph.transition().duration(200).style('opacity', 1)
     if (readings.length > 0) {
         var p = readings[readings.length - 1];
-        var tooltip_element =chart_graph.append("g").attr('id', 'tooltip_el').style('opacity',1);
+       // var tooltip_element =chart_graph.append("g").attr('id', 'tooltip_el').style('opacity',1);
 
         tooltip_element.append("rect")
             .attr('x', chart_xMap(p) + CHART_DOT_RADIUS + 4)
