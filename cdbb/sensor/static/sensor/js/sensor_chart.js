@@ -416,8 +416,8 @@ function init_chart() {
         .attr("y", 0)
         .attr("width", "100%")
         .attr("height", "100%")
-        .attr("fill", "rgb(163,193,173)") //cambridge blue https://www.cam.ac.uk/brand-resources/guidelines/typography-and-colour/colour-palette
         .attr("transform", "translate(" + -chart_offsetx + "," + -chart_offsety + ")")
+        .attr("id", "chart_sub_background")
         .attr('pointer-events', 'none');
     // .attr('opacity', 0);
 

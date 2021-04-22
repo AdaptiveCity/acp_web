@@ -214,3 +214,8 @@ input[type=date], select {
   /* width: 100px;
   height: 100px; */
 }
+#chart_sub_background{
+  /* fill: #ADD8E6; */
+  fill: rgb(163,193,173);
+  /* cambridge blue https://www.cam.ac.uk/brand-resources/guidelines/typography-and-colour/colour-palette */
+}
