@@ -53,10 +53,7 @@ function init() {
 
     chart_tooltip_el = d3.select('#chart_tooltip'); //document.getElementById('chart_tooltip');
 
-    // The cool date picker
-    var form_date = document.getElementById("form_date");
-
-    form_date.setAttribute('value', plot_date);
+    init_date_picker();
 
     set_zoom_hint(true); // Put 'drag to zoom' text in the zoom hint div
 
@@ -68,6 +65,16 @@ function init() {
     // Can use get_local_readings() to shim the API (copywrite jb2328)
     //get_local_readings();
     get_readings();
+
+}
+
+function init_date_picker() {
+
+    // The cool date picker
+    var form_date = document.getElementById("form_date");
+
+    form_date.setAttribute('value', plot_date);
+
 
 }
 
@@ -115,8 +122,7 @@ function handle_readings(results) {
             report_error(error_id, 'NO READINGS available for this sensor.');
             //return;
         }
-    }
-    else {
+    } else {
         readings = results["readings"];
         sensor_metadata = results["sensor_metadata"];
         // Setup onchange callbacks to update chart on feature change
@@ -236,7 +242,7 @@ function init_feature_select(readings, sensor_metadata) {
 
     feature_select_el.onchange = function (e) {
         onchange_feature_select(e, readings, features);
-        };
+    };
 
     feature_select_el2.onchange = function (e) {
         onchange_secondary_select(e, readings, features)
@@ -290,6 +296,12 @@ function onchange_feature_select(e, readings, features) {
 }
 
 function set_date_onclicks(feature_id) {
+    //set up onclick calls for datepicker
+    document.getElementById('form_date').addEventListener('change', (event) => {
+        let updated_date = event.target.value;
+        date_picker_change(updated_date,feature_id)
+    });
+
     // set up onclick calls for day/week forwards/back buttons
     document.getElementById("back_1_week").onclick = function () {
         date_shift(-7, feature_id)
@@ -407,7 +419,7 @@ function init_chart() {
         .attr("fill", "rgb(163,193,173)") //cambridge blue https://www.cam.ac.uk/brand-resources/guidelines/typography-and-colour/colour-palette
         .attr("transform", "translate(" + -chart_offsetx + "," + -chart_offsety + ")")
         .attr('pointer-events', 'none');
-        // .attr('opacity', 0);
+    // .attr('opacity', 0);
 
 
     //add overlay rect
@@ -710,7 +722,9 @@ function draw_chart(readings, feature, feature2) {
     var brush = d3.brush().extent([
             [0, 0],
             [chart_width, chart_height]
-        ]).on("end", function(event,d) { brushended(event); }),
+        ]).on("end", function (event, d) {
+            brushended(event);
+        }),
         idleTimeout,
         idleDelay = 350;
 
@@ -888,7 +902,7 @@ function draw_chart(readings, feature, feature2) {
             .on("click", function (event, d) {
                 show_reading_popup(d);
             })
-            .on("mouseover", function (event,d) {
+            .on("mouseover", function (event, d) {
                 mouseover_interactions(event, d, feature2);
             })
             .on("mouseout", function (event, d) {
@@ -902,32 +916,11 @@ function draw_chart(readings, feature, feature2) {
     // *******************************
     // add text for latest datapoint
     // *******************************
-    var p = readings[readings.length - 1];
-    var tooltip_element = chart_graph.append("g").attr('id', 'tooltip_el').style('opacity', 1);
-
-    tooltip_element.append("rect")
-        .attr('x', chart_xMap(p) + CHART_DOT_RADIUS + 4)
-        .attr('y', chart_yMap(p) - 27)
-        .attr('width', 140)
-        .attr('height', 36)
-        .attr('rx', 6)
-        .attr('ry', 6)
-        .style('fill', 'white')
-
-    var p_time = make_date(p.acp_ts);
-    var p_time_str = ' @ ' + ('0' + p_time.getHours()).slice(-2) + ':' + ('0' + p_time.getMinutes()).slice(-2);
-    tooltip_element.append("text")
-        .attr('x', chart_xMap(p))
-        .attr('y', chart_yMap(p))
-        .attr('dx', CHART_DOT_RADIUS + 10)
-        .style('font-size', '22px')
-        .style('fill', '#333')
-        .text(jsonPath(p, feature['jsonpath']) + p_time_str);
 
     chart_graph.transition().duration(200).style('opacity', 1)
     if (readings.length > 0) {
         var p = readings[readings.length - 1];
-       // var tooltip_element =chart_graph.append("g").attr('id', 'tooltip_el').style('opacity',1);
+        var tooltip_element = chart_graph.append("g").attr('id', 'tooltip_el').style('opacity', 1);
 
         tooltip_element.append("rect")
             .attr('x', chart_xMap(p) + CHART_DOT_RADIUS + 4)
@@ -949,7 +942,7 @@ function draw_chart(readings, feature, feature2) {
             .text(jsonPath(p, feature['jsonpath']) + p_time_str);
     }
 
-    chart_graph.transition().duration(200).style('opacity',1)
+    chart_graph.transition().duration(200).style('opacity', 1)
     //---------------------------------------------------------------------------//
     //---------------------------------------------------------------------------//
     //---------------------------------------------------------------------------//
@@ -1033,6 +1026,22 @@ function tooltip_html(p, feature) {
 // ************************************************************************************
 // ************** Date forwards / backwards function             *********************
 // ************************************************************************************
+//change the date based on the datepicker div
+function date_picker_change(updated_date, feature_id) {
+
+    let new_date = new Date(updated_date); //create a date object from the datepicker string value
+
+    new_date.setDate(new_date.getDate());
+
+    let new_year = new_date.getFullYear();
+    let new_month = ("0" + (new_date.getMonth() + 1)).slice(-2);
+    let new_day = ("0" + new_date.getDate()).slice(-2);
+
+    console.log(new_year + '-' + new_month + '-' + new_day);
+    //update the url
+    window.location.href = '?date=' + new_year + '-' + new_month + '-' + new_day + '&feature=' + feature_id;
+
+}
 
 // move page to new date +n days from current date
 function date_shift(n, feature_id) {
