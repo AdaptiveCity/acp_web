@@ -119,6 +119,7 @@ class SensorStatusView(LoginRequiredMixin, TemplateView):
             context['API_READINGS'] = settings.API_READINGS
             context['API_SPACE'] = settings.API_SPACE
             context['CRATE_IDS'] = settings.CRATE_IDS
+            context['RTMONITOR_URI'] = 'https://cdbb.uk/rtmonitor/A/mqtt_acp' #DEBUG this will move to settings.py
             #check if url parameter provided
             try:
                 #url parameter present, load all sensors for a crate
@@ -143,6 +144,8 @@ class SensorStatusTxtView(LoginRequiredMixin, TemplateView):
             context['API_READINGS'] = settings.API_READINGS
             context['API_SPACE'] = settings.API_SPACE
             context['CRATE_IDS'] = settings.CRATE_IDS
+            context['RTMONITOR_URI'] = 'https://cdbb.uk/rtmonitor/A/mqtt_acp' #DEBUG this will move to settings.py
+
             #check if url parameter provided
             try:
                 #url parameter present, load all sensors for a crate
