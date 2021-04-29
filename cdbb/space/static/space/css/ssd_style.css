@@ -1,0 +1,111 @@
+#ssd_main {
+    margin: 1em 1em 1em 1em;
+    display: block;
+    width: 100%;
+    height: 100%;
+
+    /* padding-top: 2.5em; */
+}
+
+#viz_header {
+    display: block;
+    margin-left: 1em;
+
+    margin-top: 0.1em;
+    margin-bottom: 0.1em;
+}
+
+
+#ssd_view_form {
+    display: inline-block;
+    float: right;
+}
+
+#ssd_control {
+    display: block;
+}
+
+.header_time_text {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+#recent_update {
+    font-size: 0.75em;
+}
+
+#start_time {}
+
+#viz {
+    display: inline-block;
+    vertical-align: top;
+}
+
+#legend_container {
+    display: inline-block;
+    vertical-align: top;
+    padding-top: 2.5em;
+}
+
+#text_collector {
+    /* margin-top: 1em;
+    margin-left: 1.5em; */
+    margin: 1em 1.5em;
+    padding:0.5em;
+    display: inline-block;
+    justify-content: center;
+    height: 100%;
+    width:95%;
+    /* width: 45em; */
+    border: 1px solid #ccc;
+    background-color: rgba(245, 245, 245, 0.39);
+    font: 12px Arial;
+    overflow: auto;
+    overflow-x: auto;
+
+}
+
+.tooltip {
+    position: absolute;
+    /* width: 100%; */
+    /* height: 28px; */
+    text-align: center;
+    padding: 2px;
+    font: 12px sans-serif;
+    background: rgb(108, 172, 228);
+    border: 0px;
+    border-radius: 8px;
+    pointer-events: none;
+    opacity: 0;
+    /* start with div invisible */
+}
+
+#json_msg {
+    padding: 0px;
+    margin: 0em 0em 0em 0em;
+}
+
+
+#green_span {
+    color: rgb(0, 0, 0);
+
+    background-color: rgba(135, 184, 138, 0.5);
+}
+
+.rt_status {
+    margin: 0px;
+    padding: 0px;
+    font: 8px sans-serif;
+    display: inline-block;
+    vertical-align: top;
+    /* here */
+    /* background: rgb(108, 172, 228); */
+}
+
+.rt_state {
+    margin: 0px 2px 1px 6px;
+    /* padding: 1px 2px 1px 6px; */
+    font: 4px sans-serif;
+    /* background: rgb(108, 255, 150); green*/
+    background: rgb(255, 108, 150);
+}
