@@ -56,12 +56,16 @@ class BuildingView(LoginRequiredMixin, TemplateView):
     # We override get_context_data to return the vars to embed in the template
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-            context['API_BIM'] = settings.API_BIM
-            context['API_SENSORS'] = settings.API_SENSORS
-            context['API_READINGS'] = settings.API_READINGS
-            context['API_SPACE'] = settings.API_SPACE
-            context['CRATE_IDS'] = settings.CRATE_IDS
-            context['CRATE_ID'] = self.kwargs['crate_id']
+
+            crate_id = self.kwargs['crate_id']
+            context['CRATE_ID'] = crate_id
+
+            # Get building floors SVG
+            response = requests.get(settings.API_SPACE+f'get_bim_json/{crate_id}/1/')
+            space_info = response.json()
+
+            context['API_SPACE_INFO'] = json.dumps(space_info)
+
             return context
 
 class FloorView(LoginRequiredMixin, TemplateView):

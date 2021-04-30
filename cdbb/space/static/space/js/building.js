@@ -4,7 +4,6 @@
 This is the JS for page template 'building.html' to provide a rendered view of a BUILDING.
 
 Dependencies (static/js):
-    viz_tools.js
     d3
 */
 
@@ -13,11 +12,7 @@ class SpaceBuilding {
     // Called to create instance in page : space_building = SpaceBuilding()
     constructor() {
 
-        // Instantiate a jb2328 utility class e.g. for getBoundingBox()
-        this.viz_tools = new VizTools();
-
         // vertical offset for drawn floors (in pixels)
-
         this.y_offset = 110;
         // rotating colors for drawn floors
         this.floor_colors = ['#ff8888', '#ffff88', '#88ff88'];
@@ -50,26 +45,19 @@ class SpaceBuilding {
         });
 
         // Do an http request to the SPACE api, and call handle_building_space_data() on arrival
-        this.get_building_space_data(window.CRATE_ID);
-    }
-
-    // Use SPACE api to get building and floors (as XML svg)
-    get_building_space_data(crate_id) {
-        var parent = this; // store current 'this' as lambda function will change that
-        var request = new XMLHttpRequest();
-        request.overrideMimeType('application/xml');
-        request.addEventListener("load", function () {
-            parent.handle_building_space_data(parent, request.responseXML); // alternatively request.responseText
-        });
-        var space_api_url = API_SPACE+"get_bim/"+crate_id+"/1/";
-        console.log("get_building_space_data() http request: "+space_api_url)
-        request.open("GET", space_api_url);
-        request.send();
+        this.handle_building_space_data(parent, API_SPACE_INFO);
     }
 
     // Iterate through the floor SVG polygons and draw them.
-    handle_building_space_data(parent, xml) {
-        console.log("Got SPACE data", xml);
+    handle_building_space_data(parent, space_info) {
+        console.log("handle_building_space_data() loaded:", space_info);
+        let scale = 8.3; //DEBUG
+
+        let xmlStr = atob(space_info["svg_encoded"]); // decode the SVG string
+
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(xmlStr, "application/xml");
+
         var polygons = xml.querySelectorAll("polygon");
 
         // Create a list of floor polygons (unordered)
@@ -105,7 +93,7 @@ class SpaceBuilding {
             // Note we have to append the DOM object to the page for getBBox to work
             parent.append_floor(parent, polygon);
             // Get bounding box of floor polygon
-            var box = parent.viz_tools.box(polygon);
+            var box = parent.box(polygon);
             // Update max width, height found so far
             if (box.w > max_w) max_w = box.w;
             if (box.h > max_h) max_h = box.h;
@@ -147,8 +135,6 @@ class SpaceBuilding {
 
     // Add the floor svg objects to the DOM parent SVG (but invisible)
     append_floor(parent, floor_svg) {
-        // note viz_tools.box returns ZEROs if used before the appendChild()
-        //console.log("box before render", parent.viz_tools.box(floor_svg));
 		var floorplan = parent.page_floor_svg.appendChild(floor_svg); //svgMap /* floorplan */
 
         // Now we've done the appendChild we can work out the bounding box and the scale
@@ -225,5 +211,15 @@ class SpaceBuilding {
             }
         })
     }
+    // Return { x,y,cx,cy,w,h } for an html DOM element (for us often SVG)
+    box(element) {
+        //console.log('box called with element', element);
+        var bbox = element.getBBox();
+        var cx = bbox.x + bbox.width / 2;
+        var cy = bbox.y + bbox.height / 2;
+        //console.log('box bbox=', bbox);
+        return { x: bbox.x,  y: bbox.y, cx: cx, cy: cy, w: bbox.width, h: bbox.height };
+    }
+
 
 } // end class SpaceBuilding
