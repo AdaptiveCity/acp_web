@@ -3,6 +3,10 @@ from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.conf import settings
 
+import requests
+import json
+import sys
+
 # Templates from "acp_web/cdbb/sensor/templates/sensor/"
 
 class SensorHomeView(TemplateView):
@@ -18,12 +22,12 @@ class SensorChartView(LoginRequiredMixin, TemplateView):
     # Positional args are in self.args.
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-            context['API_BIM'] = settings.API_BIM
-            context['API_SENSORS'] = settings.API_SENSORS
+            context['SENSOR_REALTIME'] = "not implemented"
+            acp_id = self.kwargs['acp_id']
+            context['ACP_ID'] = acp_id
+
+            #DEBUG these API references will be removed
             context['API_READINGS'] = settings.API_READINGS
-            context['API_SPACE'] = settings.API_SPACE
-            context['SENSOR_REALTIME'] = settings.SENSOR_REALTIME
-            context['ACP_ID'] = self.kwargs['acp_id']
 
             # &date=YYYY-MM-DD
             selected_date = self.request.GET.get('date',None)
@@ -44,7 +48,21 @@ class SensorChartView(LoginRequiredMixin, TemplateView):
             else:
                 print("SensorChartView no feature",kwargs)
 
+            # Readings
+            query_string = '?metadata=true'
+            if selected_date is not None:
+                query_string += '&date='+selected_date
+            response = requests.get(settings.API_READINGS+'get_day/'+acp_id+'/'+query_string)
+            try:
+                sensor_readings = response.json()
+            except json.decoder.JSONDecodeError:
+                context["SENSOR_READINGS"] = f'{{ "acp_error": "Sensor readings for {acp_id} unavailable" }}'
+                return context
+
+            context['SENSOR_READINGS'] = json.dumps(sensor_readings)
+
             return context
+
 
 class SensorSelectView(LoginRequiredMixin, TemplateView):
     template_name = 'sensor/select.html'
