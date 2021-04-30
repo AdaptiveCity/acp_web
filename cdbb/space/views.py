@@ -3,6 +3,10 @@ from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.conf import settings
 
+import requests
+import json
+import sys
+
 class HomeView(TemplateView):
     # Template "acp_web/cdbb/space/templates/space/home.html"
     template_name = 'space/home.html'
@@ -19,9 +23,30 @@ class MapView(TemplateView):
     # We override get_context_data to return the vars to embed in the template
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-            context['API_BIM'] = settings.API_BIM
-            context['API_SENSORS'] = settings.API_SENSORS
-            context['CRATE_IDS'] = settings.CRATE_IDS
+
+            # Get the crate (building) metadata from the BIM API
+            crate_ids = settings.CRATE_IDS.split(',')
+            bim_api_responses = {}
+            for crate_id in crate_ids:
+                response = requests.get(settings.API_BIM+"get_gps/"+crate_id+"/0/")
+
+                try:
+                    bim_api_responses[crate_id] = response.json()[crate_id]
+                except json.decoder.JSONDecodeError:
+                    context["API_BIM_INFO"] = f'{{ "acp_error": "BIM API crate info for {crate_id} unavailable" }}'
+                    return
+
+            context["API_BIM_INFO"] = json.dumps(bim_api_responses)
+
+
+            # Get the sensor metadata for all sensors with GPS locations
+            response = requests.get(settings.API_SENSORS + 'get_gps/')
+            try:
+                sensor_info = response.json()
+                context["API_SENSOR_INFO"] = json.dumps(sensor_info)
+            except json.decoder.JSONDecodeError:
+                context["API_SENSOR_INFO"] = '{ "acp_error": "SENSORS API get_gps/ failed" }'
+
             return context
 
 class BuildingView(LoginRequiredMixin, TemplateView):

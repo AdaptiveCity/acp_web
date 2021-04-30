@@ -22,8 +22,8 @@ class SpaceRenderMap {
         this.init_map_click();
 
         // Note the code is 'async' from here, both of these functions will do XMLHttpRequests
-        this.get_gps_sensors(this);
-        this.get_buildings(this);
+        this.handle_gps_sensors(API_SENSOR_INFO);
+        this.handle_bim_crates(this);
     }
 
     // Display the map, not yet populated with sensors / buildings.
@@ -69,48 +69,10 @@ class SpaceRenderMap {
         this.map.addLayer(this.markers_layer);
     }
 
-    get_buildings(parent) {
-        //DEBUG map_visualisation.js we want to get all the 'building' objects and iterate	    
-	    var crate_array = CRATE_IDS.split(',');
-	    var crate; 
-	    for (crate of crate_array){
-		    parent.get_bim_crate(parent, crate);
-	    }
-
-	
-	/*	
-        parent.get_bim_crate(parent, 'WGB');
-
-        parent.get_bim_crate(parent, 'lockdown_lab');
-
-        parent.get_bim_crate(parent, 'IFM');
-
-	    parent.get_bim_crate(parent, 'VLAB');
-	    console.log("crate ids"+CRATE_IDS);
-	*/
-	
-    }
-
-    // Use BIM api to get data for crate
-    get_bim_crate(parent, crate_id){
-        console.log("Getting boundary for "+crate_id);
-        let request = new XMLHttpRequest();
-        request.overrideMimeType('application/json');
-
-        request.addEventListener("load", function () {
-            var crates = JSON.parse(request.responseText)
-            console.log("get_bim_crate() returned:",crates);
-            // Note the BIM api returns a list
-            parent.handle_bim_crate(parent, crates[crate_id]);
-        });
-        let api_url = API_BIM+"get_gps/"+crate_id+"/0/";
-        console.log("get_bim_crate() requesting "+api_url);
-        request.open("GET", api_url);
-        request.send();
-    }
-
-    handle_bim_crate(parent, crate) {
-        parent.draw_crate(parent, crate);
+    handle_bim_crates(parent, crate) {
+        for (const crate_id in API_BIM_INFO) {
+            parent.draw_crate(parent, API_BIM_INFO[crate_id]);
+        }
     }
 
     draw_crate(parent, crate) {
@@ -176,25 +138,7 @@ class SpaceRenderMap {
             });
     }
 
-    // Called from init().
-    // Will use sensors API to get sensors with "acp_location": {"system": "GPS" ... }
-    get_gps_sensors(parent){
-        console.log('Getting GPS sensors');
-        let gps_sensors_url = API_SENSORS + 'get_gps/';
-        let request = new XMLHttpRequest();
-        request.overrideMimeType('application/json');
-
-        request.addEventListener("load", function () {
-            var gps_sensors = JSON.parse(request.responseText)
-            console.log("get_gps_sensors() returned:",gps_sensors);
-            parent.handle_gps_sensors(parent, gps_sensors);
-        });
-        console.log("get_gps_sensors() requesting "+gps_sensors_url);
-        request.open("GET", gps_sensors_url);
-        request.send();
-    }
-
-    handle_gps_sensors(parent, gps_sensors) {
+    handle_gps_sensors(gps_sensors) {
         var sensors = gps_sensors['sensors']
         for (var acp_id in sensors) {
             let sensor = sensors[acp_id];
@@ -210,7 +154,7 @@ class SpaceRenderMap {
                 popup_html += '<br/>'+sensor['description'];
             }
             marker.bindPopup(popup_html);
-            parent.markers_layer.addLayer(marker);
+            this.markers_layer.addLayer(marker);
         }
     }
 
