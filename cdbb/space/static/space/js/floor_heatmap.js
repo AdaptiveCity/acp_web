@@ -6,39 +6,30 @@ const LOW_REZ = 8;
 
 class HeatMap {
 
-    // Called to create instance in page :let rt_heatmap = new HeatMap(space_floor);
+    // Called to create instance in page :let rt_heatmap = new HeatMap(floor_plan);
 
-    constructor(space_floor) {
+    constructor(floor_plan) {
 
-        let self = this;
+        let parent = this;
 
         //throughout the class the master is the main visualisation, parent is HeatMap
-        self.master = space_floor;
-
-        //declare the url to request data from
-        self.API_HEATMAP = "https://cdbb.uk/api/readings/get_floor_feature/";
+        this.floor_plan = floor_plan;
 
         // Instatiante an RTmonitor class
-        self.rt_con = new RTconnect(self);
+        this.rt_con = new RTconnect(this);
 
         //a set of useful d3 functions
-        self.jb_tools = new VizTools2();
-
-        self.pre_init(self);
-
-    }
-
-    pre_init(parent) {
+        this.jb_tools = new VizTools2();
 
         //--------DATA STRUCTURES----------//
         //sensor data+location required to draw the heatmap
-        parent.sensor_data = {};
+        this.sensor_data = {};
 
         //sensor data saved per crate
-        parent.crates_with_sensors = {};
+        this.crates_with_sensors = {};
 
         //declare the min max range of values for temp/co2/humidity - will change during runtime
-        parent.min_max_range = {};
+        this.min_max_range = {};
         //--------DATA STRUCTURES END-------//
 
         //--------------------------------------//
@@ -46,104 +37,106 @@ class HeatMap {
         //--------------------------------------//
 
         //resolution (to be changed by the URL)
-        parent.rect_size = MEDIUM_REZ;
-        parent.resolution = 'medium';
+        this.rect_size = MEDIUM_REZ;
+        this.resolution = 'medium';
         //feature (to be changed by the URL)
-        parent.feature = 'temperature'; //set temperature as the default for this page
+        this.feature = 'temperature'; //set temperature as the default for this page
 
-        //read url parameters and reset parent.feature and parent.resolution if necessary
-        parent.read_url(parent);
+        //read url parameters and reset this.feature and this.resolution if necessary
+        this.read_url(this);
 
+        /*
         //declare the promise
-        parent.promiseResolve, parent.promiseReject;
+        this.promiseResolve, this.promiseReject;
 
-        parent.loaded = new Promise(function (resolve, reject) {
+        this.loaded = new Promise(function (resolve, reject) {
             parent.promiseResolve = resolve;
             parent.promiseReject = reject;
         });
 
         //TODO:delete
-        parent.loaded.then(function () {
+        this.loaded.then(function () {
             console.log('promise resolved; data finished loading')
         }, function () {
             console.log('someting went wrong')
         })
-
+        */
 
         //--------------------------------------//
         //------FETCH THE DATA FOR SENSORS------//
         //--------------------------------------//
 
-        //Use fetch_floor_sensors for the API calls, get_local_sensors for faked offline data
-        parent.load_sensor_data(parent);
+        this.handle_sensors_metadata(this, API_READINGS_INFO);
         //parent.get_local_sensors(parent);
 
     }
 
 
     // init() called when page loaded
-    init(parent) {
+    init() {
+
+        let parent = this;
 
         //--------ANIMATION DURATIONS----------//
         //total time to draw transitions when changing the active feature (temperature, humidity etc)
-        parent.crate_fill_duration = 500;
+        this.crate_fill_duration = 500;
 
         //separate animation to see how long the 'raindrop' or 'splash' remains visible
-        parent.ripple_duration = 3500;
+        this.ripple_duration = 3500;
 
         //the delay for drawing individual items during the animation
-        parent.animation_delay = d3.scaleLinear().range([2500, 500]);
+        this.animation_delay = d3.scaleLinear().range([2500, 500]);
         //------ANIMATION DURATIONS END--------//
 
 
         //--------MISC STYLING----------//
 
         //declare the splash color
-        parent.splash_color = 'red';
+        this.splash_color = 'red';
 
         //declare the main colorscheme for the heatmap
         //https://observablehq.com/@d3/color-schemes ; set by 'd3.interpolate'+color-scheme
-        parent.color_scheme = d3.scaleSequential(d3.interpolatePlasma) //interpolateViridis//interpolatePlasma//interpolateInferno
+        this.color_scheme = d3.scaleSequential(d3.interpolatePlasma) //interpolateViridis//interpolatePlasma//interpolateInferno
 
         //make a global c_conf reference from the parent class;
         //this creates a colorbar svg on the right side of the screen
-        parent.c_conf = parent.jb_tools.canvas_conf(90, 240, 15, 8, 15, 32);
+        this.c_conf = this.jb_tools.canvas_conf(90, 240, 15, 8, 15, 32);
 
         //heatmap opacity
-        parent.default_opacity = 0.75;
-        parent.sensor_opacity = parent.master.sensor_opacity;
+        this.default_opacity = 0.75;
+        this.sensor_opacity = this.floor_plan.sensor_opacity;
         //-------MISC STYLING END------//
 
 
         //--------RT MONITOR MISC----------//
         //set div id's show status change upon connect
-        parent.txt_div_id = 'rain_rt';
-        parent.status_div_id = 'rain_rt_state'
-        parent.timer_short; //the socket has been unactive for a while -- color yellow
-        parent.timer_long; //assume the socket connection was lost -- color red
+        this.txt_div_id = 'rain_rt';
+        this.status_div_id = 'rain_rt_state'
+        this.timer_short; //the socket has been unactive for a while -- color yellow
+        this.timer_long; //assume the socket connection was lost -- color red
         //-------RT MONITOR MISC END-------//
 
 
         //--------HEATMAP/SENSOR SCALING----------//
         //get the contextual scaling for ripples
-        parent.circle_radius = parent.master.sensor_radius;
-        parent.svg_scale = parent.master.svg_scale;
+        this.circle_radius = this.floor_plan.sensor_radius;
+        this.svg_scale = this.floor_plan.svg_scale;
         //-----HEATMAP/SENSOR SCALING END---------//
 
 
         //-----------------------------------//
         //---generate and show the heatmap---//
         //-----------------------------------//
-        parent.show_heatmap(parent);
-        parent.master.jb_tools.tooltips();
+        this.show_heatmap(this);
+        this.floor_plan.jb_tools.tooltips();
 
         //connect rt_monitor automatically
-        parent.connect_rt(parent)
+        this.connect_rt(this)
 
         //--------------------------------------//
         //--------SET UP EVENT LISTENERS--------//
         //--------------------------------------//
-        parent.setup_controls(parent);
+        this.setup_controls(this);
 
     }
 
@@ -167,7 +160,7 @@ class HeatMap {
             parent.update_url('feature', parent.feature)
 
             //first query then load
-            parent.refetch_floor_sensors(parent)
+            parent.change_feature(parent)
         });
 
         //attach an event listener to change the heatmap resolution
@@ -204,8 +197,9 @@ class HeatMap {
 
     //connects to the rt monitor via websockets
     connect_rt(parent) {
+        console.log('connect_rt() called');
         //get a list of all sensors rendered on screen
-        parent.sub_list = Object.keys(parent.master.sensor_data);
+        parent.sub_list = Object.keys(API_SENSORS_INFO["sensors"]);
 
         //create an rtmonitor connection, telling which sensors to subscribe to
         parent.rt_con.connect(parent.check_status.bind(parent), parent.sub_list);
@@ -226,12 +220,12 @@ class HeatMap {
     }
 
     //updates the rtmonitor status icon on the page
-    check_status(value, msg) {
+    check_status(rt_status, msg) {
         let parent = this; //reference to the heatmap self object
 
-        //console.log('returned rt_con state', value)
+        //console.log('returned rt_con state', rt_status)
 
-        switch (value) {
+        switch (rt_status) {
             //RealTime monitor connection successful
             case '1':
                 document.getElementById(parent.txt_div_id).innerHTML = 'RTm Connected';
@@ -244,18 +238,18 @@ class HeatMap {
                 try {
                     //do animation
                     let msg_data = msg;
-                    //console.log('value received', value, msg_data)
+                    //console.log('rt_status received', rt_status, msg_data)
 
-                    //send not only acp_id but an entire msg 
+                    //send not only acp_id but an entire msg
                     //console.log('updating sensor data structs')
                     parent.update_sensor_data(parent, msg_data);
 
                     //check if the new message only contains a "motion" trigger event
                     let motion_trigger = true;
-                    let cooked = msg_data.payload_cooked;
+                    let cooked = msg_data.payload_cooked; //DEBUG hardcoded reference instead of using metadata
 
                     //if payload_cooked only has a single key and it is 'motion' or 'occupancy'
-                    // (usually paired though) then we now 
+                    // (usually paired though) then we now
                     //it's an interrupt triggered motion event
                     if ((Object.keys(cooked).length < 3) && (("motion" in cooked) || ("occupancy" in cooked))) {
                         console.log('motion-only event detected', cooked)
@@ -299,7 +293,7 @@ class HeatMap {
         }
     }
 
-    //changes the url based on what we'd like to 
+    //changes the url based on what we'd like to
     //show on the page following the initial load
     read_url(parent) {
         //get the url with the search parameters
@@ -391,16 +385,16 @@ class HeatMap {
         }
 
         //first reset the drawn floorplan to it's original location
-        parent.master.manage_zoom.reset(parent.master);
+        parent.floor_plan.manage_zoom.reset(parent.floor_plan);
 
         //create a new heatmap
         parent.show_heatmap(parent);
 
         //update tooltips
-        parent.master.jb_tools.tooltips();
+        parent.floor_plan.jb_tools.tooltips();
     }
 
-    //creates a sublayer of masks so that splashes 
+    //creates a sublayer of masks so that splashes
     //do not cross crate boundaries
     make_clips(parent) {
 
@@ -413,7 +407,7 @@ class HeatMap {
         const defs = splash_canvas.append("defs")
 
         //add a mask for every crate;
-        //here we iterate ovre all drawn BIM polygons and make 
+        //here we iterate ovre all drawn BIM polygons and make
         //a copy for each one as a mask polygon
         d3.selectAll('.crate').select('polygon').nodes().forEach(crate => {
 
@@ -454,7 +448,7 @@ class HeatMap {
 
         //the motion trigger argument determines the size of the splash
         //the idea here is that we want to emphasize motion triggered splashes,
-        //whereas we declare periodic updates to be less importnat and hence smaller splashes are drawn 
+        //whereas we declare periodic updates to be less importnat and hence smaller splashes are drawn
 
         //if !motion_trigger, draw a smaller circle
         let final_radius = motion_trigger == true ? parent.circle_radius * 10 : parent.circle_radius * 5;
@@ -523,56 +517,15 @@ class HeatMap {
 
 
     //API requests to get sensors per crate
-    //THIS IS DONE FOR THE INITIAL CONNECTION
-    load_sensor_data(parent) {
-
-        //get the system and floor paramters required for the url
-        let system = parent.master.floor_coordinate_system;
-        let floor = parent.master.floor_number;
-
-        //combine the parameters into a coherent url
-        let readings_url = parent.API_HEATMAP + system + "/" + floor + "/" + parent.feature + "/" + "?metadata=true";
-
-        //query the url to get all of the sensors on the floor
-        d3.json(readings_url, {
-            crossOrigin: "anonymous"
-        }).then(function (received_data) {
-            console.log('heatmap received', received_data);
-            parent.handle_sensors_metadata(parent, received_data);
-
-            //change the global data_loaded
-            //and proceed to load the heatmap
-            parent.promiseResolve()
-
-        });
-    }
-
-    //API requests to get sensors per crate
     //THIS IS DONE WHEN CHANGING FEATURES ON THE LOADED PAGE
-    refetch_floor_sensors(parent) {
+    change_feature(parent) {
 
         //get the system and floor paramters required for the url
-        let system = parent.master.floor_coordinate_system;
-        let floor = parent.master.floor_number;
+        let system = parent.floor_plan.floor_coordinate_system;
+        let floor = parent.floor_plan.floor_number;
 
-        //combine the parameters into a coherent url
-        let readings_url = parent.API_HEATMAP + system + "/" + floor + "/" + parent.feature + "/" + "?metadata=true";
-
-        //OPTIONAL: wipe all previous data;
-        //might not be a good idea because it will not display sensors that do not have our selected feature;
-        parent.sensor_data = {};
-        parent.crates_with_sensors = {}
-
-        //query the url to get all of the sensors on the floor
-        d3.json(readings_url, {
-            crossOrigin: "anonymous"
-        }).then(function (received_data) {
-            //draw all the relevant sensors
-            parent.handle_sensors_metadata(parent, received_data)
-
-            //in this case use update_resolution, rather than show_heatmap()
-            parent.update_resolution(parent, parent.resolution);
-        });
+        //DEBUG create new URL with querystring '?<new feature>&resolution=medium'
+        console.log("CHANGE FEATURE NOT IMPLEMENTED");
     }
 
     // Returns a "list object" (i.e. dictionary on acp_id) of sensors on
@@ -631,13 +584,14 @@ class HeatMap {
             let new_acp_ts = msg.acp_ts;
             let new_payload = msg.payload_cooked;
 
-            console.log(acp_id)
+            console.log("New message from: "+acp_id)
 
             //variable that controls that any new value in packet
             //is different from old
             let any_updates = false;
 
             parent.sensor_data[acp_id].acp_ts = new_acp_ts;
+
             //here we take into account that sensor's payload can have only one or multiple updates to features
             //e.g. the new data packet can only have motion=1, w/out updates for other features, hence we can't
             //just wipe the rest of the data by overwriting the entire payload_cooked property in the data struct
@@ -678,7 +632,7 @@ class HeatMap {
 
         d3.selectAll("." + class_id).nodes().forEach(rect => {
 
-            //acquire their position from the HTML data-loc property 
+            //acquire their position from the HTML data-loc property
             let raw_loc = rect.dataset.loc.split(',')
 
             //get rect's location on screen
@@ -752,7 +706,7 @@ class HeatMap {
 
             d3.selectAll("." + class_id).nodes().forEach(rect => {
 
-                //acquire their position from the HTML data-loc property 
+                //acquire their position from the HTML data-loc property
                 let raw_loc = rect.dataset.loc.split(',')
                 let selected_crate = rect.dataset.crate; //??? should this be sensor_data.crate_id ??? -- to be changed
 
@@ -908,7 +862,7 @@ class HeatMap {
     show_heatmap_original(parent) {
         console.time('[TOTAL TIME LAPSED ]');
 
-        //get the most recent minmax value range 
+        //get the most recent minmax value range
         parent.get_min_max(parent, parent.feature);
 
         //make all polygons white so the underlying color does not interfere with the heatmap
@@ -917,8 +871,8 @@ class HeatMap {
         //target the app_overlay and append a sublayer for the heatmap
         let main_svg = d3.select('#app_overlay').append('g').attr('id', 'heatmap'); //parent.page_floor_svg;
 
-        let h = parent.master.page_floor_svg.clientHeight;
-        let w = parent.master.page_floor_svg.clientWidth;
+        let h = parent.floor_plan.page_floor_svg.clientHeight;
+        let w = parent.floor_plan.page_floor_svg.clientWidth;
 
         //we check for the invisible floor element since it has necessary svg information required to draw the heatmap
         let floor = document.querySelector("[data-crate_type='floor']");
@@ -954,7 +908,7 @@ class HeatMap {
             let has_sensors = crates_with_sensors_list.includes(element.id);
 
             //if a crate has sensors and is not of type building or floor, then we fill it with cells(or mini rects)
-            //that will make up the pixels of our heatmap 
+            //that will make up the pixels of our heatmap
             if (element.dataset.crate_type != 'building' && element.dataset.crate_type != 'floor' && has_sensors) {
 
                 ///class name for cells follows the standart of CRATE_ID + _rect
@@ -1003,13 +957,13 @@ class HeatMap {
                                 x: (i - parent.rect_size / 2 + x_offset).toFixed(1), //round (i + x_offset).toFixed(1)
                                 y: (u - parent.rect_size / 2 + y_offset).toFixed(1), //round (u + y_offset).toFixed(1)
                                 cons_svg: consolidated_svg,
-                                scale: scale.toFixed(1) //round 
+                                scale: scale.toFixed(1) //round
                             }
 
                             let cell_value = parent.get_cell_value(parent, selected_crate, loc).toFixed(2); //round to 2dec places ;
                             let color = parent.color_scheme(cell_value);
 
-                            //draw the cells (rects) on screen 
+                            //draw the cells (rects) on screen
                             crate_div
                                 .append("rect")
                                 //.style('pointer-events', 'none')
@@ -1083,12 +1037,12 @@ class HeatMap {
 
         //d3.selectAll('.sensor_node_off').attr('class','sensor_node').style('opacity', 0.65);
 
-        console.log('parent.master', parent.master)
+        console.log('parent.floor_plan', parent.floor_plan)
         //make sure to pass the master object rather than the "heatmap parent" itself
 
         //OPTIONAL: show choropleth
-        parent.master.setup_choropleth(parent.master)
-        parent.master.get_choropleth(parent.master);
+        parent.floor_plan.setup_choropleth(parent.floor_plan)
+        parent.floor_plan.get_choropleth(parent.floor_plan);
     }
 
     //----------------------------------------------------------------//
@@ -1124,13 +1078,13 @@ class HeatMap {
                     .attr("class", 'sensor_node')
                     .attr("id", sensor_id + "_hm")
                     .attr('data-acp_id', sensor_id)
-                    .style("opacity", parent.master.sensor_opacity)
+                    .style("opacity", parent.floor_plan.sensor_opacity)
                     .style("fill", "pink")
                     .style('stroke', 'black')
                     .on('mouseover', function (d) {
                         console.log(sensor_id, results[sensor]);
                     })
-                //  .attr("transform", parent.master.svg_transform);
+                //  .attr("transform", parent.floor_plan.svg_transform);
 
             } catch (error) {
                 console.log(error)
@@ -1206,19 +1160,19 @@ class HeatMap {
         d3.select("#legend_svg").remove();
         d3.select('#sensor_request').style('opacity', 0);
 
-        parent.master.legend_svg = d3.select('#legend_container')
+        parent.floor_plan.legend_svg = d3.select('#legend_container')
             .append("svg")
             .attr("width", parent.c_conf.width + parent.c_conf.left + parent.c_conf.right)
             .attr("height", parent.c_conf.height + parent.c_conf.top + parent.c_conf.bottom)
             .attr('id', "legend_svg");
 
-        //set the scale 
+        //set the scale
         let scale = d3.scaleLinear().domain([parent.c_conf.height, 0]).range([parent.min_max_range.min, parent.min_max_range.max]); //abs
-        //set the inverse scale 
+        //set the inverse scale
         let scale_inv = d3.scaleLinear().domain([parent.min_max_range.min, parent.min_max_range.max]).range([parent.c_conf.height, 0]);
 
         //create a series of bars comprised of small rects to create a gradient illusion
-        let bar = parent.master.legend_svg.selectAll(".bars")
+        let bar = parent.floor_plan.legend_svg.selectAll(".bars")
             .data(d3.range(0, parent.c_conf.height), function (i) {
                 return i;
             })
@@ -1239,11 +1193,11 @@ class HeatMap {
 
         //text showing range on left/right
         //jb_tools.add_text(TARGET SVG, TXT VALUE, X LOC, Y LOC, dy, TRANSLATE);
-        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.max, parent.c_conf.left + parent.c_conf.width / 2, 0, "0.75em", "translate(0,0)").attr("font-size", '0.75em') // 0 is the offset from the left
-        parent.jb_tools.add_text(parent.master.legend_svg, parent.min_max_range.min, parent.c_conf.left + parent.c_conf.width / 2, parent.c_conf.height + parent.c_conf.top + parent.c_conf.bottom, "0em", "translate(0,0)").attr("font-size", '0.75em') // 0 is the offset from the left
+        parent.jb_tools.add_text(parent.floor_plan.legend_svg, parent.min_max_range.max, parent.c_conf.left + parent.c_conf.width / 2, 0, "0.75em", "translate(0,0)").attr("font-size", '0.75em') // 0 is the offset from the left
+        parent.jb_tools.add_text(parent.floor_plan.legend_svg, parent.min_max_range.min, parent.c_conf.left + parent.c_conf.width / 2, parent.c_conf.height + parent.c_conf.top + parent.c_conf.bottom, "0em", "translate(0,0)").attr("font-size", '0.75em') // 0 is the offset from the left
 
         //Adds the feature on the right side
-        parent.jb_tools.add_text(parent.master.legend_svg, document.getElementById('features_list').value, -parent.c_conf.height / 2, parent.c_conf.left + parent.c_conf.width, "3.5px", "rotate(-90)") // 0 is the offset from the left
+        parent.jb_tools.add_text(parent.floor_plan.legend_svg, document.getElementById('features_list').value, -parent.c_conf.height / 2, parent.c_conf.left + parent.c_conf.width, "3.5px", "rotate(-90)") // 0 is the offset from the left
 
     }
 
@@ -1282,7 +1236,7 @@ class HeatMap {
             min_abs: Math.min(...value_array).toFixed(2) //absolute min
         };
 
-        //for colors, we want the heatmap to have a range of min and max, where min and max are adjusted 
+        //for colors, we want the heatmap to have a range of min and max, where min and max are adjusted
         //for 95%/5% percentiles;
         parent.color_scheme.domain([parent.min_max_range.min, parent.min_max_range.max]);
 

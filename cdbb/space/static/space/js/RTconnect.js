@@ -3,6 +3,9 @@
 class RTconnect {
     constructor(master) {
 
+        this.WATCHDOG_PERIOD = 1000 * 60 * 15; //every fifteen mins
+        this.MSG_TIMEOUT = 1000 * 60 * 5; //5mins after last message
+
         //master element e.g. SSD, Rain, Splash that RTmon is going to report to upon receiving messages
         this.master = master;
 
@@ -39,11 +42,8 @@ class RTconnect {
         this.sub_list;
         this.parent_callback;
 
-        this.last_msg_received; //will save the ts from the last msg received
-        this.periodic_timer;
-
-        this.periodic_check = 1000 * 60 * 15; //every fifteen mins
-        this.last_msg_timeout = 1000 * 60 * 5; //5mins after last message
+        this.msg_timer; //will save the ts from the last msg received
+        this.watchdog_timer;
 
         // Value	State	Description
         // 0	CONNECTING	Socket has been created. The connection is not yet open.
@@ -60,6 +60,7 @@ class RTconnect {
     }
 
     connect(callback, sensor_list) {
+        console.log('RTconnect connect() called');
         let self = this;
 
         //save the parent callback, since we need it when reconnecting
@@ -130,7 +131,7 @@ class RTconnect {
 
                 callback && callback('1');
 
-                //after the connection was successful, we want to check that 
+                //after the connection was successful, we want to check that
                 //that the connection is stable every 15(?) minutes
                 self.check_periodic(self);
             }
@@ -145,7 +146,7 @@ class RTconnect {
                 callback && callback('2', msg_data);
 
                 //clear the previous timer since last message
-                clearTimeout(self.last_msg_received);
+                clearTimeout(self.msg_timer);
 
                 //launch a new timer to check if new messages have arrived in the window of 5 mins
                 self.check_since_last(self)
@@ -173,8 +174,8 @@ class RTconnect {
         console.log("Disconnecting");
         self.socket.close();
         //clear timers
-        clearTimeout(self.last_msg_received);
-        clearTimeout(self.periodic_timer);
+        clearTimeout(self.msg_timer);
+        clearTimeout(self.watchdog_timer);
 
     }
 
@@ -193,7 +194,7 @@ class RTconnect {
 
     check_periodic(self) {
 
-        //check state of the connection 
+        //check state of the connection
         let socket_state = self.socket.readyState;
 
         console.log('connection state is', self.state_dict[socket_state], '(' + socket_state + ')');
@@ -208,24 +209,24 @@ class RTconnect {
             self.connect(self.parent_callback, self.sub_list)
         }
 
-        //else we continue as usual 
+        //else we continue as usual
 
         //set a periodic timer to check the state every 15mins
-        self.periodic_timer = setTimeout(function () {
+        self.watchdog_timer = setTimeout(function () {
 
-            console.log('checking connection status', new Date())
+            console.log('Watchdog: checking connection status', new Date())
             self.check_periodic(self);
 
-        }, self.periodic_check);
+        }, self.WATCHDOG_PERIOD);
     }
 
     check_since_last(self) {
 
         //define a timer that starts ticking after a new message has been received
-        self.last_msg_received = setTimeout(function () {
+        self.msg_timer = setTimeout(function () {
 
             console.log('5 mins passed since last msd, checking connection status', new Date())
-            //check state of the connection 
+            //check state of the connection
             let socket_state = self.socket.readyState;
 
             console.log('connection state is', self.state_dict[socket_state], '(' + socket_state + ')');
@@ -241,6 +242,6 @@ class RTconnect {
             }
 
 
-        }, self.last_msg_timeout);
+        }, self.MSG_TIMEOUT);
     }
 }

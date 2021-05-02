@@ -1,14 +1,13 @@
 "use strict"
 
-class SplashMap {
+class FloorSplash {
 
-    // Called to create instance in page : space_floorplan = SpaceFloorplan()
-    constructor(floorspace) {
+    constructor(floor_plan) {
 
         let parent = this;
 
         //throughout the class the master is the main visualisation, parent is HeatMap
-        parent.master = floorspace;
+        parent.master = floor_plan;
 
         // Instatiante an RTmonitor class
         parent.rt_con = new RTconnect(parent);
@@ -32,7 +31,7 @@ class SplashMap {
             'period_a': 0,
             'period_b': 5 * 60, //5 minutes
             'period_c': 1 * 60 * 60, //60minutes
-            'period_d': 24 * 60 * 60 //24 hours (or 86400 seconds to be precise)            
+            'period_d': 24 * 60 * 60 //24 hours (or 86400 seconds to be precise)
         }
 
         parent.color_preset = {
@@ -50,7 +49,9 @@ class SplashMap {
     }
 
     // init() called when page loaded
-    init(parent) {
+    init() {
+
+        let parent = this;
 
         parent.timer_short; //the socket has been unactive for a while -- color yellow
         parent.timer_long; //assume the socket connection was lost -- color red
@@ -111,7 +112,7 @@ class SplashMap {
     //connects to the rt monitor via websockets
     connect_rt(parent) {
         //get a list of all sensors rendered on screen
-        parent.sub_list = Object.keys(parent.master.sensor_data);
+        parent.sub_list = Object.keys(API_SENSORS_INFO["sensors"]);
 
         //create an rtmonitor connection, telling which sensors to subscribe to
         parent.rt_con.connect(parent.check_status.bind(parent), parent.sub_list);
@@ -161,7 +162,7 @@ class SplashMap {
                     let cooked = msg.payload_cooked;
 
                     //if payload_cooked only has a single key and it is 'motion' or 'occupancy'
-                    // (usually paired though) then we now 
+                    // (usually paired though) then we now
                     //it's an interrupt triggered motion event
                     if ((Object.keys(cooked).length < 3) && (("motion" in cooked) || ("occupancy" in cooked))) {
                         console.log('motion-only event detected', cooked)
@@ -245,7 +246,7 @@ class SplashMap {
             return
         }
 
-        //iterate over the list of rt_con subscribtions 
+        //iterate over the list of rt_con subscribtions
         //and fill a dict with acp_id and last_msg value(time elapsed since last msg)
         for (let i = 0; i < parent.sub_list; i++) {
             parent.chrono_keep[parent.sub_list[i]] = {
@@ -314,7 +315,7 @@ class SplashMap {
     //----------SVG modifications and drawing animations----------------//
     //------------------------------------------------------------------//
 
-    //creates a sublayer of masks so that splashes 
+    //creates a sublayer of masks so that splashes
     //do not cross crate boundaries
     make_clips(parent) {
 
@@ -327,7 +328,7 @@ class SplashMap {
         const defs = splash_canvas.append("defs")
 
         //add a mask for every crate;
-        //here we iterate ovre all drawn BIM polygons and make 
+        //here we iterate ovre all drawn BIM polygons and make
         //a copy for each one as a mask polygon
         d3.selectAll('.crate').select('polygon').nodes().forEach(crate => {
 
@@ -363,12 +364,19 @@ class SplashMap {
     //acp_id determine where the splash will radiate from, motion_trigger determines the size of the splash
     draw_splash(parent, acp_id, motion_trigger) {
 
+        let crate_id;
+
         //find the crate the acp_id sensor is in
-        let crate_id = parent.master.sensor_data[acp_id].crate_id;
+        try {
+            crate_id = API_SENSORS_INFO["sensors"][acp_id].crate_id;
+        } catch (err) {
+            console.log(`draw_splash(): no crate_id for ${acp_id}`)
+            return;
+        }
 
         //the motion trigger argument determines the size of the splash
         //the idea here is that we want to emphasize motion triggered splashes,
-        //whereas we declare periodic updates to be less importnat and hence smaller splashes are drawn 
+        //whereas we declare periodic updates to be less importnat and hence smaller splashes are drawn
 
         //if !motion_trigger, draw a smaller circle
         let final_radius = motion_trigger == true ? parent.circle_radius * 10 : parent.circle_radius * 5;
@@ -400,29 +408,33 @@ class SplashMap {
 
             //inline function definition for circles
             let create_circle = function (delay_sample, color_sample) {
-                d3.select("#clipped_" + crate_id) //target the mask
-                    .append("circle")
-                    .attr("pointer-events", "none")
-                    .attr("cx", position.x)
-                    .attr("cy", position.y)
-                    .attr("r", 0) //start as a circle with 0 radius
-                    .style("stroke-width", stroke_start)
-                    .style("fill", 'none')
-                    .style('stroke', color_sample) //defines the colors of the circle for splash animation
-                    .attr('transform', position.transf)
-                    .transition() //initiate the transition
-                    .delay(delay_sample)
-                    .duration(parent.ripple_duration)
-                    .ease(d3.easeSin)
-                    .attr("r", final_radius) //the final circle radius before dissapearing
-                    .style("stroke-opacity", 0)
-                    .style("stroke-width", stroke_finish)
-                    .on("interrupt", function () {
-                        d3.select(this).remove(); //in case of an interrupt, cancel all and delete the circle
-                    })
-                    .on("end", function () {
-                        d3.select(this).remove(); //remove ripples
-                    });
+                try {
+                    d3.select("#clipped_" + crate_id) //target the mask
+                        .append("circle")
+                        .attr("pointer-events", "none")
+                        .attr("cx", position.x)
+                        .attr("cy", position.y)
+                        .attr("r", 0) //start as a circle with 0 radius
+                        .style("stroke-width", stroke_start)
+                        .style("fill", 'none')
+                        .style('stroke', color_sample) //defines the colors of the circle for splash animation
+                        .attr('transform', position.transf)
+                        .transition() //initiate the transition
+                        .delay(delay_sample)
+                        .duration(parent.ripple_duration)
+                        .ease(d3.easeSin)
+                        .attr("r", final_radius) //the final circle radius before dissapearing
+                        .style("stroke-opacity", 0)
+                        .style("stroke-width", stroke_finish)
+                        .on("interrupt", function () {
+                            d3.select(this).remove(); //in case of an interrupt, cancel all and delete the circle
+                        })
+                        .on("end", function () {
+                            d3.select(this).remove(); //remove ripples
+                        });
+                } catch (err) {
+                    console.log('draw_splash: create_circle error', err)
+                }
             }
 
             //create circles by passing different delays and colors
@@ -494,7 +506,7 @@ class SplashMap {
                 //last one will probably be in hours
                 else if (i == time_preset_list.length - 1) {
                     return '> ' + time_preset_list[i] / time_divider + time_notation;
-                } 
+                }
                 //all the rest can vary between minutes and hours
                 else {
                     //determine if hours or minutes for a range of data

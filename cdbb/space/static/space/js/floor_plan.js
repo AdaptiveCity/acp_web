@@ -1,13 +1,6 @@
 "use strict"
 
-// NOTE the containing page defines these globals:
-// API_BIM  e.g. = "http://ijl20-iot.cl.cam.ac.uk:4123/api/bim/"
-// API_SENSORS
-// API_READINGS
-// API_SPACE
-// FLOOR_ID e.g. "FF"
-
-class SpaceFloor {
+class FloorPlan {
 
     // Called to create instance in page : space_floorplan = SpaceFloorplan()
     constructor() {
@@ -20,7 +13,6 @@ class SpaceFloor {
         // Transform parameters to scale SVG to screen
         this.svg_transform = ""; // updated by set_svg_transform()
         this.next_color = 0;
-        this.sensor_data; //metadata
         this.sensor_readings = {}; //sensor reading data
         this.sensors_in_crates = {};
 
@@ -41,27 +33,27 @@ class SpaceFloor {
         let parent = this;
 
         // Page template DOM elements we'll update
-        parent.page_draw_div = document.getElementById("main_drawing_div");
-        parent.page_floor_svg = document.getElementById("drawing_svg"); // drawing SVG element
+        this.page_draw_div = document.getElementById("main_drawing_div");
+        this.page_floor_svg = document.getElementById("drawing_svg"); // drawing SVG element
         console.log("page_floor_svg", this.page_floor_svg);
-        parent.page_coords = document.getElementById("drawing_coords");
+        this.page_coords = document.getElementById("drawing_coords");
 
         // debug for page x,y nit
-        parent.page_floor_svg.addEventListener('mousemove', function (e) {
+        this.page_floor_svg.addEventListener('mousemove', function (e) {
             parent.page_coords.innerHTML = e.clientX + "," + e.clientY;
         });
 
         // object to store BIM data for current floor when returned by BIM api
-        parent.floor_bim_object = null;
-        parent.floor_number = 0;
-        parent.floor_coordinate_system = null;
+        this.floor_bim_object = null;
+        this.floor_number = 0;
+        this.floor_coordinate_system = null;
 
 
         //------------------------------------//
         //---------CHOROPLETH STUFF-----------//
         //------------------------------------//
 
-        //parent.setup_choropleth(parent)
+        //this.setup_choropleth(parent)
 
         //------------------------------------//
         //---------CHOROPLETH END--------------//
@@ -72,42 +64,50 @@ class SpaceFloor {
         //-------------------------------------------//
 
         //----set parametrs for drawn sensors on the floorplan----//
-        parent.sensor_opacity = 0.4;
+        this.sensor_opacity = 0.4;
         // radius is calculated wrt scale so we have consistent sensor radius across all spacefloors
-        parent.radius_scaling = 1.75; // a parameters that helps calculates the sensor radius in response to svg scale
+        this.radius_scaling = 1.75; // a parameters that helps calculates the sensor radius in response to svg scale
         //calculated in handle_sensors_metadata()
-        parent.sensor_radius;
-        parent.sensor_color = "orange"; //cambs yellow
+        this.sensor_radius;
+        this.sensor_color = "orange"; //cambs yellow
         //--------------------------------------------------------//
 
-        parent.previous_circle_radius = 0; // set on mouse over, used to remember radius for reset on mouse out.
-        parent.defaultScale = 1; /* default scale of map - fits nicely on standard screen */
+        this.previous_circle_radius = 0; // set on mouse over, used to remember radius for reset on mouse out.
+        this.defaultScale = 1; /* default scale of map - fits nicely on standard screen */
 
 
-        parent.promiseResolve, parent.promiseReject;
+        /*
+        this.promiseResolve, this.promiseReject;
 
-        parent.loaded = new Promise(function (resolve, reject) {
+        this.loaded = new Promise(function (resolve, reject) {
             parent.promiseResolve = resolve;
             parent.promiseReject = reject;
         });
+        */
 
         // Do an http request to the SPACE api, and call handle_building_space_data() on arrival
-        parent.get_floor_crate(parent);
+        this.handle_floor_crate(parent, API_BIM_INFO[CRATE_ID]);
+
+        this.handle_space_info(parent, API_SPACE_INFO);
+
+        this.handle_sensors_metadata(parent, API_SENSORS_INFO);
 
         //--------------------------------------//
         //--------SET UP EVENT LISTENERS--------//
         //--------------------------------------//
-        parent.setup_buttons(parent);
+        this.setup_buttons(parent);
 
+        /*
         parent.loaded.then(function () {
             console.log('promise resolved; floor data finished loading')
         }, function () {
             console.log('someting went wrong')
         })
+        */
     }
 
 
-    //changes the url based on what we'd like to 
+    //changes the url based on what we'd like to
     //show on the page following the initial load
     manage_url() {
 
@@ -141,19 +141,6 @@ class SpaceFloor {
         //----------END EVENT LISTENERS---------//
         //--------------------------------------//
     }
-    // Use BIM api to get data for this floor
-    get_floor_crate(parent) {
-        var request = new XMLHttpRequest();
-        request.overrideMimeType('application/json');
-
-        request.addEventListener("load", function () {
-            var crates_dict = JSON.parse(request.responseText)
-            // Note the BIM api returns a dictionary
-            parent.handle_floor_crate(parent, crates_dict[CRATE_ID]);
-        });
-        request.open("GET", API_BIM + "get/" + CRATE_ID + "/0/");
-        request.send();
-    }
 
     // Will be called with a crate object when that is returned by BIM api
     handle_floor_crate(parent, crate) {
@@ -162,8 +149,8 @@ class SpaceFloor {
 
         //globals
         parent.floor_bim_object = crate;
-        parent.floor_number = crate["acp_location"]["f"];
-        parent.floor_coordinate_system = crate["acp_location"]["system"];
+        parent.floor_number = parseInt(FLOOR_NUMBER); // from template
+        parent.floor_coordinate_system = COORDINATE_SYSTEM; // from template
         console.log("loaded BIM data for floor", parent.floor_coordinate_system + "/" + parent.floor_number)
 
         //check if we're in floorspace template or not
@@ -173,42 +160,16 @@ class SpaceFloor {
         if (parent.floorspace) {
             parent.show_bim_metadata(parent, crate);
         }
-
-        parent.get_floor_svg(parent);
     }
 
-    // We get the SVG for the floor using *floor number* in the "acp_location_xyz" property
-    get_floor_svg(parent) {
-
-        var space_api_url = API_SPACE + 'get_floor_number/' +
-            parent.floor_coordinate_system + '/' + parent.floor_number + '/';
-
-        console.log('get_floor_svg()', space_api_url);
-
-        var request = new XMLHttpRequest();
-        request.overrideMimeType('application/xml');
-
-        request.addEventListener("load", function () {
-            var xml = request.responseXML
-            parent.handle_floor_svg(parent, xml);
-        });
-
-        request.open("GET", space_api_url);
-        request.send();
-
-    }
-
-    handle_floor_svg(parent, space_info) {
-        console.log("handle_floor_svg() loaded floor SVG", space_info);
+    handle_space_info(parent, space_info) {
+        console.log("handle_space_info() loaded:", space_info);
         let scale = 8.3; //DEBUG
 
-        //this bit doesn't work o n my end
-        //let xmlStr = atob(space_info["svg_encoded"]); // decode the SVG string
-        //// let xmlStr = space_info["svg_encoded"]; // decode the SVG string
-        // const parser = new DOMParser();
-        // const xml = parser.parseFromString(xmlStr, "application/xml");
-        let xml = space_info;
-        // console.log('xml', xml,xmlStr )  
+        let xmlStr = atob(space_info["svg_encoded"]); // decode the SVG string
+
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(xmlStr, "application/xml");
 
         // Parent of the SVG polygons is <g id="bim_request"...>
         let bim_request = xml.getElementById('bim_request');
@@ -238,7 +199,7 @@ class SpaceFloor {
 
         console.log("handle_floor_svg", polygons.length, "polygons");
 
-        //TODO CHECK how and why this does it 
+        //TODO CHECK how and why this does it
         parent.set_svg_transform(parent, polygons);
 
         //attach polygon styling
@@ -293,9 +254,6 @@ class SpaceFloor {
                 svg_el.appendChild(text);
             });
         }
-
-        // call SENSORS api to get the metadata for sensors on this floor
-        parent.get_sensors_metadata(parent);
 
         //add a sublayer for future apps
         d3.select('#drawing_svg').append('g').attr('id', "app_overlay")
@@ -353,7 +311,7 @@ class SpaceFloor {
 
     }
 
-    //special 'onload' zooming function to zoom in on a preloaded CRATE_ID 
+    //special 'onload' zooming function to zoom in on a preloaded CRATE_ID
     setup_floorspace(parent) {
         //make all polygons white...
         d3.selectAll('polygon').style('fill', '#ffffff')
@@ -386,7 +344,7 @@ class SpaceFloor {
             //https://stackoverflow.com/questions/19154631/how-to-get-coordinates-of-an-svg-element
             let bbox_floor_offset = document.querySelectorAll('polygon[data-crate_type=floor]')[0].getCTM(); //required for lockdown laband potentially others
 
-            // scale_new is the max number of times bounding box will fit into container, capped at 3 times 
+            // scale_new is the max number of times bounding box will fit into container, capped at 3 times
             let scale_new = Math.min(bbox_floor.width / bbox_room.width, bbox_floor.height / bbox_room.height, 3);
 
             //calculate the offset and combine it with the consolidated matrix data
@@ -473,34 +431,11 @@ class SpaceFloor {
         }
     }
 
-    // Get the metadata from the SENSORS api for the sensors on this floor
-    get_sensors_metadata(parent) {
-        var request = new XMLHttpRequest();
-        request.overrideMimeType('application/json');
-
-        request.addEventListener("load", function () {
-            var sensors_data = JSON.parse(request.responseText)
-            parent.sensor_data = sensors_data["sensors"];
-            parent.handle_sensors_metadata(parent, sensors_data["sensors"]);
-        });
-        // Using globals from floor BIM crate object retrieved earlier:
-        //   floor_coordinate_system
-        //   floor_number
-        // call /api/sensors/get_floor_number/<coordinate_system>/<floor_number>/
-        var sensors_api_url = API_SENSORS + "get_floor_number/" +
-            parent.floor_coordinate_system + "/" + parent.floor_number + '/';
-
-        console.log('sensor url', sensors_api_url)
-
-        console.log("get_sensors_metadata() ", sensors_api_url);
-        request.open("GET", sensors_api_url);
-        request.send();
-    }
-
     // Returns a "list object" (i.e. dictionary on acp_id) of sensors on
     // given floor#/coordinate system
     //   { "sensors": { "rad-ath-0099" : { <sensor metadata> }, ... }}
-    handle_sensors_metadata(parent, recieved_sensor_metadata) {
+    handle_sensors_metadata(parent, sensors_info) {
+        let recieved_sensor_metadata = sensors_info["sensors"]
         console.log("handle_sensors_metadata() loaded", recieved_sensor_metadata);
 
         //save the the received data as a global
@@ -511,8 +446,10 @@ class SpaceFloor {
             parent.show_sensor_metadata(parent);
         }
 
+        /*
         //change the global data_loaded
         parent.promiseResolve()
+        */
 
         //draw sensors over the floorplan
         parent.attach_sensors(parent);
@@ -520,7 +457,7 @@ class SpaceFloor {
         //activate tooltips on hover
         parent.jb_tools.tooltips();
 
-        //fill polygons based on # of sensors 
+        //fill polygons based on # of sensors
         //parent.get_choropleth(parent);
     }
 
@@ -552,11 +489,11 @@ class SpaceFloor {
                 sensor_list[acp_id] = sensors[acp_id]
             }
         }
-  
+
         } catch (error) {
             console.log('error, no crate detected', error)
         }
-     
+
         let txt = JSON.stringify(sensor_list, null, 2);
 
         if (sensors == {}) {

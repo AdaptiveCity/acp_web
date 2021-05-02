@@ -75,12 +75,31 @@ class FloorView(LoginRequiredMixin, TemplateView):
     # We override get_context_data to return the vars to embed in the template
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-            context['API_BIM'] = settings.API_BIM
-            context['API_SENSORS'] = settings.API_SENSORS
-            context['API_READINGS'] = settings.API_READINGS
-            context['API_SPACE'] = settings.API_SPACE
-            context['CRATE_IDS'] = settings.CRATE_IDS
-            context['CRATE_ID'] = self.kwargs['crate_id']
+
+            crate_id = self.kwargs['crate_id']
+
+            # Get crate floor_number and system
+            response = requests.get(settings.API_BIM+f'get/{crate_id}/0/')
+            bim_info = response.json()
+
+            floor_number = bim_info[crate_id]["acp_location"]["f"]; #DEBUG this should be acp_location_xyzf
+            system = bim_info[crate_id]["acp_location"]["system"]
+
+            # Get metadata for all sensors in the same crate (including selected sensor)
+            response = requests.get(settings.API_SENSORS+f'get_floor_number/{system}/{floor_number}/')
+            sensors_info = response.json()
+
+            # Get floor SVG
+            response = requests.get(settings.API_SPACE+f'get_floor_number_json/{system}/{floor_number}/')
+            space_info = response.json()
+
+            context['CRATE_ID'] = crate_id
+            context['API_BIM_INFO'] = json.dumps(bim_info)
+            context['API_SENSORS_INFO'] = json.dumps(sensors_info)
+            context['API_SPACE_INFO'] = json.dumps(space_info)
+            context['FLOOR_NUMBER'] = floor_number
+            context['COORDINATE_SYSTEM'] = system
+
             return context
 
 class FloorspaceView(LoginRequiredMixin, TemplateView):
@@ -90,12 +109,31 @@ class FloorspaceView(LoginRequiredMixin, TemplateView):
     # We override get_context_data to return the vars to embed in the template
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-            context['API_BIM'] = settings.API_BIM
-            context['API_SENSORS'] = settings.API_SENSORS
-            context['API_READINGS'] = settings.API_READINGS
-            context['API_SPACE'] = settings.API_SPACE
-            context['CRATE_IDS'] = settings.CRATE_IDS
-            context['CRATE_ID'] = self.kwargs['crate_id']
+
+            crate_id = self.kwargs['crate_id']
+
+            # Get crate floor_number and system
+            response = requests.get(settings.API_BIM+f'get/{crate_id}/0/')
+            bim_info = response.json()
+
+            floor_number = bim_info[crate_id]["acp_location"]["f"]; #DEBUG this should be acp_location_xyzf
+            system = bim_info[crate_id]["acp_location"]["system"]
+
+            # Get metadata for all sensors in the same crate (including selected sensor)
+            response = requests.get(settings.API_SENSORS+f'get_floor_number/{system}/{floor_number}/')
+            sensors_info = response.json()
+
+            # Get floor SVG
+            response = requests.get(settings.API_SPACE+f'get_floor_number_json/{system}/{floor_number}/')
+            space_info = response.json()
+
+            context['CRATE_ID'] = crate_id
+            context['API_BIM_INFO'] = json.dumps(bim_info)
+            context['API_SENSORS_INFO'] = json.dumps(sensors_info)
+            context['API_SPACE_INFO'] = json.dumps(space_info)
+            context['FLOOR_NUMBER'] = floor_number
+            context['COORDINATE_SYSTEM'] = system
+
             return context
 
 class RainHomeView(TemplateView):
@@ -110,11 +148,39 @@ class RainView(LoginRequiredMixin, TemplateView):
     # We override get_context_data to return the vars to embed in the template
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-            context['API_BIM'] = settings.API_BIM
-            context['API_SENSORS'] = settings.API_SENSORS
-            context['API_READINGS'] = settings.API_READINGS
-            context['API_SPACE'] = settings.API_SPACE
-            context['CRATE_ID'] = self.kwargs['crate_id']
+
+            crate_id = self.kwargs['crate_id']
+
+            # Get crate floor_number and system
+            response = requests.get(settings.API_BIM+f'get/{crate_id}/0/')
+            bim_info = response.json()
+
+            floor_number = bim_info[crate_id]["acp_location"]["f"]; #DEBUG this should be acp_location_xyzf
+            system = bim_info[crate_id]["acp_location"]["system"]
+
+            # Get metadata for all sensors in the same crate (including selected sensor)
+            response = requests.get(settings.API_SENSORS+f'get_floor_number/{system}/{floor_number}/')
+            sensors_info = response.json()
+
+            # Get floor SVG
+            response = requests.get(settings.API_SPACE+f'get_floor_number_json/{system}/{floor_number}/')
+            space_info = response.json()
+
+            # Get feature readings
+            feature = self.request.GET.get('feature')
+            if not feature:
+                feature = 'temperature'
+            response = requests.get(settings.API_READINGS+f'get_floor_feature/{system}/{floor_number}/{feature}/?metadata=true')
+            readings_info = response.json()
+
+            context['CRATE_ID'] = crate_id
+            context['API_BIM_INFO'] = json.dumps(bim_info)
+            context['API_SENSORS_INFO'] = json.dumps(sensors_info)
+            context['API_SPACE_INFO'] = json.dumps(space_info)
+            context['API_READINGS_INFO'] = json.dumps(readings_info)
+            context['FLOOR_NUMBER'] = floor_number
+            context['COORDINATE_SYSTEM'] = system
+
             context['RTMONITOR_URI'] = 'https://cdbb.uk/rtmonitor/A/mqtt_acp' #DEBUG this will move to settings.py
             return context
 
@@ -130,10 +196,30 @@ class SplashView(LoginRequiredMixin, TemplateView):
     # We override get_context_data to return the vars to embed in the template
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-            context['API_BIM'] = settings.API_BIM
-            context['API_SENSORS'] = settings.API_SENSORS
-            context['API_READINGS'] = settings.API_READINGS
-            context['API_SPACE'] = settings.API_SPACE
-            context['CRATE_ID'] = self.kwargs['crate_id']
+
+            crate_id = self.kwargs['crate_id']
+
+            # Get crate floor_number and system
+            response = requests.get(settings.API_BIM+f'get/{crate_id}/0/')
+            bim_info = response.json()
+
+            floor_number = bim_info[crate_id]["acp_location"]["f"]; #DEBUG this should be acp_location_xyzf
+            system = bim_info[crate_id]["acp_location"]["system"]
+
+            # Get metadata for all sensors in the same crate (including selected sensor)
+            response = requests.get(settings.API_SENSORS+f'get_floor_number/{system}/{floor_number}/')
+            sensors_info = response.json()
+
+            # Get floor SVG
+            response = requests.get(settings.API_SPACE+f'get_floor_number_json/{system}/{floor_number}/')
+            space_info = response.json()
+
+            context['CRATE_ID'] = crate_id
+            context['API_BIM_INFO'] = json.dumps(bim_info)
+            context['API_SENSORS_INFO'] = json.dumps(sensors_info)
+            context['API_SPACE_INFO'] = json.dumps(space_info)
+            context['FLOOR_NUMBER'] = floor_number
+            context['COORDINATE_SYSTEM'] = system
+
             context['RTMONITOR_URI'] = 'https://cdbb.uk/rtmonitor/A/mqtt_acp' #DEBUG this will move to settings.py
             return context

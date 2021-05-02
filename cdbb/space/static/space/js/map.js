@@ -1,10 +1,13 @@
 "use strict"
 
 // Template provides global vars:
-//      API_BIM  -- Building Information API base
-//      API_SENSORS -- Sensors metadata API base
-//      BUILDING_LINK -- links to building page, e.g. /space/building/crate_id/
-//      SENSOR_LINK -- links to sensor page, e.g. /sensor/sensor/acp_id/
+//        API_BIM_INFO
+//        API_SENSOR_INFO
+
+// Note we use a 'dummy' crate_id (using the 'crate_id' literal string) so the javascript
+// can replace it with the actual id required such as 'WGB'. Similarly for 'acp_id' in SENSOR_LINK
+//        BUILDING_LINK
+//        SENSOR_LINK
 
 class SpaceRenderMap {
 

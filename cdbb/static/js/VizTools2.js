@@ -181,6 +181,7 @@ class VizTools2 {
                 // Create API url for sensor reading AND metadata
                 //TODO: we fetch for vdd as the common denominator value for all sensors
                 //which might be troublesome down the line if a particular sensor doesn't have a vdd measure
+                //DEBUG hardcoding vdd
                 let readings_url = API_READINGS + 'get_feature/' + sensor_id + '/vdd/?metadata=true'
 
                 d3.json(readings_url, {
@@ -194,7 +195,7 @@ class VizTools2 {
                     let reading_obj = '';
 
                     //check that the packet contains any readings
-                    if (received_data['acp_error_msg'] != undefined) { //|| Object.keys(parsed).length<1 
+                    if (received_data['acp_error_msg'] != undefined) { //|| Object.keys(parsed).length<1
                         let error_id = received_data['acp_error_id'];
                         console.log('handle_readings() error', received_data);
                         reading_obj = 'NO READINGS available for this sensor.';
