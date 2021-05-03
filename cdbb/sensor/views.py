@@ -64,17 +64,23 @@ class SensorChartView(LoginRequiredMixin, TemplateView):
             return context
 
 
-class SensorSelectView(LoginRequiredMixin, TemplateView):
-    template_name = 'sensor/select.html'
-
 class SensorView(LoginRequiredMixin, TemplateView):
     template_name = 'sensor/sensor.html'
 
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-            context['API_BIM'] = settings.API_BIM
             context['API_SENSORS'] = settings.API_SENSORS
-            context['ACP_ID'] = self.kwargs['acp_id']
+            acp_id = self.kwargs['acp_id']
+            context['ACP_ID'] = acp_id
+
+            response = requests.get(settings.API_SENSORS+'get/'+acp_id+'/')
+            try:
+                sensor_info = response.json()
+            except json.decoder.JSONDecodeError:
+                context["API_SENSORS_INFO"] = f'{{ "acp_error": "Sensor metadata for {acp_id} unavailable" }}'
+                return context
+
+            context['API_SENSORS_INFO'] = json.dumps(sensor_info)
 
             return context
 
@@ -83,9 +89,18 @@ class SensorTypeView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-            context['API_BIM'] = settings.API_BIM
-            context['API_SENSORS'] = settings.API_SENSORS
-            context['ACP_TYPE_ID'] = self.kwargs['acp_type_id']
+
+            acp_type_id = self.kwargs['acp_type_id']
+            context['ACP_TYPE_ID'] = acp_type_id
+
+            response = requests.get(settings.API_SENSORS+'get_type/'+acp_type_id+'/')
+            try:
+                sensor_info = response.json()
+            except json.decoder.JSONDecodeError:
+                context["API_SENSORS_INFO"] = f'{{ "acp_error": "Sensor metadata for {acp_type_id} unavailable" }}'
+                return context
+
+            context['API_SENSORS_INFO'] = json.dumps(sensor_info)
 
             return context
 
@@ -104,6 +119,15 @@ class SensorListView(LoginRequiredMixin, TemplateView):
             else:
                 print("SensorListView no feature",kwargs)
 
+            response = requests.get(settings.API_SENSORS+'list/?type_metadata=true')
+            try:
+                sensor_info = response.json()
+            except json.decoder.JSONDecodeError:
+                context["API_SENSORS_INFO"] = f'{{ "acp_error": "Sensor metadata list API unavailable" }}'
+                return context
+
+            context['API_SENSORS_INFO'] = json.dumps(sensor_info)
+
             return context
 
 class SensorTypesView(TemplateView):
@@ -120,5 +144,14 @@ class SensorTypesView(TemplateView):
                 context['FEATURE'] = selected_feature
             else:
                 print("SensorTypesView no feature",kwargs)
+
+            response = requests.get(settings.API_SENSORS+'list_types/')
+            try:
+                sensor_info = response.json()
+            except json.decoder.JSONDecodeError:
+                context["API_SENSORS_INFO"] = f'{{ "acp_error": "Sensor metadata list API unavailable" }}'
+                return context
+
+            context['API_SENSORS_INFO'] = json.dumps(sensor_info)
 
             return context

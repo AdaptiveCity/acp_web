@@ -12,22 +12,7 @@ class Sensor {
         parent.sensor_info_el = document.getElementById('sensor_info');
         parent.type_info_el = document.getElementById('type_info');
         parent.type_heading_type_el = document.getElementById('type_heading_type');
-        parent.get_sensor_metadata(parent);
-    }
-
-    // Use API_SENSORS to retrieve requested sensor metadata
-    get_sensor_metadata(parent) {
-        let sensor_metadata_url = API_SENSORS + 'get/' + ACP_ID + '/';
-        let request = new XMLHttpRequest();
-        request.overrideMimeType('application/json');
-
-        request.addEventListener("load", function () {
-          let sensor_metadata = JSON.parse(request.responseText)
-          parent.handle_sensor_metadata(parent, sensor_metadata);
-        });
-        console.log("sensor.js requesting "+sensor_metadata_url);
-        request.open("GET", sensor_metadata_url);
-        request.send();
+        parent.handle_sensor_metadata(parent, API_SENSORS_INFO);
     }
 
     // Will handle the return jsonobject from the sensors API request
