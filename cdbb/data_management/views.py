@@ -297,7 +297,7 @@ class DMSensorTypeEditView(LoginRequiredMixin, TemplateView):
             return context
 
 class DMSensorTypesView(TemplateView):
-    template_name = 'data_management/sensor_types.html'
+    template_name = 'data_management/sensor_types_list.html'
 
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
@@ -307,10 +307,10 @@ class DMSensorTypesView(TemplateView):
             try:
                 sensor_types_info = response.json()
             except json.decoder.JSONDecodeError:
-                context["API_SENSOR_TYPES_INFO"] = '{ "acp_error": "Sensor metadata unavailable" }'
+                context["API_SENSORS_INFO"] = '{ "acp_error": "Sensor metadata unavailable" }'
                 return context
 
-            context['API_SENSOR_TYPES_INFO'] = json.dumps(sensor_types_info)
+            context['API_SENSORS_INFO'] = json.dumps(sensor_types_info)
 
             # e.g. &feature=temperature
             selected_feature = self.request.GET.get('feature',None)
