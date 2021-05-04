@@ -1,11 +1,5 @@
 "use strict"
-// uses ACP_IP, API_READINGS, SENSOR_REALTIME set in template
-
-// This codes requests a DAY sensor READINGS, with "&metadata=true" appended to
-// the readings api url, so a json object { readings: [...], sensor_metadata: { } } is
-// returned. The metadata defines each of the 'features' (e.g. temperature) available
-// in the returned readings. Consequently this code does not need to call the
-// sensors api separately (which the readings api will do server-side anyway)
+// uses ACP_IP, SENSOR_READINGS, SENSOR_REALTIME set in template
 
 var plot_date; // date of currently displayed plot (initialized from YYYY/MM/DD)
 
@@ -62,9 +56,7 @@ function init() {
     // set up layout / axes of scatterplot
     init_chart();
 
-    // Can use get_local_readings() to shim the API (copywrite jb2328)
-    //get_local_readings();
-    get_readings();
+    handle_readings(SENSOR_READINGS);
 
 }
 
@@ -78,36 +70,7 @@ function init_date_picker() {
 
 }
 
-// Use API_READINGS to retrieve requested sensor readings
-function get_readings() {
-    var readings_url = API_READINGS + 'get_day/' + ACP_ID + '/' +
-        '?date=' + plot_date +
-        '&metadata=true';
-
-    console.log("using readings URL: " + readings_url);
-
-    var jsonData = $.ajax({
-        url: readings_url,
-        dataType: 'json',
-        async: true,
-        headers: {
-            "Access-Control-Allow-Origin": "*"
-        },
-    }).done(handle_readings);
-}
-
-// Alternative to get_readings() using local file for sensors API response
-function get_local_readings() {
-    console.log('loading data')
-
-    d3.json("sample_8x8_data.json").then(function (data) {
-        handle_readings(data);
-        console.log(data)
-    });
-}
-
-
-// API http call has returned these results { readings: ..., sensor_metadata: ...}
+// Readings API returned these results { readings: ..., sensor_metadata: ...}
 function handle_readings(results) {
     console.log('handle_readings()', results);
 
@@ -471,15 +434,6 @@ function draw_chart(readings, feature, feature2) {
 
     var CHART_DOT_RADIUS = 6; // size of dots on scatterplot
 
-
-
-
-
-
-
-
-
-
     // Erase of previous drawn chart
     chart_svg.select("#graph_elements").remove();
 
@@ -505,7 +459,7 @@ function draw_chart(readings, feature, feature2) {
     chart_yValue = function (d) {
 
         // Note jsonPath always returns a list of result, or false if path not found.
-        let path_val = jsonPath(d, feature['jsonpath']); //d.payload_cooked.temperature;
+        let path_val = jsonPath(d, feature['jsonpath']);
         //console.log("chart_yValue path_val",d,path_val);
         if (path_val == false) {
             //console.log("chart_yValue returning null")
@@ -526,7 +480,7 @@ function draw_chart(readings, feature, feature2) {
         chart_yValue2 = function (d) {
 
             // Note jsonPath always returns a list of result, or false if path not found.
-            let path_val2 = jsonPath(d, feature2['jsonpath']); //d.payload_cooked.temperature;
+            let path_val2 = jsonPath(d, feature2['jsonpath']);
             //console.log("chart_yValue path_val",d,path_val);
             if (path_val2 == false) {
                 //console.log("chart_yValue returning null")
@@ -997,9 +951,12 @@ function mouseover_interactions(event, d, feature) {
 
     //heatmap is within try/catch since not all sensors have 8x8s
     try {
-        viz_tools.draw_heatmap(d, '#chart_tooltip');
+        //DEBUG we should not have 'payload_cooked' hardcoded here or in VizTools2
+        if (d?.payload_cooked?.grideye) {
+            viz_tools.draw_heatmap(d, '#chart_tooltip');
+        }
     } catch (error) {
-        console.log('no elsys eye: ', error)
+        console.log('elsys eye error: ', error)
     }
 
 }

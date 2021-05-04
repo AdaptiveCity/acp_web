@@ -11,7 +11,9 @@
 
     <!-- Page local script -->
     <script type="text/javascript">
-        var API_SENSORS = "{{ API_SENSORS }}";
+
+        var API_SENSORS_INFO = JSON.parse('{{ API_SENSORS_INFO | escapejs }}');
+
         var SENSOR_LIST_LINK = "{% url 'sensor_list' %}";
         var SENSOR_TYPE_LINK = "{% url 'sensor_type' 'acp_type_id' %}";
         var FEATURE = '{{ FEATURE }}'; // e.g. 'temperature'

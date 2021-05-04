@@ -5,29 +5,19 @@
 
 {% block head %}
     <!-- Our style sheets -->
-    <link rel="stylesheet" href="{% static 'space/css/space.css' %}"/>
     <link rel="stylesheet" type="text/css" href="{% static 'space/css/building.css' %}" />
 
     <!-- Local copy of d3 -->
-    <script type="text/javascript" src="{% static 'js/d3.v5.min.js' %}"></script>
-
-    <!-- JS SCRIPT for space snd building -->
-    <script type="text/javascript" src="{% static 'space/js/space.js' %}"></script>
-
-    <!-- viz_tools contains some common rendering functions -->
-    <script type="text/javascript" src="{% static 'space/js/viz_tools.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/d3.v6_5.min.js' %}"></script>
 
     <!-- building.js defines class SpaceBuilding -->
     <script type='text/javascript' src="{% static 'space/js/building.js' %}"></script>
 
     <!-- Page local script -->
     <script type="text/javascript">
-        API_BIM = '{{ API_BIM }}';
-        API_SENSORS = '{{ API_SENSORS }}';
-        API_READINGS = '{{ API_READINGS }}';
-        API_SPACE = '{{ API_SPACE }}';
         CRATE_ID = '{{ CRATE_ID }}';
         URL_FLOOR = '{% url "space_floor" "crate_id" %}'
+        API_SPACE_INFO = JSON.parse('{{ API_SPACE_INFO | escapejs }}');
     </script>
 {% endblock %}
 

@@ -24,55 +24,53 @@ Real-time Building Information Management
 <div class="card_block_inner">
 
     <div class="card">
+        <a class="card_link" href="https://pages.cdbb.uk">
             <div class="card_title">
                 About
             </div>
             <div class="card_image">
-                <a class="card_link" href="https://pages.cdbb.uk">
-                    <img src="{% static 'home/images/about.jpg' %}"/>
-                </a>
+                <img src="{% static 'home/images/about.jpg' %}"/>
             </div>
             <div class="card_text">
                 <div class="card_text_content">
                     We're researching the urban and in-building digital infrastructure for the
                     cities of the future.
-                    These pages provide detail on who we are, what we're doing, and why we're doing it.
                 </div>
             </div>
+        </a>
     </div>
 
     <div class="card">
+        <a class="card_link" href="https://pages.cdbb.uk/research/">
             <div class="card_title">
                 Research
             </div>
             <div class="card_image">
-                <a class="card_link" href="https://pages.cdbb.uk/research/">
-                    <img src="{% static 'home/images/research.png' %}"/>
-                </a>
+                <img src="{% static 'home/images/research.png' %}"/>
             </div>
             <div class="card_text">
                 <div class="card_text_content">
                     This information outlines how we've structured our work into specific research <i>themes</i>.
                 </div>
             </div>
+        </a>
     </div>
 
     <div class="card">
+        <a class="card_link" href="https://pages.cdbb.uk/projects/">
             <div class="card_title">
                 Projects
             </div>
             <div class="card_image">
-                <a class="card_link" href="https://pages.cdbb.uk/projects/">
-                    <img src="{% static 'home/images/acp_local_mqtt.png' %}"/>
-                </a>
+                <img src="{% static 'home/images/acp_local_mqtt.png' %}"/>
             </div>
             <div class="card_text">
                 <div class="card_text_content">
                     We are building a substantial systems platform in support of the Adaptive City Programme and
-                    the CDBB Digital Twin initiative. This information shows how that is structured into multiple
-                    parallel projects.
+                    the CDBB Digital Twin initiative.
                 </div>
             </div>
+        </a>
     </div>
 
 </div>
@@ -87,13 +85,12 @@ Real-time Building Information Management
 <div class="card_block_outer">
 <div class="card_block_inner">
 <div class="card">
+    <a class="card_link" href="{% url 'space_home' %}">
         <div class="card_title">
             Space
         </div>
         <div class="card_image">
-            <a class="card_link" href="{% url 'space_home' %}">
-                <img src="{% static 'space/images/space.png' %}"/>
-            </a>
+            <img src="{% static 'space/images/space.png' %}"/>
         </div>
         <div class="card_text">
             <div class="card_text_content">
@@ -101,16 +98,16 @@ Real-time Building Information Management
                 data.
             </div>
         </div>
+    </a>
 </div>
 
 <div class="card">
+    <a class="card_link" href="{% url 'sensor_home' %}">
         <div class="card_title">
             Sensors
         </div>
         <div class="card_image">
-            <a class="card_link" href="{% url 'sensor_home' %}">
-                <img src="{% static 'home/images/sensor.png' %}"/>
-            </a>
+            <img src="{% static 'home/images/sensor.png' %}"/>
         </div>
         <div class="card_text">
             <div class="card_text_content">
@@ -118,16 +115,16 @@ Real-time Building Information Management
                 and the sensor metadata.
             </div>
         </div>
+    </a>
 </div>
 
 <div class="card">
+    <a class="card_link" href="{% url 'dm_home' %}"><!-- DEBUG need BIM url -->
         <div class="card_title">
             Data Management
         </div>
         <div class="card_image">
-            <a class="card_link" href="{% url 'dm_home' %}"><!-- DEBUG need BIM url -->
-                <img src="{% static 'home/images/data_management.png' %}"/>
-            </a>
+            <img src="{% static 'home/images/data_management.png' %}"/>
         </div>
         <div class="card_text">
             <div class="card_text_content">
@@ -135,9 +132,10 @@ Real-time Building Information Management
                 platform, e.g. sensor metadata and building object data.
             </div>
         </div>
+    </a>
 </div>
 
-</div>
-</div><!-- end card_block -->
+</div><!-- end card_block_inner -->
+</div><!-- end card_block_outer -->
 
 {% endblock %}

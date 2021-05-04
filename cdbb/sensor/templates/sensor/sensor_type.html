@@ -11,8 +11,8 @@
 
     <!-- Page local script -->
     <script type="text/javascript">
-        var API_SENSORS = '{{ API_SENSORS }}';
         var ACP_TYPE_ID = '{{ ACP_TYPE_ID }}'; // e.g. 'rad-ath'
+        var API_SENSORS_INFO = JSON.parse('{{ API_SENSORS_INFO | escapejs }}');
     </script>
 {% endblock %}
 

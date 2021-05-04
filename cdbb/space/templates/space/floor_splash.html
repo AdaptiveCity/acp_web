@@ -4,16 +4,11 @@
 
 {% block head %}
 <!-- Our style sheets -->
-<link rel="stylesheet" href="{% static 'space/css/space.css' %}" />
 <link rel="stylesheet" type="text/css" href="{% static 'space/css/floor.css' %}" />
 <link rel="stylesheet" type="text/css" href="{% static 'space/css/style.css' %}" />
 
 <!-- Local copy of d3 -->
 <script type="text/javascript" src="{% static 'js/d3.v6_5.min.js' %}"></script>
-<!-- <script type="text/javascript" src="{% static 'js/d3.v5.min.js' %}"></script> -->
-
-<!-- JS SCRIPT for space snd building -->
-<script type="text/javascript" src="{% static 'space/js/space.js' %}"></script>
 
 <!-- viz_tools contains some common rendering functions, uses parse_readings, jsonpath -->
 <script type="text/javascript" src="{% static 'js/jsonpath.js' %}"></script>
@@ -24,32 +19,25 @@
 
 <!-- LOAD APP SCRIPTS -->
 
-<!-- ssd files -->
-<!-- <link rel="stylesheet" type="text/css" href="{% static 'space/css/ssd_style.css' %}" />
-<script type="text/javascript" src="{% static 'space/js/sensor_status.js' %}"></script>
-<script type="text/javascript" src="{% static 'space/js/sensor_circle.js' %}"></script> -->
-
-
-<!-- Rain class  -->
-<!-- <script type='text/javascript' src="{% static 'space/js/heatmap.js' %}"></script> -->
-
+<script type='text/javascript' src="{% static 'space/js/floor_plan.js' %}"></script>
 <!-- Splash class  -->
-<script type='text/javascript' src="{% static 'space/js/splash.js' %}"></script>
+<script type='text/javascript' src="{% static 'space/js/floor_splash.js' %}"></script>
 
 <!-- RTMonitor tests -->
 <script type='text/javascript' src="{% static 'space/js/RTconnect.js' %}"></script>
-<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-
-<!-- building.js defines class SpaceBuilding -->
-<script type='text/javascript' src="{% static 'space/js/floor.js' %}"></script>
+<script src="{% static 'js/sockjs.min.js' %}"></script>
 
 <!-- Page local script -->
 <script type="text/javascript">
-    var API_BIM = '{{ API_BIM }}';
-    var API_SENSORS = '{{ API_SENSORS }}';
-    var API_READINGS = '{{ API_READINGS }}';
-    var API_SPACE = '{{ API_SPACE }}';
+
     var CRATE_ID = '{{ CRATE_ID }}';
+
+    var API_BIM_INFO = JSON.parse('{{ API_BIM_INFO | escapejs }}');
+    var API_SENSORS_INFO = JSON.parse('{{ API_SENSORS_INFO | escapejs }}');
+    var API_SPACE_INFO = JSON.parse('{{ API_SPACE_INFO | escapejs }}');
+    var FLOOR_NUMBER = '{{ FLOOR_NUMBER }}';
+    var COORDINATE_SYSTEM = '{{ COORDINATE_SYSTEM }}';
+
     var FLOORSPACE_LINK = '{% url "space_floorspace" "crate_id" %}';
     var SENSOR_LINK = "{% url 'sensor' 'acp_id' %}"; // we will replace id as required
     var RTMONITOR_URI = '{{ RTMONITOR_URI }}';
@@ -163,18 +151,14 @@ Splash app
 <script>
     //instantiate template tools (js functions that handle the navigation bar, etc)
     let ttools=new TemplateTools();
-    
+
     console.log('lazy_script');
-    var space_floor = new SpaceFloor();
-    space_floor.init();
+    var floor_plan = new FloorPlan();
+    floor_plan.init();
 
 
-    let rt_splash = new SplashMap(space_floor);
- 
-    //wait for the page to load
-    space_floor.loaded.then(function () {
-        rt_splash.init(rt_splash)
-    })
+    let floor_splash = new FloorSplash(floor_plan);
+    floor_splash.init()
 
 </script>
 {% endblock %}

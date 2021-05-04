@@ -1,7 +1,7 @@
 "use strict"
 
 // Template provides:
-//   API_SENSORS - url for the sensors API
+//   API_SENSORS_INFO - metadata from the sensors API
 //   SENSOR_LINK - page link for the "sensor" page, with string "acp_id" where the acp_id should go (see code below).
 //   SENSOR_TYPE_LINK - page link for the "sensor type" page, with "acp_type_id" to be replaced with required id.
 //
@@ -31,22 +31,7 @@ class SensorList {
         });
 
         // Now we make the Sensors API call, to get the required data
-        parent.get_sensor_list(parent);
-    }
-
-    // Use API_SENSORS to retrieve requested sensor metadata
-    get_sensor_list(parent) {
-        let sensor_list_url = API_SENSORS + 'list/?type_metadata=true';
-        let request = new XMLHttpRequest();
-        request.overrideMimeType('application/json');
-
-        request.addEventListener("load", function () {
-          let sensor_list = JSON.parse(request.responseText)
-          parent.handle_sensor_list(parent, sensor_list);
-        });
-        console.log("sensor_list.js requesting "+sensor_list_url);
-        request.open("GET", sensor_list_url);
-        request.send();
+        parent.handle_sensor_list(parent, API_SENSORS_INFO);
     }
 
     // Will handle the return jsonobject from the sensors API request
@@ -145,7 +130,7 @@ class SensorList {
     // Get comma-separated string of feature names for a given sensor
     // Sensor has property 'acp_type_id' which is lookup into the types info that was also returned by the API.
     make_features(sensor, types_obj) {
-        console.log('make_features() given',types_obj);
+        //console.log('make_features() given',types_obj);
         let features_txt = '';
         if ('acp_type_id' in sensor) {
             let acp_type_id = sensor['acp_type_id'];

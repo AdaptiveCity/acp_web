@@ -1,6 +1,6 @@
 "use strict"
 
-// Template provides ACP_TYPE_ID, API_SENSORS
+// Template provides ACP_TYPE_ID, API_SENSORS_INFO
 
 class SensorType {
 
@@ -12,22 +12,7 @@ class SensorType {
         parent = this;
         console.log("init()");
         parent.type_info_el = document.getElementById('type_info');
-        parent.get_type_info(parent);
-    }
-
-    // Use API_SENSORS to retrieve requested sensor metadata
-    get_type_info(parent) {
-        let type_info_url = API_SENSORS + 'get_type/' + ACP_TYPE_ID + '/';
-        let request = new XMLHttpRequest();
-        request.overrideMimeType('application/json');
-
-        request.addEventListener("load", function () {
-          let type_info = JSON.parse(request.responseText)
-          parent.handle_type_info(parent, type_info);
-        });
-        console.log("sensor_type.js requesting "+type_info_url);
-        request.open("GET", type_info_url);
-        request.send();
+        parent.handle_type_info(parent, API_SENSORS_INFO);
     }
 
     // Will handle the return jsonobject from the sensors API request

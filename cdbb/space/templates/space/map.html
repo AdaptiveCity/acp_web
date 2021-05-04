@@ -5,15 +5,12 @@
 
 {% block head %}
     <!-- Our style -->
-    <link rel="stylesheet" href="{% static 'space/css/space.css' %}"/>
-
     <link rel="stylesheet" type="text/css" href="{% static 'space/css/map.css' %}" />
 
     <!-- LEAFLET -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
        integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
        crossorigin="" />
-    <script type="text/javascript" src="{% static 'space/js/d3.v5.min.js' %}"></script>
     <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
             integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
             crossorigin="">
@@ -24,19 +21,16 @@
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css">
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
-    <!-- JS SCRIPT from space.js and map.js -->
-    <script type="text/javascript" src="{% static 'space/js/space.js' %}"></script>
-
     <!-- map.js defines class SpaceRenderMap -->
     <script type='text/javascript' src="{% static 'space/js/map.js' %}"></script>
 
     <!-- Page local script -->
     <script type="text/javascript">
-        API_BIM = '{{ API_BIM }}';
-        API_SENSORS = '{{ API_SENSORS }}';
-	CRATE_IDS = '{{ CRATE_IDS }}';
+        var API_BIM_INFO = JSON.parse('{{ API_BIM_INFO | escapejs }}');
+        var API_SENSOR_INFO = JSON.parse('{{ API_SENSOR_INFO | escapejs }}');
+
         // Note we use a 'dummy' crate_id (using the 'crate_id' literal string) so the javascript
-        // can replace it with the actual id required such as 'WGB'
+        // can replace it with the actual id required such as 'WGB'. Similarly for 'acp_id'
         BUILDING_LINK = "{% url 'space_building' 'crate_id' %}";
         SENSOR_LINK = "{% url 'sensor' 'acp_id' %}";
     </script>
