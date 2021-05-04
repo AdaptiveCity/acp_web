@@ -18,8 +18,6 @@
     <script type="text/javascript" src="{% static 'js/parse_readings.js' %}"></script>
     <script type="text/javascript" src="{% static '/js/VizTools2.js' %}"></script>
 
-    <script type='text/javascript' src="{% static 'space/js/RTconnect.js' %}"></script>
-
     <script type='text/javascript' src="{% static 'space/js/floor_plan.js' %}"></script>
 
 
@@ -30,8 +28,6 @@
         var API_BIM_INFO = JSON.parse('{{ API_BIM_INFO | escapejs }}');
         var API_SENSORS_INFO = JSON.parse('{{ API_SENSORS_INFO | escapejs }}');
         var API_SPACE_INFO = JSON.parse('{{ API_SPACE_INFO | escapejs }}');
-        var FLOOR_NUMBER = '{{ FLOOR_NUMBER }}';
-        var COORDINATE_SYSTEM = '{{ COORDINATE_SYSTEM }}';
 
         var SENSOR_LINK = "{% url 'sensor' 'acp_id' %}"; // we will replace id as required
         var FLOORSPACE_LINK = '{% url "space_floorspace" "crate_id" %}';

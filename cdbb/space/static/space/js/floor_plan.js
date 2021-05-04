@@ -45,9 +45,6 @@ class FloorPlan {
 
         // object to store BIM data for current floor when returned by BIM api
         this.floor_bim_object = null;
-        this.floor_number = 0;
-        this.floor_coordinate_system = null;
-
 
         //------------------------------------//
         //---------CHOROPLETH STUFF-----------//
@@ -149,9 +146,6 @@ class FloorPlan {
 
         //globals
         parent.floor_bim_object = crate;
-        parent.floor_number = parseInt(FLOOR_NUMBER); // from template
-        parent.floor_coordinate_system = COORDINATE_SYSTEM; // from template
-        console.log("loaded BIM data for floor", parent.floor_coordinate_system + "/" + parent.floor_number)
 
         //check if we're in floorspace template or not
         parent.floorspace = ((crate.crate_type == 'floor') || (crate.crate_type == 'building')) ? false : true;
@@ -243,7 +237,7 @@ class FloorPlan {
                 let box_offset = room.getCTM(); //get consolidated matrix for offset
                 let x = (box.x + box.width / 4) * parent.svg_scale + box_offset.e;
                 let y = (box.y + box.height / 2) * parent.svg_scale + box_offset.f;
-                console.log('box x y scale', box, x, y, parent.svg_scale, parent.svg_x, parent.svg_y)
+                //console.log('box x y scale', box, x, y, parent.svg_scale, parent.svg_x, parent.svg_y)
                 let text = document.createElementNS(svgNS, "text");
                 text.setAttribute('x', x);
                 text.setAttribute('y', y);
@@ -463,21 +457,22 @@ class FloorPlan {
 
     //displays BIM metadata on the side, when loaded a floorspace page
     show_bim_metadata(parent, crate) {
-        console.log("handle_floorspace_crate got", crate);
-        //globals
-        //floorspace_bim_object = crate;
-        parent.floor_number = crate["acp_location"]["f"];
-        parent.floor_coordinate_system = crate["acp_location"]["system"];
-        console.log("loaded BIM data for crate ", crate["crate_id"],
-            parent.floor_coordinate_system + "/" + parent.floor_number);
+        var bim_div = document.getElementById('bim_content');
+        if (!bim_div) {
+            return;
+        }
 
         let floorspace_bim_txt = JSON.stringify(crate, null, 2);
-        var bim_div = document.getElementById('bim_content')
         bim_div.innerHTML = "<pre>" + floorspace_bim_txt + "</pre>";
     }
 
     //displays sensor metadata on the side, when loaded a floorspace page
     show_sensor_metadata(parent) {
+        var sensor_div = document.getElementById('sensor_content')
+        if (!sensor_div) {
+            return;
+        }
+        
         let sensors = parent.sensor_metadata;
         let sensor_list = {};
 
@@ -501,7 +496,6 @@ class FloorPlan {
         }
 
         // Display the json sensor metadata on the page in #SENSOR_container
-        var sensor_div = document.getElementById('sensor_content')
         sensor_div.innerHTML = "<pre>" + txt + "</pre>";
     }
 

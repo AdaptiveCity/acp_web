@@ -4,27 +4,33 @@
 
 {% block head %}
     <!-- Our style sheets -->
-    <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/floorspace.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'space/css/floorspace.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'space/css/style.css' %}" />
+    <!-- styling for tooltips -->
+    <link rel="stylesheet" type="text/css" href="{% static 'space/css/floor.css' %}" />
+
 
     <!-- Local copy of d3 -->
-    <script type="text/javascript" src="{% static 'js/d3.v5.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/d3.v6_5.min.js' %}"></script>
 
     <!-- viz_tools contains some common rendering functions, uses parse_readings, jsonpath -->
     <script type="text/javascript" src="{% static 'js/jsonpath.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/parse_readings.js' %}"></script>
-    <script type='text/javascript' src="{% static 'data_management/js/viz_tools.js' %}"></script>
-    <script type='text/javascript' src="{% static 'data_management/js/floorspace.js' %}"></script>
+    <script type="text/javascript" src="{% static '/js/VizTools2.js' %}"></script>
+
+    <script type='text/javascript' src="{% static 'space/js/floor_plan.js' %}"></script>
 
     <!-- Page local script -->
     <script type="text/javascript">
+        var CRATE_ID = '{{ CRATE_ID }}';
         var ACP_ID = '{{ ACP_ID }}'; // e.g. 'elsys-eye-04504'
 
         // Information for all sensors in BIM object (crate_id)
         var API_SENSORS_INFO = JSON.parse('{{ API_SENSORS_INFO | escapejs }}');
-        var API_READINGS_INFO = JSON.parse('{{ API_READINGS_INFO | escapejs }}');
         var API_BIM_INFO = JSON.parse('{{ API_BIM_INFO | escapejs }}');
         var API_SPACE_INFO = JSON.parse('{{ API_SPACE_INFO | escapejs }}');
-        var CRATE_ID = '{{ CRATE_ID }}';
+        var API_READINGS_INFO = JSON.parse('{{ API_READINGS_INFO | escapejs }}');
+
         var SENSOR_LINK = "{% url 'sensor' 'acp_id' %}"; // we will replace 'acp_id' as required
         var FLOORSPACE_LINK = "{% url 'space_floorspace' 'crate_id' %}";
 
@@ -50,16 +56,13 @@
 <div id="tooltip" class="tooltip">
 </div>
 
-<!-- TOOLTIP - will be made visible/invisible as mouse moves over sensors -->
-<div id="message" class="message">
-</div>
-{% endblock %} <!-- end sensor_content -->
+{% endblock %} <!-- content -->
 
 <!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
 {% block lazy_script %}
 <script>
     console.log('lazy_script');
-    var sensor = new FloorSpace();
-    sensor.init();
+    var floor_plan = new FloorPlan();
+    floor_plan.init();
 </script>
 {% endblock %} <!-- lazy_script -->
