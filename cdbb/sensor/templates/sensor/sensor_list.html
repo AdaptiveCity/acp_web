@@ -16,9 +16,8 @@
 
         var API_SENSORS_INFO = JSON.parse('{{ API_SENSORS_INFO | escapejs }}');
 
-        var SENSOR_LINK = "{% url 'sensor' 'acp_id' %}"; // we will replace id as required
-        var SENSOR_TYPE_LINK = "{% url 'sensor_type' 'acp_type_id' %}";
-        var SENSOR_CHART_LINK = "{% url 'sensor_chart' 'acp_id' %}";
+        var SENSOR_LINK = "{% url 'dm_sensor' 'acp_id' %}"; // we will replace id as required
+        var SENSOR_TYPE_LINK = "{% url 'dm_sensor_type' 'acp_type_id' %}";
     </script>
 {% endblock %}
 

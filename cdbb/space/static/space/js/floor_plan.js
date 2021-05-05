@@ -458,6 +458,7 @@ class FloorPlan {
     //displays BIM metadata on the side, when loaded a floorspace page
     show_bim_metadata(parent, crate) {
         var bim_div = document.getElementById('bim_content');
+        // We only display BIM metadata *if* there is a div called 'bim_div' on the page
         if (!bim_div) {
             return;
         }
@@ -469,10 +470,11 @@ class FloorPlan {
     //displays sensor metadata on the side, when loaded a floorspace page
     show_sensor_metadata(parent) {
         var sensor_div = document.getElementById('sensor_content')
+        // We only display sensor metadata *if* there is a div called 'sensor_div' on the page
         if (!sensor_div) {
             return;
         }
-        
+
         let sensors = parent.sensor_metadata;
         let sensor_list = {};
 

@@ -32,7 +32,7 @@
         // Note we use a 'dummy' crate_id (using the 'crate_id' literal string) so the javascript
         // can replace it with the actual id required such as 'WGB'. Similarly for 'acp_id'
         BUILDING_LINK = "{% url 'space_building' 'crate_id' %}";
-        SENSOR_LINK = "{% url 'sensor' 'acp_id' %}";
+        SENSOR_LINK = "{% url 'dm_sensor' 'acp_id' %}";
     </script>
 {% endblock %}
 

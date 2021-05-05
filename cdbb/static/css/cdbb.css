@@ -1,15 +1,20 @@
 /* test global css for base 'cdbb.html' template */
 
+html, body {min-height: 100%;}
+
 body {
     font-style: italic;
     /* This was initially just for style debug, but actually I quite like the retro vibe */
-    /*jb2328:was about to change it but if you like it that's ok*/
+    /* jb2328:was about to change it but if you like it that's ok */
     /* font-family: serif; */
     font-family: Arial, Helvetica, sans-serif;
     /* Again just for debug but hey, this is Cambridge */
-    background-color: rgba(163, 193, 173, 0.8);
+    /* background-color: rgba(163, 193, 173, 0.8); */
+    background-image: url('/static_web/images/jb_background_480x250.png');
+    background-size: cover;
 }
 
+/* ijl20: I replaced the 'cdbb.html' template '<img id=bgr_img>' with the above css 'background-image' */
 #bgr_img {
     background-size: cover;
     z-index: -99;
@@ -271,7 +276,7 @@ body {
     border-top-right-radius: 8px;
     vertical-align: bottom;
     cursor: pointer;
-    opacity: 0.65;   
+    opacity: 0.65;
 }
 
 .contextual_link a {

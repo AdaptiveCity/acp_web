@@ -8,6 +8,8 @@ html {
 body {
     height: 100%;
     margin: 0px;
+    display: flex;
+    flex-flow: column;
 }
 
 a.button1 {
@@ -40,27 +42,6 @@ a.button1:hover {
         margin: 0.4em auto;
     }
 }
-
-/* STYLING FOR SSD FORM ON THE FLOOR PAGE */
-.ssd_view_form {
-    margin: 0.1em 0em;
-}
-
-
-.ssd_view_form label {
-    font-family: 'Roboto', sans-serif;
-    font-style: normal;
-    font-size: 0.7em;
-    border-radius: 5%;
-}
-
-.ssd_view_form input {
-    opacity: 0.5;
-    width: 0.75em;
-    height: 0.75em;
-}
-
-/* SSD BUTTONS STYLING END */
 
 .slidecontainer {
     font: 0.7em sans-serif;
@@ -131,16 +112,17 @@ select:hover {
 .drawing_div {
     margin: 0em 0.25em 0em 1em;
     display: inline-block;
-    height: 98%;
-    width: 86%;
-    display: inline-block;
+    width: 95%;
+    flex-grow: 0.95;
     border: Gray dashed 1px;
 }
 
 .main_content {
     width: 100%;
     /* matches the predefined height of drawing_div */
-    height: 86%;
+    /* height: 86%; */
+    display: flex;
+    flex-grow: 0.95;
 }
 
 #drawing_coords {

@@ -25,8 +25,9 @@ urlpatterns = [
     path('sensor_types/', DMSensorTypesView.as_view(), name='dm_sensor_types'),
 
     path('bim_home/', DMBIMHomeView.as_view(), name='dm_bim_home'),
-    path('bim/<crate_id>/', DMBIMMetadataView.as_view(), name='dm_bim'),
+    path('bim/<crate_id>/', DMBIMLocationView.as_view(), name='dm_bim'),
     path('bim_location/<crate_id>/', DMBIMLocationView.as_view(), name='dm_bim_location'),
+    path('bim_metadata/<crate_id>/', DMBIMMetadataView.as_view(), name='dm_bim_metadata'),
     path('bim_history/<crate_id>/', DMBIMHistoryView.as_view(), name='dm_bim_history'),
     path('bim_edit/<crate_id>/', DMBIMEditView.as_view(), name='dm_bim_edit')
 
