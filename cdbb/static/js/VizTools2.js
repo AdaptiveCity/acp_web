@@ -182,32 +182,32 @@ class VizTools2 {
                 //TODO: we fetch for vdd as the common denominator value for all sensors
                 //which might be troublesome down the line if a particular sensor doesn't have a vdd measure
                 //DEBUG hardcoding vdd
-                let readings_url = API_READINGS + 'get_feature/' + sensor_id + '/vdd/?metadata=true'
+                //let readings_url = API_READINGS + 'get_feature/' + sensor_id + '/vdd/?metadata=true'
 
-                d3.json(readings_url, {
-                    crossOrigin: "anonymous"
-                }).then(function (received_data) {
+                //d3.json(readings_url, {
+                //    crossOrigin: "anonymous"
+                //}).then(function (received_data) {
 
                     // console.log('tooltips() raw', received_data)
-                    let reading = received_data["reading"];
-                    let sensor_metadata = received_data["sensor_info"];
+                //    let reading = received_data["reading"];
+                //    let sensor_metadata = received_data["sensor_info"];
 
-                    let reading_obj = '';
+                //    let reading_obj = '';
 
-                    //check that the packet contains any readings
-                    if (received_data['acp_error_msg'] != undefined) { //|| Object.keys(parsed).length<1
-                        let error_id = received_data['acp_error_id'];
-                        console.log('handle_readings() error', received_data);
-                        reading_obj = 'NO READINGS available for this sensor.';
-                    } else {
-                        reading_obj = reading;
-                    }
+                //    //check that the packet contains any readings
+                //    if (received_data['acp_error_msg'] != undefined) { //|| Object.keys(parsed).length<1
+                //        let error_id = received_data['acp_error_id'];
+                //        console.log('handle_readings() error', received_data);
+                //        reading_obj = 'NO READINGS available for this sensor.';
+                //    } else {
+                //        reading_obj = reading;
+                //    }
 
-                    //if returned msg object is string, then there was no message inside - show empty
-                    let msg = typeof (reading_obj) == 'string' ? reading_obj : '';
+                //    //if returned msg object is string, then there was no message inside - show empty
+                //    let msg = typeof (reading_obj) == 'string' ? reading_obj : '';
 
                     //render the html tooltip element
-                    self.tooltip_div.html('<b>' + sensor_id + '</b>' + "<br/>" + msg)
+                    self.tooltip_div.html('<b>' + sensor_id + '</b>') // + "<br/>" + msg)
                         .style("left", function () {
                             //push the tooltip to the left rather than to the right if out of screen
                             if (eventX + tooltip_width > document.body.clientWidth) {
@@ -222,22 +222,22 @@ class VizTools2 {
                         });
 
                     //if return msg is an object (or not a string), then we have full readings - generate d3 canvas and draw elements
-                    if ((typeof (reading_obj) != 'string') && (reading_obj != undefined)) {
+                //    if ((typeof (reading_obj) != 'string') && (reading_obj != undefined)) {
 
                         //attach a timestamp
                         //convert to string and slice off the unnecessary bits (GMT etc)
-                        let reading_ts = self.make_date(reading_obj['acp_ts']).toString().slice(0, 25);
+                //        let reading_ts = self.make_date(reading_obj['acp_ts']).toString().slice(0, 25);
 
                         //append under the sensor acp_id
-                        let tooltip_el = document.getElementById('tooltip');
-                        tooltip_el.insertAdjacentHTML('beforeend', reading_ts + "<br/>");
+                //        let tooltip_el = document.getElementById('tooltip');
+                //        tooltip_el.insertAdjacentHTML('beforeend', reading_ts + "<br/>");
 
                         //generate colorbars
-                        self.viz_readings(reading_obj, sensor_metadata)
-                        reading_obj = undefined;
-                        sensor_metadata = undefined;
-                    }
-                });
+                //        self.viz_readings(reading_obj, sensor_metadata)
+                //        reading_obj = undefined;
+                //        sensor_metadata = undefined;
+                //    }
+                //});
             })
             .on("mouseout", function (d) {
 

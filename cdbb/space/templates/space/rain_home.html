@@ -31,6 +31,8 @@ Space
 
 {% block content %}
 
+<h2>Temperature</h2>
+
 <div class="card">
         <div class="card_title">
             WGB Ground Floor
@@ -53,6 +55,72 @@ Space
         </div>
         <div class="card_image">
             <a class="card_link" href="{% url 'space_rain' 'FF' %}">
+                <img src="{% static 'space/images/floor_rain.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                View real-time heatmaps updating with live sensor data.
+            </div>
+        </div>
+</div>
+
+<div class="card">
+        <div class="card_title">
+            WGB Second Floor
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'space_rain' 'SF' %}">
+                <img src="{% static 'space/images/floor_rain.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                View real-time heatmaps updating with live sensor data.
+            </div>
+        </div>
+</div>
+
+<h2>CO2</h2>
+
+<div class="card">
+        <div class="card_title">
+            WGB Ground Floor
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'space_rain' 'GF' %}?feature=co2">
+                <img src="{% static 'space/images/floor_rain.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                View real-time heatmaps updating with live sensor data.
+            </div>
+        </div>
+</div>
+
+<div class="card">
+        <div class="card_title">
+            WGB First Floor
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'space_rain' 'FF' %}?feature=co2">
+                <img src="{% static 'space/images/floor_rain.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                View real-time heatmaps updating with live sensor data.
+            </div>
+        </div>
+</div>
+
+<div class="card">
+        <div class="card_title">
+            WGB Second Floor
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'space_rain' 'SF' %}?feature=co2">
                 <img src="{% static 'space/images/floor_rain.png' %}"/>
             </a>
         </div>
