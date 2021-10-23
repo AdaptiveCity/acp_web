@@ -31,7 +31,7 @@
         var API_SPACE_INFO = JSON.parse('{{ API_SPACE_INFO | escapejs }}');
         var API_READINGS_INFO = JSON.parse('{{ API_READINGS_INFO | escapejs }}');
 
-        var SENSOR_LINK = "{% url 'sensor' 'acp_id' %}"; // we will replace 'acp_id' as required
+        var SENSOR_LINK = "{% url 'dm_sensor' 'acp_id' %}"; // we will replace 'acp_id' as required
         var FLOORSPACE_LINK = "{% url 'space_floorspace' 'crate_id' %}";
 
     </script>
