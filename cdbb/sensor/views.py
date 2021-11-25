@@ -49,7 +49,7 @@ class SensorChartView(LoginRequiredMixin, TemplateView):
                 print("SensorChartView no feature",kwargs)
 
             # Readings
-            query_string = '?metadata=true'
+            query_string = '?person_id='+str(self.request.user)+'&metadata=true'
             if selected_date is not None:
                 query_string += '&date='+selected_date
             response = requests.get(settings.API_READINGS+'get_day/'+acp_id+'/'+query_string)
@@ -73,7 +73,7 @@ class SensorView(LoginRequiredMixin, TemplateView):
             acp_id = self.kwargs['acp_id']
             context['ACP_ID'] = acp_id
 
-            response = requests.get(settings.API_SENSORS+'get/'+acp_id+'/')
+            response = requests.get(settings.API_SENSORS+'get/'+acp_id+'/?person_id='+str(self.request.user))
             try:
                 sensor_info = response.json()
             except json.decoder.JSONDecodeError:
@@ -93,7 +93,7 @@ class SensorTypeView(LoginRequiredMixin, TemplateView):
             acp_type_id = self.kwargs['acp_type_id']
             context['ACP_TYPE_ID'] = acp_type_id
 
-            response = requests.get(settings.API_SENSORS+'get_type/'+acp_type_id+'/')
+            response = requests.get(settings.API_SENSORS+'get_type/'+acp_type_id+'/?person_id='+str(self.request.user))
             try:
                 sensor_info = response.json()
             except json.decoder.JSONDecodeError:
@@ -119,7 +119,7 @@ class SensorListView(LoginRequiredMixin, TemplateView):
             else:
                 print("SensorListView no feature",kwargs)
 
-            response = requests.get(settings.API_SENSORS+'list/?type_metadata=true')
+            response = requests.get(settings.API_SENSORS+'list/?person_id='+str(self.request.user)+'&type_metadata=true')
             try:
                 sensor_info = response.json()
             except json.decoder.JSONDecodeError:

@@ -86,7 +86,7 @@ class FloorView(LoginRequiredMixin, TemplateView):
             system = bim_info[crate_id]["acp_location"]["system"]
 
             # Get metadata for all sensors in the same crate (including selected sensor)
-            response = requests.get(settings.API_SENSORS+f'get_floor_number/{system}/{floor_number}/')
+            response = requests.get(settings.API_SENSORS+f'get_floor_number/{system}/{floor_number}/?person_id='+str(self.request.user))
             sensors_info = response.json()
 
             # Get floor SVG
@@ -120,7 +120,7 @@ class FloorspaceView(LoginRequiredMixin, TemplateView):
             system = bim_info[crate_id]["acp_location"]["system"]
 
             # Get metadata for all sensors in the same crate (including selected sensor)
-            response = requests.get(settings.API_SENSORS+f'get_floor_number/{system}/{floor_number}/')
+            response = requests.get(settings.API_SENSORS+f'get_floor_number/{system}/{floor_number}/?person_id='+str(self.request.user))
             sensors_info = response.json()
 
             # Get floor SVG

@@ -46,9 +46,10 @@ class DMSensorView(LoginRequiredMixin, TemplateView):
                 print("SensorChartView no feature",kwargs)
 
             # Readings
-            query_string = '?metadata=true'
+            query_string = '?person_id='+str(self.request.user)+'&metadata=true'
             if selected_date is not None:
                 query_string += '&date='+selected_date
+            print(query_string)
             response = requests.get(settings.API_READINGS+'get_day/'+self.kwargs['acp_id']+'/'+query_string)
             try:
                 sensor_readings = response.json()
@@ -67,7 +68,7 @@ class DMSensorMetadataView(LoginRequiredMixin, TemplateView):
             context = super().get_context_data(**kwargs)
             context['ACP_ID'] = self.kwargs['acp_id']
 
-            response = requests.get(settings.API_SENSORS+'get/'+self.kwargs['acp_id']+'/')
+            response = requests.get(settings.API_SENSORS+'get/'+self.kwargs['acp_id']+'/?person_id='+str(self.request.user))
             try:
                 sensor_metadata = response.json()
             except json.decoder.JSONDecodeError:
@@ -84,7 +85,7 @@ class DMSensorHistoryView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
             context['ACP_ID'] = self.kwargs['acp_id']
-            response = requests.get(settings.API_SENSORS+'get_history/'+self.kwargs['acp_id']+'/')
+            response = requests.get(settings.API_SENSORS+'get_history/'+self.kwargs['acp_id']+'/?person_id='+str(self.request.user))
             try:
                 sensor_history_obj = response.json()
             except json.decoder.JSONDecodeError:
@@ -111,7 +112,7 @@ class DMSensorLocationView(LoginRequiredMixin, TemplateView):
         context['ACP_ID'] = acp_id
 
         # Get crate_id from the metadata for the selected sensor
-        response = requests.get(settings.API_SENSORS+'get/'+acp_id+'/')
+        response = requests.get(settings.API_SENSORS+'get/'+acp_id+'/?person_id='+str(self.request.user))
         try:
             sensor_info = response.json()
         except json.decoder.JSONDecodeError:
@@ -165,7 +166,7 @@ class DMSensorEditView(LoginRequiredMixin, TemplateView):
                 #DEBUG can return sensor_edit error message here
                 return redirect('dm_sensor_edit',acp_id=acp_id)
 
-            res = requests.post(settings.API_SENSORS+'update/'+self.kwargs['acp_id']+'/',
+            res = requests.post(settings.API_SENSORS+'update/'+self.kwargs['acp_id']+'/?person_id='+str(self.request.user),
                                 json=sensor_metadata_obj)
             if res.ok:
                 print(f'sensor_edit wrote data to update',file=sys.stderr)
@@ -178,7 +179,7 @@ class DMSensorEditView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
             acp_id = self.kwargs['acp_id']
-            response = requests.get(settings.API_SENSORS+'get/'+acp_id+'/')
+            response = requests.get(settings.API_SENSORS+'get/'+acp_id+'/?person_id='+str(self.request.user))
             try:
                 sensor_metadata = response.json()
             except json.decoder.JSONDecodeError:
@@ -194,27 +195,27 @@ class DMSensorListView(LoginRequiredMixin, TemplateView):
     template_name = 'data_management/sensor_list.html'
 
     def get_context_data(self, **kwargs):
-            context = super().get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
 
-            # Make Sensors API call to get sensor metadata for all sensors
-            response = requests.get(settings.API_SENSORS + 'list/?type_metadata=true')
-            try:
-                sensors_info = response.json()
-            except json.decoder.JSONDecodeError:
-                context["API_SENSORS_INFO"] = '{ "acp_error": "Sensor metadata unavailable" }'
-                return context
-
-            context['API_SENSORS_INFO'] = json.dumps(sensors_info)
-
-            # e.g. &feature=temperature
-            selected_feature = self.request.GET.get('feature',None)
-            if selected_feature is not None:
-                print("DMSensorListView feature in request '"+selected_feature)
-                context['FEATURE'] = selected_feature
-            else:
-                print("DMSensorListView no feature",kwargs)
-
+        # Make Sensors API call to get sensor metadata for all sensors
+        response = requests.get(settings.API_SENSORS + 'list/?person_id='+str(self.request.user)+'&type_metadata=true')
+        try:
+            sensors_info = response.json()
+        except json.decoder.JSONDecodeError:
+            context["API_SENSORS_INFO"] = '{ "acp_error": "Sensor metadata unavailable" }'
             return context
+
+        context['API_SENSORS_INFO'] = json.dumps(sensors_info)
+
+        # e.g. &feature=temperature
+        selected_feature = self.request.GET.get('feature',None)
+        if selected_feature is not None:
+            print("DMSensorListView feature in request '"+selected_feature)
+            context['FEATURE'] = selected_feature
+        else:
+            print("DMSensorListView no feature",kwargs)
+
+        return context
 
 ###############################################################
 ###############################################################
@@ -270,7 +271,7 @@ class DMSensorTypeEditView(LoginRequiredMixin, TemplateView):
                 #DEBUG can return sensor_edit error message here
                 return redirect('dm_sensor_type_edit',acp_type_id=acp_type_id)
 
-            res = requests.post(settings.API_SENSORS+'update_type/'+self.kwargs['acp_type_id']+'/',
+            res = requests.post(settings.API_SENSORS+'update_type/'+self.kwargs['acp_type_id']+'/?person_id='+str(self.request.user),
                                 json=sensor_type_metadata_obj)
             if res.ok:
                 print(f'sensor_type_edit wrote data to update',file=sys.stderr)
@@ -285,7 +286,7 @@ class DMSensorTypeEditView(LoginRequiredMixin, TemplateView):
             acp_type_id = self.kwargs['acp_type_id']
             context['ACP_TYPE_ID'] = acp_type_id
 
-            response = requests.get(settings.API_SENSORS+'get_type/'+acp_type_id+'/')
+            response = requests.get(settings.API_SENSORS+'get_type/'+acp_type_id+'/?person_id='+str(self.request.user))
             try:
                 sensor_type_metadata = response.json()
             except json.decoder.JSONDecodeError:
@@ -303,7 +304,7 @@ class DMSensorTypesView(TemplateView):
             context = super().get_context_data(**kwargs)
 
             # Make Sensors API call to get sensor type metadata for all sensor type
-            response = requests.get(settings.API_SENSORS  + 'list_types/')
+            response = requests.get(settings.API_SENSORS  + 'list_types/?person_id='+str(self.request.user))
             try:
                 sensor_types_info = response.json()
             except json.decoder.JSONDecodeError:
@@ -339,7 +340,7 @@ class DMBIMMetadataView(LoginRequiredMixin, TemplateView):
             crate_id = self.kwargs['crate_id']
             context['CRATE_ID'] = crate_id
 
-            response = requests.get(settings.API_BIM + 'get/' + crate_id + '/')
+            response = requests.get(settings.API_BIM + 'get/' + crate_id + '/?person_id='+str(self.request.user))
             try:
                 bim_metadata = response.json()
             except json.decoder.JSONDecodeError:
@@ -358,18 +359,18 @@ class DMBIMLocationView(TemplateView):
             crate_id = self.kwargs['crate_id']
 
             # Get crate floor_number and system
-            response = requests.get(settings.API_BIM+f'get_xyzf/{crate_id}/0/')
+            response = requests.get(settings.API_BIM+f'get_xyzf/{crate_id}/0/?person_id='+str(self.request.user))
             bim_info = response.json()
 
             floor_number = bim_info[crate_id]["acp_location_xyz"]["f"];
             system = bim_info[crate_id]["acp_location"]["system"]
 
             # Get metadata for all sensors in the same crate (including selected sensor)
-            response = requests.get(settings.API_SENSORS+f'get_bim/{system}/{crate_id}/')
+            response = requests.get(settings.API_SENSORS+f'get_bim/{system}/{crate_id}/?person_id='+str(self.request.user))
             sensors_info = response.json()
 
             # Get floor SVG
-            response = requests.get(settings.API_SPACE+f'get_floor_number_json/{system}/{floor_number}/')
+            response = requests.get(settings.API_SPACE+f'get_floor_number_json/{system}/{floor_number}/?person_id='+str(self.request.user))
             space_info = response.json()
 
             context['CRATE_ID'] = crate_id
@@ -386,7 +387,7 @@ class DMBIMHistoryView(TemplateView):
             context = super().get_context_data(**kwargs)
             crate_id = self.kwargs['crate_id']
             context['CRATE_ID'] = crate_id
-            response = requests.get(settings.API_BIM+'get_history/'+crate_id+'/')
+            response = requests.get(settings.API_BIM+'get_history/'+crate_id+'/?person_id='+str(self.request.user))
             try:
                 history_obj = response.json()
             except json.decoder.JSONDecodeError:
@@ -410,7 +411,7 @@ class DMBIMEditView(TemplateView):
                 #DEBUG can return bim_edit error message here
                 return redirect('dm_bim_edit',crate_id=crate_id)
 
-            res = requests.post(settings.API_BIM+'update/'+self.kwargs['crate_id']+'/',
+            res = requests.post(settings.API_BIM+'update/'+self.kwargs['crate_id']+'/?person_id='+str(self.request.user),
                                 json=bim_metadata_obj)
             if res.ok:
                 print(f'bim_edit wrote data to update',file=sys.stderr)
@@ -425,7 +426,7 @@ class DMBIMEditView(TemplateView):
             crate_id = self.kwargs['crate_id']
             context['CRATE_ID'] = crate_id
 
-            response = requests.get(settings.API_BIM+'get/'+crate_id+'/')
+            response = requests.get(settings.API_BIM+'get/'+crate_id+'/?person_id='+str(self.request.user))
             try:
                 bim_metadata = response.json()
             except json.decoder.JSONDecodeError:
