@@ -179,7 +179,7 @@ class RainView(LoginRequiredMixin, TemplateView):
             context['FLOOR_NUMBER'] = floor_number
             context['COORDINATE_SYSTEM'] = system
 
-            context['RTMONITOR_URI'] = 'https://cdbb.uk/rtmonitor/A/mqtt_acp' #DEBUG this will move to settings.py
+            context['RTMONITOR_URI'] = settings.RTMONITOR_BASE+'rtmonitor/A/mqtt_acp'
             return context
 
 class SplashHomeView(TemplateView):
@@ -219,5 +219,5 @@ class SplashView(LoginRequiredMixin, TemplateView):
             context['FLOOR_NUMBER'] = floor_number
             context['COORDINATE_SYSTEM'] = system
 
-            context['RTMONITOR_URI'] = 'https://cdbb.uk/rtmonitor/A/mqtt_acp' #DEBUG this will move to settings.py
+            context['RTMONITOR_URI'] = settings.RTMONITOR_BASE+'rtmonitor/A/mqtt_acp'
             return context
