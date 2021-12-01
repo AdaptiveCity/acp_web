@@ -166,7 +166,7 @@ class DMSensorEditView(LoginRequiredMixin, TemplateView):
                 #DEBUG can return sensor_edit error message here
                 return redirect('dm_sensor_edit',acp_id=acp_id)
 
-            res = requests.post(settings.API_SENSORS+'update/'+self.kwargs['acp_id']+'/?person_id='+str(self.request.user),
+            res = requests.post(settings.API_SENSORS+'update/'+self.kwargs['acp_id']+'/',
                                 json=sensor_metadata_obj)
             if res.ok:
                 print(f'sensor_edit wrote data to update',file=sys.stderr)
@@ -271,7 +271,7 @@ class DMSensorTypeEditView(LoginRequiredMixin, TemplateView):
                 #DEBUG can return sensor_edit error message here
                 return redirect('dm_sensor_type_edit',acp_type_id=acp_type_id)
 
-            res = requests.post(settings.API_SENSORS+'update_type/'+self.kwargs['acp_type_id']+'/?person_id='+str(self.request.user),
+            res = requests.post(settings.API_SENSORS+'update_type/'+self.kwargs['acp_type_id']+'/',
                                 json=sensor_type_metadata_obj)
             if res.ok:
                 print(f'sensor_type_edit wrote data to update',file=sys.stderr)
@@ -411,7 +411,7 @@ class DMBIMEditView(TemplateView):
                 #DEBUG can return bim_edit error message here
                 return redirect('dm_bim_edit',crate_id=crate_id)
 
-            res = requests.post(settings.API_BIM+'update/'+self.kwargs['crate_id']+'/?person_id='+str(self.request.user),
+            res = requests.post(settings.API_BIM+'update/'+self.kwargs['crate_id']+'/',
                                 json=bim_metadata_obj)
             if res.ok:
                 print(f'bim_edit wrote data to update',file=sys.stderr)
