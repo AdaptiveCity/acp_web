@@ -1,0 +1,79 @@
+
+#edit_box {
+    display: block;
+    vertical-align: top;
+
+    background-color: #ffffff;
+    padding: 4px;
+    border-radius: 8px;
+    font-family: monospace;
+    font-style: normal;
+    width: 80%;
+    height: calc(100vh - 350px);
+    overflow: auto;
+    white-space: pre;
+}
+
+#edit_box #sourceText {
+  padding: 0;
+  margin: 0;
+  min-width: 498px;
+  min-height: 200px;
+}
+
+#editMode label { cursor: pointer; }
+
+.edit_bold {
+    font-weight: bold;
+    background-color: #ff8888;
+}
+
+.edit_invalid {
+    background-color: #ffaaaa;
+}
+
+button {
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 24px;
+    font-family: sans-serif;
+}
+
+/* ******************** */
+/*      ERROR BOX       */
+/* ******************** */
+
+.error_box {
+    position: absolute;
+    top: 33vh;
+    left: 10vw;
+    height: 33vh;
+    width: 33vw;
+    /* center text vertically & horizontally */
+    display: none;
+    justify-content: center;
+    align-content: center;
+    flex-direction: column;
+    text-align: center;
+    /* border */
+    border: 3px solid red;
+    border-radius: 20px;
+    background: rgba(250,200,200,0.5);
+}
+
+.error_box_close {
+    position: absolute;
+    top: 2vh;
+    left: 60vh;
+}
+
+.error_box_close img {
+    float: right;
+    cursor: pointer;
+}
+
+.error_box_content {
+    /* font */
+    font-family: sans-serif;
+    font-size: 2em;
+}

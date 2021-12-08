@@ -1,0 +1,78 @@
+{% extends "data_management/sensor_type/sensor_type_template.html" %}
+{% load static %}
+{% block title %}{{ ACP_TYPE_ID }} Edit{% endblock %}
+
+{% block head %}
+    <!-- Our style sheets -->
+    <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/edit.css' %}" />
+
+    <!-- JS files -->
+    <script src="{% static 'js/jsonpath.js' %}" charset="utf-8"></script>
+    <script type='text/javascript' src="{% static 'data_management/js/sensor_type_edit.js' %}"></script>
+
+    <!-- Page local script -->
+    <script type="text/javascript">
+        var ACP_TYPE_ID = '{{ ACP_TYPE_ID }}'; // e.g. 'elsys-co2'
+        var ACP_PERSON_ID = '{{ user.get_username }}';
+        var ACP_PERSON_NAME = '{{ user.get_full_name }}';
+        // This link will embed the correct acp_id value as was given for this page
+        var SENSOR_TYPE_METADATA = JSON.parse('{{ SENSOR_TYPE_METADATA|escapejs }}');
+    </script>
+{% endblock %}
+
+{% block header_title %}
+Sensor Type Edit {{ ACP_TYPE_ID }}
+{% endblock %}
+
+{% block sensor_type_breadcrumbs %}
+    <div class="breadcrumb">
+        &gt; Edit
+    </div>
+{% endblock %} <!-- end sensor_breadcrumbs -->
+
+{% block sensor_type_content %}
+<h2>Edit Sensor Type Metadata: {{ ACP_TYPE_ID }}. Editor {{ user.get_full_name }} ({{ user.get_username }})</h2>
+
+<form name="edit_form" id="edit_form"
+    method="post"
+    action="{{ SENSOR_TYPE_METADATA_SAVE_URL }}"
+    spellcheck="false"
+>
+<!--    onsubmit="if(sensor.validate()){this.myDoc.value=oDoc.innerHTML;return true;}return false;"> -->
+{% csrf_token %}
+    <input type="hidden" name="plain_text_value" id="plain_text_value" value='{"foo": "bar"}'>
+    <div id="edit_box" contenteditable="true">
+        <p>No sensor type metadata available</p>
+    </div>
+    <p>
+        <button type="button" id="cancel_button">Cancel</button>
+        <button type="button" id="save_button">Save</button>
+        <!--
+        <button type="button" onclick="sensor.format_selected('removeFormat')" >Clean</button>
+        <button type="button" onclick="sensor.format_selected('bold')">Bold</button>
+        <button type="button" name="switchMode" id="switchBox" onchange="sensor.showHTML(this.checked);">
+            Debug HTML
+        </button>
+        -->
+    </p>
+</form>
+
+<div id="error_box" class="error_box">
+    <div id="error_box_close" class="error_box_close">
+        <img src="{% static 'sensor/images/reading_close.png' %}" />
+    </div>
+    <div id="error_box_content" class="error_box_content">
+        foo
+    </div>
+</div>
+
+{% endblock %} <!-- end sensor_content -->
+
+<!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
+{% block lazy_script %}
+<script>
+    console.log('lazy_script');
+    var sensor_type = new SensorTypeEdit();
+    sensor_type.init();
+</script>
+{% endblock %} <!-- lazy_script -->

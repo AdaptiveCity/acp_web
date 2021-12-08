@@ -1,0 +1,36 @@
+{% extends "cdbb.html" %}
+{% load static %}
+{% block title %}CDBB Sensor Type{% endblock %}
+
+{% block header_title %}
+Sensor Type {{ ACP_TYPE_ID }}
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <div class="breadcrumb">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/home_icon.png' %}" />
+        </a>
+    </div>
+    <div class="breadcrumb">
+        &gt; <a href="{% url 'dm_home' %}">Data Management</a>
+    </div>
+    <div class="breadcrumb">
+        &gt; <a href="{% url 'dm_sensor_types' %}">Sensor Types</a>
+    </div>
+    <div class="breadcrumb">
+        &gt; Sensor Type {{ ACP_TYPE_ID }}
+    </div>
+    {% block sensor_type_breadcrumbs %}
+    {% endblock %}
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- in block content of sensor_type.html -->
+{% include "data_management/includes/sensor_type_tabs.html" %}
+
+    {% block sensor_type_content %}
+    {% endblock %}
+{% endblock %} <!-- end content -->

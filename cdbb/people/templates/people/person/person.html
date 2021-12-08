@@ -1,0 +1,99 @@
+{% extends "data_management/sensor/sensor_template.html" %}
+{% load static %}
+{% block title %}{{ ACP_ID }} Readings{% endblock %}
+
+{% block head %}
+<!-- Our style sheets -->
+<link rel="stylesheet" type="text/css" href="{% static 'sensor/css/chart.css' %}" />
+
+<script src="{% static 'js/d3.v6_5.min.js' %}" charset="utf-8"></script>
+<script src="{% static 'js/sockjs.min.js' %}" charset="utf-8"></script>
+<script src="{% static 'js/jquery.min.js' %}" charset="utf-8"></script>
+<script src="{% static 'js/jsonpath.js' %}" charset="utf-8"></script>
+<script src="{% static 'js/VizTools2.js' %}" charset="utf-8"></script>
+
+<!-- chart.js defines class SensorChart-->
+<script type='text/javascript' src="{% static 'sensor/js/sensor_chart.js' %}"></script>
+
+<!-- Page local script -->
+<script type="text/javascript">
+    var ACP_ID = '{{ ACP_ID }}';
+    var SENSOR_REALTIME = '{{ SENSOR_REALTIME }}'; // URL for rtmonitor websocket
+    var YYYY = '{{ YYYY }}';
+    var MM = '{{ MM }}';
+    var DD = '{{ DD }}';
+    var FEATURE = '{{ FEATURE }}'; // e.g. 'temperature'
+    var SENSOR_READINGS = JSON.parse('{{ SENSOR_READINGS | escapejs }}');
+</script>
+{% endblock %}
+
+{% block sensor_breadcrumbs %}
+    <div class="breadcrumb">
+        &gt; Readings
+    </div>
+{% endblock %} <!-- end sensor_breadcrumbs -->
+
+{% block sensor_content %}
+
+<div id="zoom_hint"></div>
+
+<div class="selection_wrapper">
+
+    <form id="selection_form">
+        <div class="nav_date" id="back_1_week">&lt; Week</div>
+        <div class="nav_date" id="back_1_day">&lt; Day</div>
+        <div class="selection_input">
+            <div class="input_label">Date:</div>
+            <div class="input_box">
+                <input type="date" name="date" id="form_date" value="2020-03-15">
+            </div>
+        </div>
+        <div class="selection_input">
+            <div class="input_label">Feature:</div>
+            <div class="input_box">
+                <select id="form_feature" name="feature">
+                    <option>Select feature</option>
+                </select>
+            </div>
+        </div>
+        <div class="selection_input">
+            <div class="input_label">Secondary Feature:</div>
+            <div class="input_box">
+                <select id="form_feature2" name="feature">
+                    <option>Select feature</option>
+                </select>
+            </div>
+        </div>
+        <div class="nav_date" id="forward_1_day">Day &gt;</div>
+        <div class="nav_date" id="forward_1_week">Week &gt;</div>
+    </form>
+
+</div> <!-- end selection_wrapper -->
+
+<div id="popup_message"></div>
+<div id="chart" class="chart">
+    <div id="loading">
+        <img src="{% static 'sensor/images/loader.gif' %}"></img>
+    </div>
+    <!-- <canvas id="chart_canvas"></canvas> -->
+</div><!-- end chart_wrapper -->
+<div id="chart_tooltip">
+</div>
+<!-- div to hold pop-up full reading -->
+<div id="reading_popup">
+    <div id="reading_close">
+        <img src="{% static 'sensor/images/reading_close.png' %}" />
+    </div>
+    <pre id="reading_content">
+    </pre>
+</div>
+
+{% endblock %} <!-- end sensor_content -->
+
+<!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
+{% block lazy_script %}
+<script>
+    console.log('lazy_script');
+    init();
+</script>
+{% endblock %} <!-- lazy_script -->

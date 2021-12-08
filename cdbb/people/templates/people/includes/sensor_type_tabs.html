@@ -1,0 +1,11 @@
+<div class="contextual_links">
+    {% if '/sensor_type/' in request.path %}<div class="contextual_link_active">{% else %}<div class="contextual_link">{% endif %}
+        <a href="{% url 'dm_sensor_type' acp_type_id %}">View Sensor Type</a>
+    </div>
+    {% if '/sensor_type_history/' in request.path %}<div class="contextual_link_active">{% else %}<div class="contextual_link">{% endif %}
+        <a href="{% url 'dm_sensor_type_history' acp_type_id %}">History</a>
+    </div>
+    {% if '/sensor_type_edit/' in request.path %}<div class="contextual_link_active">{% else %}<div class="contextual_link">{% endif %}
+        <a href="{% url 'dm_sensor_type_edit' acp_type_id %}">Edit</a>
+    </div>
+</div><!-- end contextual_links -->

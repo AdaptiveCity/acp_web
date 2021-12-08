@@ -1,0 +1,53 @@
+{% extends "data_management/bim/bim_template.html" %}
+{% load static %}
+{% block title %}{{ CRATE_ID }} History{% endblock %}
+
+{% block head %}
+    <!-- Our style sheets -->
+    <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/history.css' %}" />
+
+    <script type='text/javascript' src="{% static 'data_management/js/bim_history.js' %}"></script>
+
+    <!-- Page local script -->
+    <script type="text/javascript">
+        var ACP_TYPE_ID = '{{ CRATE_ID }}'; // e.g. 'elsys-co2'
+        var API_BIM_HISTORY = JSON.parse('{{ API_BIM_HISTORY|escapejs }}');
+
+    </script>
+{% endblock %}
+
+{% block header_title %}
+BIM Object History {{ CRATE_ID }}
+{% endblock %}
+
+{% block bim_breadcrumbs %}
+    <div class="breadcrumb">
+        &gt; History
+    </div>
+{% endblock %} <!-- end sensor_breadcrumbs -->
+
+{% block bim_content %}
+
+<div id="history">
+    <h2>BIM History</h2>
+    <!-- javascript will add  history data -->
+</div>
+
+<div id="popup">
+    <div id="popup_close">
+        <img src="{% static 'images/popup_close.png' %}"/>
+    </div>
+    <pre id="popup_content">
+    </pre>
+</div>
+
+{% endblock %} <!-- end sensor_content -->
+
+<!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
+{% block lazy_script %}
+<script>
+    console.log('lazy_script');
+    var bim_history = new BIMHistory();
+    bim_history.init();
+</script>
+{% endblock %} <!-- lazy_script -->

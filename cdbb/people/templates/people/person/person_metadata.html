@@ -1,0 +1,54 @@
+{% extends "data_management/sensor/sensor_template.html" %}
+{% load static %}
+{% block title %}{{ ACP_ID }} Metadata{% endblock %}
+
+{% block head %}
+    <!-- Our style sheets -->
+    <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/sensor_metadata.css' %}" />
+
+    <script type='text/javascript' src="{% static 'data_management/js/sensor_metadata.js' %}"></script>
+
+    <!-- Page local script -->
+    <script type="text/javascript">
+        var ACP_ID = '{{ ACP_ID }}'; // e.g. 'temperature'
+        // Note this embeds "acp_type_id" in the link, to be replaced in the JS
+        var SENSOR_TYPE_LINK = "{% url 'dm_sensor_type' 'acp_type_id' %}";
+        var SENSOR_METADATA = JSON.parse('{{ SENSOR_METADATA|escapejs }}');
+    </script>
+{% endblock %}
+
+{% block header_title %}
+Sensor Metadata {{ ACP_ID }}
+{% endblock %}
+
+{% block sensor_breadcrumbs %}
+    <div class="breadcrumb">
+        &gt; Metadata
+    </div>
+{% endblock %} <!-- end sensor_breadcrumbs -->
+
+{% block sensor_content %}
+
+<div id="sensor_info">
+    <h2>Sensor Metadata</h2>
+    <!-- javascript will add  <pre id="sensor_metadata">...</pre> -->
+</div>
+
+<div id="type_info">
+    <h2 id="type_info_heading">
+        <!-- javascript will add a link to the type info url here -->
+    </h2>
+
+    <!-- javascript will add  <pre id="sensor_type_metadata">...</pre> -->
+</div>
+
+{% endblock %} <!-- end sensor_content -->
+
+<!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
+{% block lazy_script %}
+<script>
+    console.log('lazy_script');
+    var sensor = new SensorMetadata();
+    sensor.init();
+</script>
+{% endblock %} <!-- lazy_script -->

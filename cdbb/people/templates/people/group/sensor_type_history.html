@@ -1,0 +1,53 @@
+{% extends "data_management/sensor_type/sensor_type_template.html" %}
+{% load static %}
+{% block title %}{{ ACP_TYPE_ID }} History{% endblock %}
+
+{% block head %}
+    <!-- Our style sheets -->
+    <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/sensor_history.css' %}" />
+
+    <script type='text/javascript' src="{% static 'data_management/js/sensor_type_history.js' %}"></script>
+
+    <!-- Page local script -->
+    <script type="text/javascript">
+        var ACP_TYPE_ID = '{{ ACP_TYPE_ID }}'; // e.g. 'elsys-co2'
+        var API_SENSOR_TYPE_HISTORY = JSON.parse('{{ API_SENSOR_TYPE_HISTORY|escapejs }}');
+
+    </script>
+{% endblock %}
+
+{% block header_title %}
+Sensor Type History {{ ACP_TYPE_ID }}
+{% endblock %}
+
+{% block sensor_type_breadcrumbs %}
+    <div class="breadcrumb">
+        &gt; History
+    </div>
+{% endblock %} <!-- end sensor_breadcrumbs -->
+
+{% block sensor_type_content %}
+
+<div id="history">
+    <h2>Sensor Type History</h2>
+    <!-- javascript will add  sensor type history data -->
+</div>
+
+<div id="popup">
+    <div id="popup_close">
+        <img src="{% static 'images/popup_close.png' %}"/>
+    </div>
+    <pre id="popup_content">
+    </pre>
+</div>
+
+{% endblock %} <!-- end sensor_content -->
+
+<!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
+{% block lazy_script %}
+<script>
+    console.log('lazy_script');
+    var sensor_type_history = new SensorTypeHistory();
+    sensor_type_history.init();
+</script>
+{% endblock %} <!-- lazy_script -->

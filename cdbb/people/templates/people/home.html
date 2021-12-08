@@ -1,0 +1,76 @@
+{% extends "cdbb.html" %}
+{% load static %}
+{% block title %}CDBB People{% endblock %}
+
+{% block head %}
+
+{% endblock %}
+
+{% block header_title %}
+People Data
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <div class="breadcrumb">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/home_icon.png' %}" />
+        </a>
+    </div>
+    <div class="breadcrumb">
+         &gt; People
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+        <div class="card_title">
+            People
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'people_person_list' %}">
+                <img src="{% static 'people/images/person_list.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                Manage reference data for People.
+            </div>
+        </div>
+</div>
+
+<div class="card">
+        <div class="card_title">
+            Groups
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'people_person_list' %}">
+                <img src="{% static 'images/elsys_ems.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                Manage reference data for Groups.
+            </div>
+        </div>
+</div>
+
+<div class="card">
+        <div class="card_title">
+            Institutions
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'people_person_list' %}">
+                <img src="{% static 'space/images/space.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                Manage reference data for institutions.
+            </div>
+        </div>
+</div>
+
+{% endblock %}
