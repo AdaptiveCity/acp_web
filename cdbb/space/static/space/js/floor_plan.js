@@ -289,11 +289,16 @@ class FloorPlan {
 
         //zooming/panning for the drawn polygons/rects/sensors
         //TODO; add programmatic zoom for floorspace pages + disable mouse interaction
-        function zoomed({
-            transform
-        }) {
-            d3.select('#bim_request').attr("transform", transform);
-            d3.select('#app_overlay').attr("transform", transform);
+        // function zoomed({
+        //     transform
+        // }) {
+        //     d3.select('#bim_request').attr("transform", transform);
+        //     d3.select('#app_overlay').attr("transform", transform);
+        // }
+
+        function zoomed(e) {
+            d3.select('#bim_request').attr("transform", e.transform);
+            d3.select('#app_overlay').attr("transform", e.transform);
         }
 
         //resets the panned/zoomed svg to the initial transformation
@@ -558,8 +563,8 @@ class FloorPlan {
                     .style("opacity", parent.sensor_opacity)
                     .attr('stroke-width', stroke_width)
                     .style('stroke', 'black')
-                    .style("fill", fill)
-                    .attr("transform", parent.svg_transform);
+                    .style("fill", fill);
+                    // .attr("transform", parent.svg_transform);
 
             } catch (error) {
                 console.log(error)
