@@ -196,11 +196,13 @@ class FloorPlan {
         //TODO CHECK how and why this does it
         parent.set_svg_transform(parent, polygons);
 
+        document.getElementById("bim_request").setAttribute("transform", parent.svg_transform)
+
         //attach polygon styling
         d3.selectAll("polygon")
             .style("stroke-width", 0.5 / scale)
-            .attr("stroke", "black")
-            .attr("transform", parent.svg_transform);
+            .attr("stroke", "black");
+            // .attr("transform", parent.svg_transform);
 
         //assign fill colors
         d3.select(parent.page_floor_svg).selectAll("polygon")
@@ -251,6 +253,8 @@ class FloorPlan {
 
         //add a sublayer for future apps
         d3.select('#drawing_svg').append('g').attr('id', "app_overlay")
+
+        document.getElementById("app_overlay").setAttribute("transform", parent.svg_transform)
 
         //declare zooming/panning function
         parent.manage_zoom(parent);
