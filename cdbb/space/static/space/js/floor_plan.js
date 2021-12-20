@@ -8,10 +8,10 @@ class FloorPlan {
         // Instantiate a jb2328 utility class e.g. for getBoundingBox()
         this.jb_tools = new VizTools2();
 
-        this.svg_scale;
+        // this.svg_scale;
 
         // Transform parameters to scale SVG to screen
-        this.svg_transform = ""; // updated by set_svg_transform()
+        this.svg_transform = null; // updated by set_svg_transform()
         this.next_color = 0;
         this.sensor_readings = {}; //sensor reading data
         this.sensors_in_crates = {};
@@ -194,9 +194,9 @@ class FloorPlan {
         console.log("handle_floor_svg", polygons.length, "polygons");
 
         //TODO CHECK how and why this does it
-        parent.set_svg_transform(parent, polygons);
+        parent.svg_transform = parent.set_svg_transform(parent, polygons);
 
-        document.getElementById("bim_request").setAttribute("transform", parent.svg_transform)
+        document.getElementById("bim_request").setAttribute("transform", parent.svg_transform.transform)
 
         //attach polygon styling
         d3.selectAll("polygon")
@@ -229,23 +229,24 @@ class FloorPlan {
                 console.log('CLICKED ON FLOOR_PLAN', d3.select(this))
             });
 
-
+        // Add labels to room crates
         if (parent.floorspace) {
             let rooms = document.querySelectorAll('polygon[data-crate_type=room]');
             let svg_el = document.querySelector("#bim_request");
+            let font_size = Math.max(4.5, parent.svg_transform.scale / 2)
             rooms.forEach(function (room) {
                 let svgNS = "http://www.w3.org/2000/svg"; // sigh... thank you 1999
                 let box = room.getBBox();
                 let box_offset = room.getCTM(); //get consolidated matrix for offset
-                let x = (box.x + box.width / 4) * parent.svg_scale + box_offset.e;
-                let y = (box.y + box.height / 2) * parent.svg_scale + box_offset.f;
-                //console.log('box x y scale', box, x, y, parent.svg_scale, parent.svg_x, parent.svg_y)
+                let x = (box.x + box.width / 4) + box_offset.e;
+                let y = (box.y + box.height / 2) + box_offset.f;
+                //console.log('box x y scale', box, x, y, parent.svg_transform.scale, parent.svg_x, parent.svg_y)
                 let text = document.createElementNS(svgNS, "text");
                 text.setAttribute('x', x);
                 text.setAttribute('y', y);
                 //set the font
                 //either 6 or the scale divided by two, our buildings have different sizes, so shoudl the fonts
-                text.setAttribute('font-size', Math.max(4.5, parent.svg_scale / 2));
+                text.setAttribute('font-size', font_size);
                 text.textContent = room.id;
                 svg_el.appendChild(text);
             });
@@ -254,7 +255,7 @@ class FloorPlan {
         //add a sublayer for future apps
         d3.select('#drawing_svg').append('g').attr('id', "app_overlay")
 
-        document.getElementById("app_overlay").setAttribute("transform", parent.svg_transform)
+        document.getElementById("app_overlay").setAttribute("transform", parent.svg_transform.transform)
 
         //declare zooming/panning function
         parent.manage_zoom(parent);
@@ -268,7 +269,7 @@ class FloorPlan {
     }
 
     //allows to scroll into the floorplan/heatmap
-    manage_zoom(parent) {
+    manage_zoom_d3(parent) {
 
         //if we're in  floorspace page, we need to zoom in on a crate
         if (parent.floorspace) {
@@ -282,7 +283,7 @@ class FloorPlan {
                 [1, 1]
             ])
             .scaleExtent([-0.5, 10])
-            .on("zoom", zoomed);
+            .on("zoom", (e) => {zoomed(parent, e)});
 
         //bind the zoom variable to the svg canvas
         d3.select('#drawing_svg').call(zoom);
@@ -292,11 +293,14 @@ class FloorPlan {
         // function zoomed({
         //     transform
         // }) {
+        //     console.log('zoomed: '+transform);
         //     d3.select('#bim_request').attr("transform", transform);
         //     d3.select('#app_overlay').attr("transform", transform);
         // }
 
-        function zoomed(e) {
+        function zoomed(parent, e) {
+            console.log('event: ',e.transform.x,e.transform.y,e.transform.k);
+            // parent.svg_transform.transform.x += 
             d3.select('#bim_request').attr("transform", e.transform);
             d3.select('#app_overlay').attr("transform", e.transform);
         }
@@ -314,8 +318,63 @@ class FloorPlan {
 
     }
 
+    manage_zoom(parent){
+
+        var prevX = 0;
+        var prevY = 0;
+        var curr_element = null;
+        //if we're in  floorspace page, we need to zoom in on a crate
+        if (parent.floorspace) {
+            parent.setup_crate(parent);
+        }
+
+        const zoomable = document.getElementById('drawing_svg');
+        zoomable.onwheel = zoomed;
+        zoomable.onmousedown = startdrag;
+        zoomable.onmousemove = whiledrag;
+        zoomable.onmouseup = stopdrag;
+
+        function zoomed(event){
+            event.preventDefault();
+            
+            parent.svg_transform.scale += event.deltaY * -0.01;
+            parent.svg_transform.transform = "translate(" + parent.svg_transform.x + "," + parent.svg_transform.y + ") " + "scale(" + parent.svg_transform.scale + ")"
+
+            document.getElementById('bim_request').setAttribute('transform', parent.svg_transform.transform)
+            document.getElementById('app_overlay').setAttribute('transform', parent.svg_transform.transform)
+        }
+
+        function startdrag(event){
+            event.preventDefault();
+
+            curr_element = this;
+
+            prevX = event.clientX - parent.svg_transform.x;
+            prevY = event.clientY - parent.svg_transform.y;
+        }
+
+        function stopdrag(event){
+            curr_element = null;            
+        }
+
+        function whiledrag(event){
+            var x_cursor = event.clientX;
+            var y_cursor = event.clientY;
+            
+            if (curr_element != null){
+                
+                parent.svg_transform.x = (x_cursor - prevX);
+                parent.svg_transform.y = (y_cursor - prevY);
+                parent.svg_transform.transform = "translate(" + parent.svg_transform.x + "," + parent.svg_transform.y + ") " + "scale(" + parent.svg_transform.scale + ")"
+                
+                document.getElementById('bim_request').setAttribute('transform', parent.svg_transform.transform)
+                document.getElementById('app_overlay').setAttribute('transform', parent.svg_transform.transform)
+            }
+        }
+    }
+
     //special 'onload' zooming function to zoom in on a preloaded CRATE_ID
-    setup_floorspace(parent) {
+    setup_crate(parent) {
         //make all polygons white...
         d3.selectAll('polygon').style('fill', '#ffffff')
             .on("mouseover", function (d) {
@@ -335,43 +394,49 @@ class FloorPlan {
         //and highlight the one in question
         d3.select("#" + CRATE_ID).style("stroke", "#448844").attr("stroke-width", '0.5px').style('fill', '#3CB371');
 
-        function floorspace_zoom() {
+        // function floorspace_zoom() {
 
-            //get the room bounding box
-            let bbox_room = d3.select('#' + CRATE_ID).node().getBBox();
+        //get the room bounding box
+        let bbox_room = d3.select('#' + CRATE_ID).node().getBBox();
 
-            //get the foor bounding box
-            let bbox_floor = document.querySelectorAll('polygon[data-crate_type=floor]')[0].getBBox();
+        //get the foor bounding box
+        let bbox_floor = document.querySelectorAll('polygon[data-crate_type=floor]')[0].getBBox();
 
-            //get the consolidated matrix for making the right offset (for more check the link below or in the heatmap class)
-            //https://stackoverflow.com/questions/19154631/how-to-get-coordinates-of-an-svg-element
-            let bbox_floor_offset = document.querySelectorAll('polygon[data-crate_type=floor]')[0].getCTM(); //required for lockdown laband potentially others
+        //get the consolidated matrix for making the right offset (for more check the link below or in the heatmap class)
+        //https://stackoverflow.com/questions/19154631/how-to-get-coordinates-of-an-svg-element
+        let bbox_floor_offset = document.querySelectorAll('polygon[data-crate_type=floor]')[0].getCTM(); //required for lockdown laband potentially others
 
-            // scale_new is the max number of times bounding box will fit into container, capped at 3 times
-            let scale_new = Math.min(bbox_floor.width / bbox_room.width, bbox_floor.height / bbox_room.height, 3);
+        // scale_new is the max number of times bounding box will fit into container, capped at 3 times
+        let scale_new = parent.svg_transform.scale * Math.min(bbox_floor.width / bbox_room.width, bbox_floor.height / bbox_room.height, 3);
 
-            //calculate the offset and combine it with the consolidated matrix data
-            let tx = -bbox_room.x + (bbox_floor.width - bbox_room.width * scale_new) / (2 * scale_new);
-            let ty = -bbox_room.y + (bbox_floor.height - bbox_room.height * scale_new) / (2 * scale_new);
+        //calculate the offset and combine it with the consolidated matrix data
+        let tx = -bbox_room.x + (bbox_floor.width - bbox_room.width * scale_new) / (2 * scale_new);
+        let ty = -bbox_room.y + (bbox_floor.height - bbox_room.height * scale_new) / (2 * scale_new);
 
-            let translate_x = tx * parent.svg_scale - bbox_floor_offset.e;
-            let translate_y = ty * parent.svg_scale - bbox_floor_offset.f;
+        let translate_x = tx * parent.svg_transform.scale - bbox_floor_offset.e;
+        let translate_y = ty * parent.svg_transform.scale - bbox_floor_offset.f;
 
-            //highlight the selected crate
-            d3.select('#bim_request').transition()
-                .duration(750)
-                .attr('transform', 'scale(' + scale_new + ')translate(' + translate_x + ',' + translate_y + ')')
-                .on('end', function () {
-                    d3.select("#" + CRATE_ID).transition()
-                        .duration(750)
-                        .style("stroke", "#448844")
-                        .attr("stroke-width", '2px')
-                        .style('fill', '#e0ffe0'); //light green
-                })
+        parent.svg_transform.scale = scale_new;
+        parent.svg_transform.x = translate_x;
+        parent.svg_transform.y = translate_y;
+        parent.svg_transform.transform = "translate(" + parent.svg_transform.x + "," + parent.svg_transform.y + ") " + "scale(" + parent.svg_transform.scale + ")"
 
-        }
-        //zoom in on load
-        d3.select('#bim_request').call(floorspace_zoom);
+
+        //highlight the selected crate
+        d3.select('#bim_request').transition()
+            .duration(750)
+            .attr('transform', parent.svg_transform.transform)
+            .on('end', function () {
+                d3.select("#" + CRATE_ID).transition()
+                    .duration(750)
+                    .style("stroke", "#448844")
+                    .attr("stroke-width", '2px')
+                    .style('fill', '#e0ffe0'); //light green
+            })
+
+        // }
+        // //zoom in on load
+        // d3.select('#bim_request').call(floorspace_zoom);
     }
 
     // Append each floor to page SVG but keep invisible for now
@@ -418,19 +483,21 @@ class FloorPlan {
         let y_scale = h / (max_y - min_y);
         // Set the svg scale to fit either x or y
         let svg_scale = x_scale < y_scale ? x_scale : y_scale;
-        parent.svg_scale = svg_scale;
+        // parent.svg_scale = svg_scale;
 
         // x offset
         let svg_x = -min_x * svg_scale;
         let svg_y = -min_y * svg_scale;
 
-        parent.svg_transform = "translate(" + svg_x + "," + svg_y + ") " +
-            "scale(" + svg_scale + ")";
+        // parent.svg_transform = "translate(" + svg_x + "," + svg_y + ") " +
+        //     "scale(" + svg_scale + ")";
 
         return {
             'x': svg_x,
             'y': svg_y,
-            'scale': svg_scale
+            'scale': svg_scale,
+            'transform': "translate(" + svg_x + "," + svg_y + ") " +
+            "scale(" + svg_scale + ")"
         }
     }
 
@@ -516,9 +583,9 @@ class FloorPlan {
         let recieved_sensor_metadata = parent.sensor_metadata;
         //declare circle properties - radius
         //calculate the sensor radius based on the svg scale; use the log to 'normalise' different scale values;
-        parent.sensor_radius = parent.radius_scaling / Math.log(parent.svg_scale)
+        parent.sensor_radius = parent.radius_scaling / Math.log(parent.svg_transform.scale)
 
-        let stroke_width = 1 / parent.svg_scale;
+        let stroke_width = 1 / parent.svg_transform.scale;
 
         //let rad = ; // radius of sensor icon in METERS (i.e. XYZF before transform)
 
