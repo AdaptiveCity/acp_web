@@ -233,7 +233,7 @@ class FloorPlan {
         if (parent.floorspace) {
             let rooms = document.querySelectorAll('polygon[data-crate_type=room]');
             let svg_el = document.querySelector("#bim_request");
-            let font_size = Math.max(4.5, parent.svg_transform.scale / 2)
+            let font_size = Math.max(4.5, parent.svg_transform.scale / 2)/parent.svg_transform.scale;
             rooms.forEach(function (room) {
                 let svgNS = "http://www.w3.org/2000/svg"; // sigh... thank you 1999
                 let box = room.getBBox();
@@ -407,16 +407,16 @@ class FloorPlan {
         let bbox_floor_offset = document.querySelectorAll('polygon[data-crate_type=floor]')[0].getCTM(); //required for lockdown laband potentially others
 
         // scale_new is the max number of times bounding box will fit into container, capped at 3 times
-        let scale_new = parent.svg_transform.scale * Math.min(bbox_floor.width / bbox_room.width, bbox_floor.height / bbox_room.height, 3);
+        let scale_new = Math.min(bbox_floor.width / bbox_room.width, bbox_floor.height / bbox_room.height, 3);
 
         //calculate the offset and combine it with the consolidated matrix data
         let tx = -bbox_room.x + (bbox_floor.width - bbox_room.width * scale_new) / (2 * scale_new);
         let ty = -bbox_room.y + (bbox_floor.height - bbox_room.height * scale_new) / (2 * scale_new);
 
-        let translate_x = tx * parent.svg_transform.scale - bbox_floor_offset.e;
-        let translate_y = ty * parent.svg_transform.scale - bbox_floor_offset.f;
+        let translate_x = (tx * parent.svg_transform.scale - bbox_floor_offset.e) - parent.svg_transform.x;
+        let translate_y = (ty * parent.svg_transform.scale - bbox_floor_offset.f) - parent.svg_transform.y;
 
-        parent.svg_transform.scale = scale_new;
+        parent.svg_transform.scale *= scale_new;
         parent.svg_transform.x = translate_x;
         parent.svg_transform.y = translate_y;
         parent.svg_transform.transform = "translate(" + parent.svg_transform.x + "," + parent.svg_transform.y + ") " + "scale(" + parent.svg_transform.scale + ")"
