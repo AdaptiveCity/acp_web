@@ -413,12 +413,12 @@ class FloorPlan {
         let tx = -bbox_room.x + (bbox_floor.width - bbox_room.width * scale_new) / (2 * scale_new);
         let ty = -bbox_room.y + (bbox_floor.height - bbox_room.height * scale_new) / (2 * scale_new);
 
-        let translate_x = (tx * parent.svg_transform.scale - bbox_floor_offset.e) - parent.svg_transform.x;
-        let translate_y = (ty * parent.svg_transform.scale - bbox_floor_offset.f) - parent.svg_transform.y;
+        let translate_x = (tx * parent.svg_transform.scale - bbox_floor_offset.e);
+        let translate_y = (ty * parent.svg_transform.scale - bbox_floor_offset.f);
 
         parent.svg_transform.scale *= scale_new;
-        parent.svg_transform.x = translate_x;
-        parent.svg_transform.y = translate_y;
+        parent.svg_transform.x += translate_x*scale_new;
+        parent.svg_transform.y += translate_y*scale_new;
         parent.svg_transform.transform = "translate(" + parent.svg_transform.x + "," + parent.svg_transform.y + ") " + "scale(" + parent.svg_transform.scale + ")"
 
 
