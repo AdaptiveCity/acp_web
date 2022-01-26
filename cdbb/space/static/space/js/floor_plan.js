@@ -13,6 +13,7 @@ class FloorPlan {
         // Transform parameters to scale SVG to screen
         this.svg_transform = null; // updated by set_svg_transform()
         this.base_scale = 1.0
+        this.base_rect = null;
         this.next_color = 0;
         this.sensor_readings = {}; //sensor reading data
         this.sensors_in_crates = {};
@@ -85,6 +86,8 @@ class FloorPlan {
 
         this.handle_sensors_metadata(parent, API_SENSORS_INFO);
 
+        this.base_rect = d3.select('#bim_request')._groups[0][0].childNodes[0].getBoundingClientRect();
+
         //--------------------------------------//
         //--------SET UP EVENT LISTENERS--------//
         //--------------------------------------//
@@ -95,14 +98,13 @@ class FloorPlan {
             var origin_x = 17.0;
             var origin_y = 118.0;
 
-            var d3_rect = d3.select('#bim_request')._groups[0][0].childNodes[0].getBoundingClientRect();
-            var svg_xmax = (d3_rect.width - origin_x)/650;
-            var svg_ymax = (d3_rect.height - origin_y)/660;
+            var svg_xmax = (parent.base_rect.width - origin_x)/650;
+            var svg_ymax = (parent.base_rect.height - origin_y)/660;
             
             var svg_x = (e.clientX - origin_x - parent.svg_transform.x)/(svg_xmax * (parent.svg_transform.scale/parent.base_scale));
             var svg_y = (e.clientY - origin_y - parent.svg_transform.y)/(svg_ymax * (parent.svg_transform.scale/parent.base_scale));
 
-            parent.page_coords.innerHTML = Math.round((svg_x + Number.EPSILON) * 100) / 100 + "," + Math.round((svg_y + Number.EPSILON) * 100) / 100;
+            parent.page_coords.innerHTML = '( '+ e.clientX + ',' + e.clientY +' ) --> ( ' + Math.round((svg_x + Number.EPSILON) * 100) / 100 + "," + Math.round((svg_y + Number.EPSILON) * 100) / 100 + ' )';
         });
 
         /*
@@ -503,6 +505,7 @@ class FloorPlan {
         // parent.svg_transform = "translate(" + svg_x + "," + svg_y + ") " +
         //     "scale(" + svg_scale + ")";
         this.base_scale = svg_scale;
+        
         return {
             'x': svg_x,
             'y': svg_y,
