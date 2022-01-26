@@ -12,6 +12,7 @@ class FloorPlan {
 
         // Transform parameters to scale SVG to screen
         this.svg_transform = null; // updated by set_svg_transform()
+        this.base_scale = 1.0
         this.next_color = 0;
         this.sensor_readings = {}; //sensor reading data
         this.sensors_in_crates = {};
@@ -36,12 +37,7 @@ class FloorPlan {
         this.page_draw_div = document.getElementById("main_drawing_div");
         this.page_floor_svg = document.getElementById("drawing_svg"); // drawing SVG element
         console.log("page_floor_svg", this.page_floor_svg);
-        this.page_coords = document.getElementById("drawing_coords");
-
-        // debug for page x,y nit
-        this.page_floor_svg.addEventListener('mousemove', function (e) {
-            parent.page_coords.innerHTML = e.clientX + "," + e.clientY;
-        });
+        this.page_coords = document.getElementById("drawing_coords");        
 
         // object to store BIM data for current floor when returned by BIM api
         this.floor_bim_object = null;
@@ -93,6 +89,21 @@ class FloorPlan {
         //--------SET UP EVENT LISTENERS--------//
         //--------------------------------------//
         this.setup_buttons(parent);
+
+        // debug for page x,y nit
+        this.page_floor_svg.addEventListener('mousemove', function (e) {
+            var origin_x = 17.0;
+            var origin_y = 118.0;
+
+            var d3_rect = d3.select('#bim_request')._groups[0][0].childNodes[0].getBoundingClientRect();
+            var svg_xmax = (d3_rect.width - origin_x)/650;
+            var svg_ymax = (d3_rect.height - origin_y)/660;
+            
+            var svg_x = (e.clientX - origin_x - parent.svg_transform.x)/(svg_xmax * (parent.svg_transform.scale/parent.base_scale));
+            var svg_y = (e.clientY - origin_y - parent.svg_transform.y)/(svg_ymax * (parent.svg_transform.scale/parent.base_scale));
+
+            parent.page_coords.innerHTML = Math.round((svg_x + Number.EPSILON) * 100) / 100 + "," + Math.round((svg_y + Number.EPSILON) * 100) / 100;
+        });
 
         /*
         parent.loaded.then(function () {
@@ -491,7 +502,7 @@ class FloorPlan {
 
         // parent.svg_transform = "translate(" + svg_x + "," + svg_y + ") " +
         //     "scale(" + svg_scale + ")";
-
+        this.base_scale = svg_scale;
         return {
             'x': svg_x,
             'y': svg_y,
