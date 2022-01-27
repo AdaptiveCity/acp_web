@@ -95,8 +95,8 @@ class FloorPlan {
 
         // debug for page x,y nit
         this.page_floor_svg.addEventListener('mousemove', function (e) {
-            var origin_x = 17.0;
-            var origin_y = 118.0;
+            var origin_x = parent.base_rect.x;
+            var origin_y = parent.base_rect.y;
 
             var svg_xmax = (parent.base_rect.width - origin_x)/650;
             var svg_ymax = (parent.base_rect.height - origin_y)/660;
