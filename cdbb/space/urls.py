@@ -1,7 +1,7 @@
 # space/urls.py
 from django.urls import path
 
-from .views import HomeView, MapView, BuildingView, FloorView, FloorspaceView, RainHomeView, RainView, SplashHomeView, SplashView
+from .views import HomeView, MapView, BuildingView, FloorView, FloorspaceView, RainHomeView, RainView, SplashHomeView, SplashView, RotasView
 
 urlpatterns = [
     path('home/', HomeView.as_view(), name='space_home'),
@@ -14,5 +14,7 @@ urlpatterns = [
     path('rain_home/', RainHomeView.as_view(), name='space_rain_home'),
     path('splash_home/', SplashHomeView.as_view(), name='space_splash_home'),
     path('floor_rain/<crate_id>/', RainView.as_view(), name='space_rain'),
-    path('floor_splash/<crate_id>/', SplashView.as_view(), name='space_splash')
+    path('floor_splash/<crate_id>/', SplashView.as_view(), name='space_splash'),
+    path('rotas/<crate_id>/', RotasView.as_view(), name='space_rotas')
+
 ]
