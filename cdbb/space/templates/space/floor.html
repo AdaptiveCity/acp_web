@@ -29,6 +29,7 @@
 
     var FLOORSPACE_LINK = '{% url "dm_bim_location" "crate_id" %}';
     var SENSOR_LINK = "{% url 'dm_sensor' 'acp_id' %}"; // we will replace id as required
+    var SVG_CONSTANTS = JSON.parse('{{ SVG_CONSTANTS | escapejs }}')
 </script>
 {% endblock %}
 

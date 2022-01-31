@@ -98,11 +98,14 @@ class FloorPlan {
             var origin_x = parent.base_rect.x;
             var origin_y = parent.base_rect.y;
 
-            var svg_xmax = (parent.base_rect.width - origin_x)/650;
-            var svg_ymax = (parent.base_rect.height - origin_y)/660;
+            var svg_xmax = SVG_CONSTANTS[API_BIM_INFO[CRATE_ID]["acp_location"]['system']]['x']
+            var svg_ymax = SVG_CONSTANTS[API_BIM_INFO[CRATE_ID]["acp_location"]['system']]['y']
+
+            var multiplier_x = (parent.base_rect.width - origin_x)/svg_xmax;
+            var multiplier_y = (parent.base_rect.height - origin_y)/svg_ymax;
             
-            var svg_x = (e.clientX - origin_x - parent.svg_transform.x)/(svg_xmax * (parent.svg_transform.scale/parent.base_scale));
-            var svg_y = (e.clientY - origin_y - parent.svg_transform.y)/(svg_ymax * (parent.svg_transform.scale/parent.base_scale));
+            var svg_x = (e.clientX - origin_x - parent.svg_transform.x)/(multiplier_x * (parent.svg_transform.scale/parent.base_scale));
+            var svg_y = (e.clientY - origin_y - parent.svg_transform.y)/(multiplier_y * (parent.svg_transform.scale/parent.base_scale));
 
             parent.page_coords.innerHTML = '( '+ e.clientX + ',' + e.clientY +' ) --> ( ' + Math.round((svg_x + Number.EPSILON) * 100) / 100 + "," + Math.round((svg_y + Number.EPSILON) * 100) / 100 + ' )';
         });
