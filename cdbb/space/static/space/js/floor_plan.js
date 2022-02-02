@@ -507,8 +507,8 @@ class FloorPlan {
         // parent.svg_transform = "translate(" + svg_x + "," + svg_y + ") " +
         //     "scale(" + svg_scale + ")";
         this.base_scale = svg_scale;
-        this.svg_xmax = max_x;
-        this.svg_ymax = max_y;
+        this.svg_xmax = (max_x - min_x);
+        this.svg_ymax = (max_y - min_y);
         
         return {
             'x': svg_x,
