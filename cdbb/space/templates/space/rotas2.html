@@ -1,0 +1,304 @@
+{% extends "cdbb.html" %}
+{% load static %}
+{% block title %}CDBB Floor {{ CRATE_ID }}{% endblock %}
+
+{% block head %}
+<!-- Our style sheets -->
+<link rel="stylesheet" type="text/css" href="{% static 'space/css/floor.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'space/css/style.css' %}" />
+
+<!-- Local copy of d3 -->
+<script type="text/javascript" src="{% static 'js/d3.v6_5.min.js' %}"></script>
+<!-- <script type="text/javascript" src="{% static 'js/d3.v5.min.js' %}"></script> -->
+
+<!-- viz_tools contains some common rendering functions, uses parse_readings, jsonpath -->
+<script type="text/javascript" src="{% static 'js/jsonpath.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/parse_readings.js' %}"></script>
+<script type="text/javascript" src="{% static '/js/VizTools2.js' %}"></script>
+<script type="text/javascript" src="{% static '/js/TemplateTools.js' %}"></script>
+<script type="text/javascript" src="{% static '/js/maths.js' %}"></script>
+
+<!-- FloorPlan -->
+<script type='text/javascript' src="{% static 'space/js/floor_plan.js' %}"></script>
+<!-- Rain class  -->
+<script type='text/javascript' src="{% static 'space/js/rotas_heatmap.js' %}"></script>
+
+<!-- RTMonitor tests -->
+<script type='text/javascript' src="{% static 'space/js/RTconnect.js' %}"></script>
+
+<script src="{% static 'js/sockjs.min.js' %}"></script>
+
+<!-- <script type='text/javascript' src="{% static 'sensor/js/rotas_chart.js' %}"></script> -->
+
+<!-- Page local script -->
+<script type="text/javascript">
+    var CRATE_ID = '{{ CRATE_ID }}';
+
+    var API_BIM_INFO = JSON.parse('{{ API_BIM_INFO | escapejs }}');
+    var API_SENSORS_INFO = JSON.parse('{{ API_SENSORS_INFO | escapejs }}');
+    var API_SPACE_INFO = JSON.parse('{{ API_SPACE_INFO | escapejs }}');
+    var API_READINGS_INFO = JSON.parse('{{ API_READINGS_INFO | escapejs }}');
+    var FLOOR_NUMBER = '{{ FLOOR_NUMBER }}';
+    var COORDINATE_SYSTEM = '{{ COORDINATE_SYSTEM }}';
+
+    var FLOORSPACE_LINK = '{% url "space_floorspace" "crate_id" %}';
+    var SENSOR_LINK = "{% url 'dm_sensor' 'acp_id' %}"; // we will replace id as required
+    var RTMONITOR_URI = '{{ RTMONITOR_URI }}';
+
+    //var ACP_ID = '{{ ACP_ID }}';
+    //var SENSOR_REALTIME = '{{ SENSOR_REALTIME }}'; // URL for rtmonitor websocket
+    //var YYYY = '{{ YYYY }}';
+    //var MM = '{{ MM }}';
+    //var DD = '{{ DD }}';
+    //var FEATURE = '{{ FEATURE }}'; // e.g. 'temperature'
+   // var SENSOR_READINGS = JSON.parse('{{ SENSOR_READINGS | escapejs }}'); 
+
+</script>
+{% endblock %}
+
+{% block header_title %}
+ROTAS app
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <div class="breadcrumb">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/home_icon.png' %}" />
+        </a>
+    </div>
+    <div class="breadcrumb">
+        &gt; <a href="{% url 'space_home' %}">Space</a>
+    </div>
+    <div class="breadcrumb">
+        &gt; <a href="{% url 'space_rain_home' %}">ROTAS</a>
+    </div>
+    <div class="breadcrumb">
+        &gt; Floor {{ CRATE_ID }}
+    </div>
+
+      <div class="breadcrumb">
+        &gt; HARDCODED LT1 (GW20-FF)
+    </div>
+
+    <div id='wrapped_ham'>
+        <a id='hamburger_link' onclick="ttools.openNav()">
+            <img id='hamburger_img' alt="hamburger_menu_icon" src="{% static 'images/burger.png' %}" />
+            <!-- burger.png -->
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div id="drawing_coords">0,0</div>
+
+<div class="main_content" id="main_content_id">
+
+    <div class="drawing_div" id="main_drawing_div">
+        <svg class="drawing_svg" id="drawing_svg">
+        </svg>
+
+
+
+    </div>
+    <div id="legend_and_buttons">
+        <div id="legend_container"></div>
+
+        <!-- close LEGEND AND BUTTONS -->
+    </div>
+
+
+
+    <div id="mySidenav" class="sidenav">
+        <a href="javascript:void(0)" class="closebtn" onclick="ttools.closeNav()">&times;</a>
+
+        <!-- OUTERMOST WRAPPER FOR ALL BUTTONS -->
+        <div class='all_buttons'>
+
+            <!-- MAIN RAIN ACTIVATION -->
+            <div class="button_wrapper">
+                <!-- <button type="button" id="show_heatmap" style="padding-left: 1em;">Heatmap</button> -->
+                <a id="show_rain" class="button1">Restart Rain</a>
+            </div>
+
+            <br>
+
+            <!-- RAIN CONFIGURATION/HIDE SETTINGS -->
+            <div class='hidden_divs'>
+
+                <!-- FEATURE SELECT -->
+                <div class="button_wrapper" id='heatmap_activation'>
+
+                    <!-- Real Time Subscription for Rain -->
+                    <div class="button_wrapper" id='heatmap_rt_con'>
+                        <a id="rain_rt_connect" class="button1">RT Disconnect</a>
+                    </div>
+                    <div id='rain_control' class='rt_status'><span id='rain_rt_state'
+                            class='rt_state'>&nbsp&nbsp&nbsp&nbsp</span>&nbsp<span id='rain_rt'>RtM not connected</span>
+                    </div>
+
+                    <!-- I know the following should not be hardcoded, this is just for debug -->
+                    <form id="feature_form">
+                        <label class='form_label' for="features">Feature:</label>
+                        <br>
+                        <select name="features" id="features_list">
+                            <option value="co2">CO2</option>
+                            <option value="temperature" selected="selected">Temperature</option>
+                            <option value="humidity">Humidity</option>
+                            <option value="vdd">Battery</option>
+                            <option value="digital">Open/Close</option>
+                        </select>
+                        <br>
+                    </form>
+
+                </div>
+
+                <!-- CHANGE RESOLUTION -->
+                <div class="button_wrapper" id='heatmap_activation'>
+
+                    <!-- I know the following should not be hardcoded, this is just for debug -->
+                    <form id="resolution_form">
+                        <label class='form_label' for="resolution">Resolution:</label>
+                        <br>
+                        <select name="resolution" id="resolution_list">
+                            <option value="low">Low</option>
+                            <option value="medium" selected="selected">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                        <br>
+                    </form>
+
+                </div>
+
+                <br>
+
+                <!-- change sensor opacity slider -->
+                <div class="button_wrapper">
+                    <div class="slidecontainer">
+                        <label for="opacity_slider">Sensor Opacity:</label>
+                        <br>
+                        <input type="range" min="0" max="100" value="50" name='opacity_slider' class="slider"
+                            id="sensor_opacity">
+                    </div>
+                </div>
+
+                <br>
+
+                <!-- HIDE HEATMAP -->
+                <div class="button_wrapper" id='heatmap_activation'>
+                    <a id="reset" class="button1">Show Choropleth</a>
+                </div>
+                <br>
+
+            </div>
+
+            <!-- reset zoom -->
+            <div class="button_wrapper" id='reset_zoom_wrapper'>
+                <a id="reset_zoom" class="button1">Reset Zoom</a>
+            </div>
+
+            <!-- close ALL_BUTTONS -->
+        </div>
+    </div>
+
+
+
+    <script>
+
+
+    </script>
+    <!-- end MAIN CONTENT -->
+</div>
+
+<!-- </div> -->
+
+<!-- TOOLTIP - will be made visible/invisible as mouse moves over sensors -->
+<div id="tooltip" class="tooltip">
+</div>
+
+<!-- {% endblock %} -->
+<!-- <!-- content --> -->
+<!--  -->
+<!--  -->
+<!-- {% block chart_content %} -->
+<!--  -->
+
+<!-- <div class="selection_wrapper"> -->
+<!--  -->
+    <!-- <form id="selection_form"> -->
+        <!-- <div class="nav_date" id="back_1_week">&lt; Week</div> -->
+        <!-- <div class="nav_date" id="back_1_day">&lt; Day</div> -->
+        <!-- <div class="selection_input"> -->
+            <!-- <div class="input_label">Date:</div> -->
+            <!-- <div class="input_box"> -->
+                <!-- <input type="date" name="date" id="form_date" value="2020-03-15"> -->
+            <!-- </div> -->
+        <!-- </div> -->
+        <!-- <div class="selection_input"> -->
+            <!-- <div class="input_label">Feature:</div> -->
+            <!-- <div class="input_box"> -->
+                <!-- <select id="form_feature" name="feature"> -->
+                    <!-- <option>Select feature</option> -->
+                <!-- </select> -->
+            <!-- </div> -->
+        <!-- </div> -->
+        <!-- <div class="selection_input"> -->
+            <!-- <div class="input_label">Secondary Feature:</div> -->
+            <!-- <div class="input_box"> -->
+                <!-- <select id="form_feature2" name="feature"> -->
+                    <!-- <option>Select feature</option> -->
+                <!-- </select> -->
+            <!-- </div> -->
+        <!-- </div> -->
+        <!-- <div class="nav_date" id="forward_1_day">Day &gt;</div> -->
+        <!-- <div class="nav_date" id="forward_1_week">Week &gt;</div> -->
+    <!-- </form> -->
+<!--  -->
+<!-- </div> <!-- end selection_wrapper --> -->
+<!--  -->
+<!-- <div id="popup_message"></div> -->
+<!-- <div id="chart" class="chart"> -->
+    <!-- <div id="loading"> -->
+        <!-- <img src="{% static 'sensor/images/loader.gif' %}"></img> -->
+    <!-- </div> -->
+    <!-- <!-- <canvas id="chart_canvas"></canvas> --> -->
+<!-- </div><!-- end chart_wrapper --> -->
+<!-- <div id="chart_tooltip"> -->
+<!-- </div> -->
+<!-- <!-- div to hold pop-up full reading --> -->
+<!-- <div id="reading_popup"> -->
+    <!-- <div id="reading_close"> -->
+        <!-- <img src="{% static 'sensor/images/reading_close.png' %}" /> -->
+    <!-- </div> -->
+    <!-- <pre id="reading_content"> -->
+    <!-- </pre> -->
+<!-- </div> -->
+
+{% endblock %}
+<!-- end content -->
+
+
+<!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
+{% block lazy_script %}
+<script>
+
+    //instantiate template tools (js functions that handle the navigation bar, etc)
+    let ttools=new TemplateTools();
+
+    console.log('lazy_script');
+    let floor_plan = new FloorPlan();
+    floor_plan.init();
+
+    let rt_heatmap = new RotasHeatMap(floor_plan);
+    console.log('now loading heatmap')
+
+    rt_heatmap.init();
+
+    console.log('launching chart');
+    //init();
+
+</script>
+{% endblock %}
+<!-- lazy_script -->
