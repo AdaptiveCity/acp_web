@@ -14,6 +14,8 @@ class FloorPlan {
         this.svg_transform = null; // updated by set_svg_transform()
         this.base_scale = 1.0
         this.base_rect = null;
+        this.svg_xmax = 0.0;
+        this.svg_ymax = 0.0;
         this.next_color = 0;
         this.sensor_readings = {}; //sensor reading data
         this.sensors_in_crates = {};
@@ -98,11 +100,8 @@ class FloorPlan {
             var origin_x = parent.base_rect.x;
             var origin_y = parent.base_rect.y;
 
-            var svg_xmax = SVG_CONSTANTS[API_BIM_INFO[CRATE_ID]["acp_location"]['system']]['x']
-            var svg_ymax = SVG_CONSTANTS[API_BIM_INFO[CRATE_ID]["acp_location"]['system']]['y']
-
-            var multiplier_x = (parent.base_rect.width - origin_x)/svg_xmax;
-            var multiplier_y = (parent.base_rect.height - origin_y)/svg_ymax;
+            var multiplier_x = (parent.base_rect.width - origin_x)/parent.svg_xmax;
+            var multiplier_y = (parent.base_rect.height - origin_y)/parent.svg_ymax;
             
             var svg_x = (e.clientX - origin_x - parent.svg_transform.x)/(multiplier_x * (parent.svg_transform.scale/parent.base_scale));
             var svg_y = (e.clientY - origin_y - parent.svg_transform.y)/(multiplier_y * (parent.svg_transform.scale/parent.base_scale));
@@ -508,6 +507,8 @@ class FloorPlan {
         // parent.svg_transform = "translate(" + svg_x + "," + svg_y + ") " +
         //     "scale(" + svg_scale + ")";
         this.base_scale = svg_scale;
+        this.svg_xmax = max_x;
+        this.svg_ymax = max_y;
         
         return {
             'x': svg_x,

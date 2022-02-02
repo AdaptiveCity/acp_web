@@ -99,7 +99,6 @@ class FloorView(LoginRequiredMixin, TemplateView):
             context['API_SPACE_INFO'] = json.dumps(space_info)
             context['FLOOR_NUMBER'] = floor_number
             context['COORDINATE_SYSTEM'] = system
-            context['SVG_CONSTANTS'] = json.dumps(settings.SVG_CONSTANTS)
 
             return context
 
@@ -132,7 +131,6 @@ class FloorspaceView(LoginRequiredMixin, TemplateView):
             context['API_BIM_INFO'] = json.dumps(bim_info)
             context['API_SENSORS_INFO'] = json.dumps(sensors_info)
             context['API_SPACE_INFO'] = json.dumps(space_info)
-            context['SVG_CONSTANTS'] = json.dumps(settings.SVG_CONSTANTS)
 
             return context
 
