@@ -1,8 +1,8 @@
 "use strict"
 
-const MEDIUM_REZ = 5;
-const HIGH_REZ = 3;
-const LOW_REZ = 8;
+const MEDIUM_REZ = 0.3;
+const HIGH_REZ = 0.2;
+const LOW_REZ = 0.5;
 
 class HeatMap {
 
@@ -418,7 +418,7 @@ class HeatMap {
 
             //copy current polygon infornation and save it be reused for clip path polygons
             let polygon_points = crate.attributes.points.value.split(' '); //this creates a list of coordinates
-            let polygon_transform = crate.attributes.transform.value;
+            let polygon_transform = parent.floor_plan.svg_transform.transform;
             //the last element in the the list of polygon coordinates is an empty string, so we remove it
             polygon_points.pop();
 
@@ -426,7 +426,7 @@ class HeatMap {
             let crate_polygon =
                 clip_def.append("polygon")
                 .attr("points", polygon_points)
-                .attr("transform", polygon_transform)
+                // .attr("transform", polygon_transform)
                 .attr('pointer-events', 'none')
                 .attr('stroke-width', 0.01)
                 .attr("stroke", "black")
@@ -457,20 +457,22 @@ class HeatMap {
         let position = {
             'x': d3.select('#' + acp_id + "_bim").attr('cx'),
             'y': d3.select('#' + acp_id + "_bim").attr('cy'),
-            'transf': d3.select('#' + acp_id + "_bim").attr("transform")
+            'transf': parent.floor_plan.svg_transform.transform
         }
 
+        let splash_scale = parent.floor_plan.svg_transform.scale;
+        // splash_scale = 1.0
         //draw three expanding circles as a splash
         for (let splash_index = 1; splash_index < 4; ++splash_index) {
 
             //stroke should be a function of time, so over the course of the splash animation
             //we change it from a thicker stroke to a smaller one, showing how the splash slowly disintegrates
-
+            
             //calculate the starting stroke for the splash's circle
-            let stroke_start = 4.5 / (parent.svg_scale * splash_index); //strokes take into account the svg scale
+            let stroke_start = 4.5 / (splash_scale * splash_index); //strokes take into account the svg scale
 
             //calculate the finishing stroke for the splash's circle
-            let stroke_finish = 1.5 / (parent.svg_scale * splash_index); //strokes take into account the svg scale
+            let stroke_finish = 1.5 / (splash_scale * splash_index); //strokes take into account the svg scale
 
             //create two separate delays for pairs of circles that create ripples
             let ms_delay = splash_index * 400;
@@ -491,7 +493,7 @@ class HeatMap {
                     .style("stroke-width", stroke_start)
                     .style("fill", 'none')
                     .style('stroke', color_sample) //defines the colors of the circle for splash animation
-                    .attr('transform', position.transf)
+                    // .attr('transform', position.transf)
                     .transition() //initiate the transition
                     .delay(delay_sample)
                     .duration(parent.ripple_duration)
@@ -887,6 +889,7 @@ class HeatMap {
         let scale = floor.getCTM().a; //.transform.baseVal.consolidate().matrix.a;
         let x_offset = floor.getCTM().e; //.transform.baseVal.consolidate().matrix.e;
         let y_offset = floor.getCTM().f; //.transform.baseVal.consolidate().matrix.f;
+        scale = 1.0;
 
         let consolidated_svg = {
             scale: scale,
@@ -926,7 +929,7 @@ class HeatMap {
                 let pol_top = bbox.y * scale;
                 let pol_left = bbox.x * scale;
 
-                let cell_spacing = -0.1; //spacing inbetween cells
+                let cell_spacing = -0.04; //spacing inbetween cells
 
                 //create a parent div for all crate lvl heatmaps
                 let crate_div = main_svg.append('g').attr('id', element.id + '_heatmap').attr('class', 'heatmap_crates')
@@ -1056,7 +1059,7 @@ class HeatMap {
 
         //declare circle properties - opacity and radius
         // radius of sensor icon in METERS (i.e. XYZF before transform)
-        let rad = 4; //hardcoded value for heatmap circles
+        let rad = 0.28; //hardcoded value for heatmap circles
         //I found that scaling heatmap circle's radius doesn't work as well as with floor.js
 
         for (let sensor in results) {
@@ -1080,7 +1083,6 @@ class HeatMap {
                     .attr('data-acp_id', sensor_id)
                     .style("opacity", parent.floor_plan.sensor_opacity)
                     .style("fill", "pink")
-                    .style('stroke', 'black')
                     .on('mouseover', function (d) {
                         console.log(sensor_id, results[sensor]);
                     })
