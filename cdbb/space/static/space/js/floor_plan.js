@@ -96,17 +96,8 @@ class FloorPlan {
         this.setup_buttons(parent);
 
         // debug for page x,y nit
-        this.page_floor_svg.addEventListener('mousemove', function (e) {
-            var origin_x = parent.base_rect.x;
-            var origin_y = parent.base_rect.y;
-
-            var multiplier_x = (parent.base_rect.width - origin_x)/parent.svg_xrange;
-            var multiplier_y = (parent.base_rect.height - origin_y)/parent.svg_yrange;
-            
-            var svg_x = (e.clientX - origin_x - parent.svg_transform.x)/(multiplier_x * (parent.svg_transform.scale/parent.base_scale));
-            var svg_y = (e.clientY - origin_y - parent.svg_transform.y)/(multiplier_y * (parent.svg_transform.scale/parent.base_scale));
-
-            parent.page_coords.innerHTML = '( '+ e.clientX + ',' + e.clientY +' ) --> ( ' + Math.round((svg_x + Number.EPSILON) * 100) / 100 + "," + Math.round((svg_y + Number.EPSILON) * 100) / 100 + ' )';
+        this.page_floor_svg.addEventListener('mousemove', (e) => {
+            parent.pixel_to_svg_coord(parent, e);
         });
 
         /*
@@ -118,6 +109,19 @@ class FloorPlan {
         */
     }
 
+
+    pixel_to_svg_coord(parent, e) {
+        var origin_x = parent.base_rect.x;
+        var origin_y = parent.base_rect.y;
+
+        var multiplier_x = (parent.base_rect.width - origin_x) / parent.svg_xrange;
+        var multiplier_y = (parent.base_rect.height - origin_y) / parent.svg_yrange;
+
+        var svg_x = (e.clientX - origin_x - parent.svg_transform.x) / (multiplier_x * (parent.svg_transform.scale / parent.base_scale));
+        var svg_y = (e.clientY - origin_y - parent.svg_transform.y) / (multiplier_y * (parent.svg_transform.scale / parent.base_scale));
+
+        parent.page_coords.innerHTML = '( ' + e.clientX + ',' + e.clientY + ' ) --> ( ' + svg_x.toFixed(2) + "," + svg_y.toFixed(2) + ' )';
+    }
 
     //changes the url based on what we'd like to
     //show on the page following the initial load
