@@ -1,8 +1,8 @@
 "use strict"
 
-const MEDIUM_REZ = 0.3;
+const MEDIUM_REZ = 0.4;
 const HIGH_REZ = 0.2;
-const LOW_REZ = 0.5;
+const LOW_REZ = 0.6;
 
 class HeatMap {
 
@@ -929,7 +929,7 @@ class HeatMap {
                 let pol_top = bbox.y * scale;
                 let pol_left = bbox.x * scale;
 
-                let cell_spacing = -0.04; //spacing inbetween cells
+                let cell_spacing = -0.007; //spacing inbetween cells
 
                 //create a parent div for all crate lvl heatmaps
                 let crate_div = main_svg.append('g').attr('id', element.id + '_heatmap').attr('class', 'heatmap_crates')
