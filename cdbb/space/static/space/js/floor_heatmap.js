@@ -886,10 +886,14 @@ class HeatMap {
         //and draws the heatmap overlayed over the floorplan
 
         //https://stackoverflow.com/questions/19154631/how-to-get-coordinates-of-an-svg-element
-        let scale = floor.getCTM().a; //.transform.baseVal.consolidate().matrix.a;
-        let x_offset = floor.getCTM().e; //.transform.baseVal.consolidate().matrix.e;
-        let y_offset = floor.getCTM().f; //.transform.baseVal.consolidate().matrix.f;
-        scale = 1.0;
+        // Required for older version with multiple transform entries
+        // let scale = floor.getCTM().a; //.transform.baseVal.consolidate().matrix.a;
+        // let x_offset = floor.getCTM().e; //.transform.baseVal.consolidate().matrix.e;
+        // let y_offset = floor.getCTM().f; //.transform.baseVal.consolidate().matrix.f;
+
+        let scale = 1.0;
+        let x_offset = 0.0;
+        let y_offset = 0.0;
 
         let consolidated_svg = {
             scale: scale,
@@ -929,7 +933,7 @@ class HeatMap {
                 let pol_top = bbox.y * scale;
                 let pol_left = bbox.x * scale;
 
-                let cell_spacing = -0.007; //spacing inbetween cells
+                let cell_spacing = -0.005; //spacing inbetween cells
 
                 //create a parent div for all crate lvl heatmaps
                 let crate_div = main_svg.append('g').attr('id', element.id + '_heatmap').attr('class', 'heatmap_crates')
