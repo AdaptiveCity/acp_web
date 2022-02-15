@@ -339,7 +339,7 @@ class FloorSplash {
 
             //copy current polygon infornation and save it be reused for clip path polygons
             let polygon_points = crate.attributes.points.value.split(' '); //this creates a list of coordinates
-            let polygon_transform = crate.attributes.transform.value;
+            // let polygon_transform = crate.attributes.transform.value;
             //the last element in the the list of polygon coordinates is an empty string, so we remove it
             polygon_points.pop();
 
@@ -347,7 +347,7 @@ class FloorSplash {
             let crate_polygon =
                 clip_def.append("polygon")
                 .attr("points", polygon_points)
-                .attr("transform", polygon_transform)
+                // .attr("transform", polygon_transform)
                 .attr('pointer-events', 'none')
                 .attr('stroke-width', 0.01)
                 .attr("stroke", "black")
@@ -388,6 +388,7 @@ class FloorSplash {
             'transf': d3.select('#' + acp_id + "_bim").attr("transform")
         }
 
+        let splash_scale = parent.master.svg_transform.scale;
         //draw three expanding circles as a splash
         for (let splash_index = 1; splash_index < 4; ++splash_index) {
 
@@ -395,10 +396,10 @@ class FloorSplash {
             //we change it from a thicker stroke to a smaller one, showing how the splash slowly disintegrates
 
             //calculate the starting stroke for the splash's circle
-            let stroke_start = 4.5 / (parent.svg_scale * splash_index); //strokes take into account the svg scale
+            let stroke_start = 4.5 / (splash_scale * splash_index); //strokes take into account the svg scale
 
             //calculate the finishing stroke for the splash's circle
-            let stroke_finish = 1.5 / (parent.svg_scale * splash_index); //strokes take into account the svg scale
+            let stroke_finish = 1.5 / (splash_scale * splash_index); //strokes take into account the svg scale
 
             //create a delay for circles that create ripples
             let ms_delay = splash_index * 400;
@@ -418,7 +419,7 @@ class FloorSplash {
                         .style("stroke-width", stroke_start)
                         .style("fill", 'none')
                         .style('stroke', color_sample) //defines the colors of the circle for splash animation
-                        .attr('transform', position.transf)
+                        // .attr('transform', position.transf)
                         .transition() //initiate the transition
                         .delay(delay_sample)
                         .duration(parent.ripple_duration)
