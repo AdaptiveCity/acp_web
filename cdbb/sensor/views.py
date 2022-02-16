@@ -15,6 +15,19 @@ class SensorHomeView(TemplateView):
 class SensorResearchView(TemplateView):
     template_name = 'sensor/sensor_research.html'
 
+
+class CrateChartView(LoginRequiredMixin, TemplateView):
+    template_name = 'sensor/crate_chart.html'
+      # We override get_context_data to return the vars to embed in the template
+    # Positional args are in self.args.
+    def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            context['SENSOR_REALTIME'] = "not implemented"
+            crate_id = self.kwargs['crate_id']
+            context['CRATE_ID'] = crate_id
+            return context
+
+
 class SensorChartView(LoginRequiredMixin, TemplateView):
     template_name = 'sensor/sensor_chart.html'
 

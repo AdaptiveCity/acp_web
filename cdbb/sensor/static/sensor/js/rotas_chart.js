@@ -27,6 +27,9 @@ var pantone583c = 'rgb(183, 191, 16)';
 
 var viz_tools = new VizTools2();
 
+var YYYY='2022';
+var MM='01';
+var DD='20';
 // Called on page load
 function init() {
 
@@ -37,10 +40,6 @@ function init() {
         plot_date = YYYY + '-' + MM + '-' + DD;
     }
 
-
-     plot_date = new Date().toISOString().split('T')[0];
-
-     
     // Animated "loading" gif, shows until readings are loaded from api
     loading_el = document.getElementById('loading');
     zoom_hint_el = document.getElementById('zoom_hint');
@@ -51,9 +50,7 @@ function init() {
 
     chart_tooltip_el = d3.select('#chart_tooltip'); //document.getElementById('chart_tooltip');
 
-    init_date_picker();
-
-    console.log('datepicker')
+   // init_date_picker();
 
     set_zoom_hint(true); // Put 'drag to zoom' text in the zoom hint div
 
@@ -62,9 +59,22 @@ function init() {
     // set up layout / axes of scatterplot
     init_chart();
 
-    handle_readings(SENSOR_READINGS);
-
+    handle_readings();
+//load_readings();
 }
+
+function load_readings(){
+
+	let url="http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_crate_chart/wgb/"+String(CRATE_ID)+"/";
+	console.log('querying',url);
+	
+	 d3.json(url ,{crossOrigin: "anonymous"}).then(function(received_data) {
+			//DATA=d;
+            console.log(received_data);
+            handle_crate_readings(received_data['readings'])
+        });
+}
+
 
 function init_date_picker() {
 
@@ -77,12 +87,21 @@ function init_date_picker() {
 }
 
 // Readings API returned these results { readings: ..., sensor_metadata: ...}
-function handle_readings(results) {
-    console.log('handle_readings()', results);
+function handle_readings() {
+  //  console.log('handle_readings()', results);
 
     let readings = [];
     let sensor_metadata = {}
     let feature = null;
+
+
+    	let url="http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_crate_chart/wgb/"+String(CRATE_ID)+"/";
+	console.log('querying',url);
+	
+	 d3.json(url ,{crossOrigin: "anonymous"}).then(function(results) {
+			//DATA=d;
+           // console.log(received_data);
+           // handle_crate_readings(received_data['readings'])
 
     if ('acp_error_id' in results) {
         let error_id = results['acp_error_id'];
@@ -101,7 +120,7 @@ function handle_readings(results) {
 
 
     //make the secondary feature none
-    document.getElementById('form_feature2').value = 'none';
+    //document.getElementById('form_feature2').value = 'none';
 
     //exrtact all features with ranges --needed for mouseover viz
     let all_features = sensor_metadata['acp_type_info']['features'];
@@ -117,6 +136,15 @@ function handle_readings(results) {
     } else {
         report_error('FEATURE', 'Metadata not available for this sensor.');
     }
+
+
+
+
+            
+        });
+
+        
+
 }
 
 // Populate the 'select' area at the top of the page using info from
@@ -124,6 +152,7 @@ function handle_readings(results) {
 function handle_sensor_metadata(sensor_metadata) {
     try {
         let features = sensor_metadata["acp_type_info"]["features"];
+        console.log('features',String(features))
         return features;
     } catch (err) {
         console.log('handle_sensor_metadata failed with ', sensor_metadata);

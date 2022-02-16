@@ -6,8 +6,6 @@
 <!-- Our style sheets -->
 <link rel="stylesheet" type="text/css" href="{% static 'space/css/floor.css' %}" />
 <link rel="stylesheet" type="text/css" href="{% static 'space/css/style.css' %}" />
-<link rel="stylesheet" type="text/css" href="{% static 'space/css/slider.css' %}" />
-
 
 <!-- Local copy of d3 -->
 <script type="text/javascript" src="{% static 'js/d3.v6_5.min.js' %}"></script>
@@ -27,8 +25,10 @@
 
 <!-- RTMonitor tests -->
 <script type='text/javascript' src="{% static 'space/js/RTconnect.js' %}"></script>
+
 <script src="{% static 'js/sockjs.min.js' %}"></script>
 
+<!-- <script type='text/javascript' src="{% static 'sensor/js/rotas_chart.js' %}"></script> -->
 
 <!-- Page local script -->
 <script type="text/javascript">
@@ -44,6 +44,15 @@
     var FLOORSPACE_LINK = '{% url "space_floorspace" "crate_id" %}';
     var SENSOR_LINK = "{% url 'dm_sensor' 'acp_id' %}"; // we will replace id as required
     var RTMONITOR_URI = '{{ RTMONITOR_URI }}';
+
+    //var ACP_ID = '{{ ACP_ID }}';
+    //var SENSOR_REALTIME = '{{ SENSOR_REALTIME }}'; // URL for rtmonitor websocket
+    //var YYYY = '{{ YYYY }}';
+    //var MM = '{{ MM }}';
+    //var DD = '{{ DD }}';
+    //var FEATURE = '{{ FEATURE }}'; // e.g. 'temperature'
+   // var SENSOR_READINGS = JSON.parse('{{ SENSOR_READINGS | escapejs }}'); 
+
 </script>
 {% endblock %}
 
@@ -200,25 +209,75 @@ ROTAS app
 
 
     </script>
-
-   
     <!-- end MAIN CONTENT -->
 </div>
- <div class="slidecontainer">
-      <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
-       <h2>Value: <span id="demo"></span></h2>
-    </div>
 
-<div>
-    <button class="button button1" id='button_backward'>-5min</button>
-    <button class="button button2" id='button_forward'>+5min</button>
-</div> 
 
 <!-- TOOLTIP - will be made visible/invisible as mouse moves over sensors -->
 <div id="tooltip" class="tooltip">
 </div>
+
+<!-- {% endblock %} -->
+<!-- <!-- content --> -->
+<!--  -->
+<!--  -->
+<!-- {% block chart_content %} -->
+<!--  -->
+
+<!-- <div class="selection_wrapper"> -->
+<!--  -->
+    <!-- <form id="selection_form"> -->
+        <!-- <div class="nav_date" id="back_1_week">&lt; Week</div> -->
+        <!-- <div class="nav_date" id="back_1_day">&lt; Day</div> -->
+        <!-- <div class="selection_input"> -->
+            <!-- <div class="input_label">Date:</div> -->
+            <!-- <div class="input_box"> -->
+                <!-- <input type="date" name="date" id="form_date" value="2020-03-15"> -->
+            <!-- </div> -->
+        <!-- </div> -->
+        <!-- <div class="selection_input"> -->
+            <!-- <div class="input_label">Feature:</div> -->
+            <!-- <div class="input_box"> -->
+                <!-- <select id="form_feature" name="feature"> -->
+                    <!-- <option>Select feature</option> -->
+                <!-- </select> -->
+            <!-- </div> -->
+        <!-- </div> -->
+        <!-- <div class="selection_input"> -->
+            <!-- <div class="input_label">Secondary Feature:</div> -->
+            <!-- <div class="input_box"> -->
+                <!-- <select id="form_feature2" name="feature"> -->
+                    <!-- <option>Select feature</option> -->
+                <!-- </select> -->
+            <!-- </div> -->
+        <!-- </div> -->
+        <!-- <div class="nav_date" id="forward_1_day">Day &gt;</div> -->
+        <!-- <div class="nav_date" id="forward_1_week">Week &gt;</div> -->
+    <!-- </form> -->
+<!--  -->
+<!-- </div> <!-- end selection_wrapper --> -->
+<!--  -->
+<!-- <div id="popup_message"></div> -->
+<!-- <div id="chart" class="chart"> -->
+    <!-- <div id="loading"> -->
+        <!-- <img src="{% static 'sensor/images/loader.gif' %}"></img> -->
+    <!-- </div> -->
+    <!-- <!-- <canvas id="chart_canvas"></canvas> --> -->
+<!-- </div><!-- end chart_wrapper --> -->
+<!-- <div id="chart_tooltip"> -->
+<!-- </div> -->
+<!-- <!-- div to hold pop-up full reading --> -->
+<!-- <div id="reading_popup"> -->
+    <!-- <div id="reading_close"> -->
+        <!-- <img src="{% static 'sensor/images/reading_close.png' %}" /> -->
+    <!-- </div> -->
+    <!-- <pre id="reading_content"> -->
+    <!-- </pre> -->
+<!-- </div> -->
+
 {% endblock %}
-<!-- content -->
+<!-- end content -->
+
 
 <!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
 {% block lazy_script %}
@@ -235,6 +294,9 @@ ROTAS app
     console.log('now loading heatmap')
 
     rt_heatmap.init();
+
+    console.log('launching chart');
+    //init();
 
 </script>
 {% endblock %}

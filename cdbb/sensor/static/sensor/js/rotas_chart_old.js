@@ -27,27 +27,28 @@ var pantone583c = 'rgb(183, 191, 16)';
 
 var viz_tools = new VizTools2();
 
+
+//var features=features 
+
+
 // Called on page load
 function init() {
 
-    // Set plot_date to today, or date given in URL (& parsed into template)
-    if (YYYY == '') {
-        plot_date = new Date().toISOString().split('T')[0];
-    } else {
-        plot_date = YYYY + '-' + MM + '-' + DD;
-    }
-
+   
+     
     // Animated "loading" gif, shows until readings are loaded from api
     loading_el = document.getElementById('loading');
     zoom_hint_el = document.getElementById('zoom_hint');
 
-    feature_select_el = document.getElementById("form_feature");
-    feature_select_el2 = document.getElementById("form_feature2");
+    //feature_select_el = document.getElementById("form_feature");
+    //feature_select_el2 = document.getElementById("form_feature2");
+
     console.log(feature_select_el, feature_select_el2)
 
     chart_tooltip_el = d3.select('#chart_tooltip'); //document.getElementById('chart_tooltip');
 
-    init_date_picker();
+
+    console.log('datepicker')
 
     set_zoom_hint(true); // Put 'drag to zoom' text in the zoom hint div
 
@@ -56,19 +57,126 @@ function init() {
     // set up layout / axes of scatterplot
     init_chart();
 
-    handle_readings(SENSOR_READINGS);
+    //handle_readings(SENSOR_READINGS);
+
+}
+var DATA;
+function load_readings(){
+
+	let url="http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_crate_chart/wgb/"+String(CRATE_ID)+"/";
+	console.log('querying',url);
+	
+	 d3.json(url ,{crossOrigin: "anonymous"}).then(function(received_data) {
+			//DATA=d;
+            console.log(received_data);
+            handle_crate_readings(received_data['readings'])
+        });
+}
+
+var DATA;
+function handle_crate_readings(readings){
+    loading_el.className = 'loading_hide'; // set style "display: none"
+ //exrtact all features with ranges --needed for mouseover viz
+    //let all_features = sensor_metadata['acp_type_info']['features'];
+
+    //append the rest of the features with their ranges to the object
+    //feature['all_features'] = all_features;
+//	feature='co2';
+DATA=readings;
+
+let data_points=Object.keys(readings);
+
+var final_data=[];
+
+	for(let u=0; u<data_points.length;u++){
+
+	final_data.push({'time':data_points[u], 'value':readings[data_points[u]].payload.co2});
+	
+}
+	var total_len=Object.keys(readings).length;
+
+    draw_chart_new(final_data);
+    console.log('drawn')
+
+
 
 }
 
-function init_date_picker() {
-
-    // The cool date picker
-    var form_date = document.getElementById("form_date");
-
-    form_date.setAttribute('value', plot_date);
+function draw_chart_new(readings){
+  let obj=readings['readings'];
+	var total_len=readings.length;
 
 
-}
+	      // get the height and width of the "chart" div, and set d3 svg element to that
+    let svg_width = 1600;//document.getElementById("chart_sub_background").clientWidth;
+    let svg_height =600;// document.getElementById("chart_sub_background").clientHeight;
+
+    // calculate the dimensions of the actual chart within the SVG area (i.e. allowing margins for axis info)
+    chart_width = svg_width - 210;
+    chart_height = svg_height - 110;
+    chart_offsetx = 60;
+    chart_offsety = 20;
+
+
+		// set the dimensions and margins of the graph
+	var margin = {top: 10, right: 30, bottom: 30, left: 60},
+	    width = chart_width - margin.left - margin.right,
+	    height = chart_height - margin.top - margin.bottom;
+
+	    
+	// append the svg object to the body of the page
+	var svg = d3.select(".plot_svg")
+	  .append("svg")
+	    .attr("width", width + margin.left + margin.right)
+	    .attr("height", height + margin.top + margin.bottom)
+	  .append("g")
+	    .attr("transform",
+	          "translate(" + margin.left + "," + margin.top + ")");
+
+
+
+
+	          
+	
+	//Read the data
+	
+	  // Add X axis
+	  var x = d3.scaleLinear()
+	    .domain([0, total_len])
+	    .range([ 0, width ]);
+	  svg.append("g")
+	    .attr("transform", "translate(0," + height + ")")
+	    .call(d3.axisBottom(x));
+	
+	  // Add Y axis
+	  var y = d3.scaleLinear()
+	    .domain([300, 1400])
+	    .range([ height, 0]);
+	  svg.append("g")
+	    .call(d3.axisLeft(y));
+	
+	  // Add dots
+	  svg.append('g')
+	    .selectAll("dot")
+	    .data(readings)
+	    .enter()
+	    .append("circle")
+	      .attr("cx", function (d,i) {
+			console.log('Hi')
+	      console.log(d,i);
+
+	       return x(i);
+	       //x(d.GrLivArea);
+	        } )
+	      .attr("cy", function (d,i) {
+	      console.log(d.value);
+
+	       	  return y(d.value); } )
+	      .attr("r", 1.5)
+	      .style("fill", "#69b3a2")
+
+	}
+
 
 // Readings API returned these results { readings: ..., sensor_metadata: ...}
 function handle_readings(results) {
@@ -90,7 +198,6 @@ function handle_readings(results) {
         sensor_metadata = results["sensor_metadata"];
         // Setup onchange callbacks to update chart on feature change
         feature = init_feature_select(readings, sensor_metadata);
-        console.log('FEATURE', feature);
     }
     loading_el.className = 'loading_hide'; // set style "display: none"
 
@@ -119,7 +226,6 @@ function handle_readings(results) {
 function handle_sensor_metadata(sensor_metadata) {
     try {
         let features = sensor_metadata["acp_type_info"]["features"];
-        console.log('features',String(features))
         return features;
     } catch (err) {
         console.log('handle_sensor_metadata failed with ', sensor_metadata);
@@ -127,160 +233,6 @@ function handle_sensor_metadata(sensor_metadata) {
     return [];
 }
 
-function init_feature_select(readings, sensor_metadata) {
-    console.log("init_feature_select()");
-    // ***************************************
-    // Update selection dropdown on page
-    // ***************************************
-    // remove any initial entries
-    while (feature_select_el.firstChild) {
-        feature_select_el.removeChild(feature_select_el.firstChild)
-    }
-    while (feature_select_el2.firstChild) {
-        feature_select_el2.removeChild(feature_select_el2.firstChild)
-    }
-    let selected_feature = null; // Will return this value
-
-    let feature_count = 0;
-    let features = sensor_metadata["acp_type_info"]["features"]
-    let feature_id = null;
-
-    console.log('features', features)
-
-    // add a select option for each feature in the sensor metadata
-    for (const feature in features) {
-        console.log("feature: " + feature);
-        feature_count += 1;
-        const option = document.createElement('option');
-        const text = document.createTextNode(features[feature]["short_name"]);
-        // set option text
-        option.appendChild(text);
-        // and option value
-        option.setAttribute('value', feature);
-        // add the option to the select box
-        let copy = option.cloneNode(true);
-
-        feature_select_el.appendChild(option);
-        console.log('append A', feature_select_el, option)
-
-
-        feature_select_el2.appendChild(copy);
-        console.log('append B', feature_select_el2, copy)
-
-    }
-    let option_none = document.createElement('option');
-    let text_none = document.createTextNode('none');
-    // set option text
-    option_none.appendChild(text_none);
-    // and option value
-    option_none.setAttribute('value', 'none');
-    // add the option to the select box
-    //let copy = option.cloneNode(true);
-
-    feature_select_el2.appendChild(option_none);
-
-
-    if (feature_count == 0) {
-        console.log("No features listed in sensor_metadata");
-        return null;
-    } else if (FEATURE == '') {
-        console.log("No feature given in page request");
-        if ("feature_default" in sensor_metadata["acp_type_info"]) {
-            feature_id = sensor_metadata["acp_type_info"]["feature_default"];
-            console.log("Using 'feature_default'", feature_id);
-        } else {
-            for (const feature in features) {
-                console.log("Defaulting to random feature " + feature);
-                feature_id = feature;
-                break;
-            }
-        }
-        selected_feature = features[feature_id];
-        selected_feature["feature_id"] = feature_id;
-    } else {
-        selected_feature = features[FEATURE];
-        selected_feature['feature_id'] = FEATURE;
-    }
-
-    feature_select_el.value = selected_feature['feature_id'];
-    feature_select_el2.value = selected_feature['feature_id'];
-
-    feature_select_el.onchange = function (e) {
-        onchange_feature_select(e, readings, features);
-    };
-
-    feature_select_el2.onchange = function (e) {
-        onchange_secondary_select(e, readings, features)
-    };
-
-    return selected_feature;
-}
-
-function onchange_secondary_select(e, readings, features) {
-    console.log("onchange_feature_select", window.location.href);
-    //let features = sensor_metadata["acp_type_info"]["features"];
-    let feature_id1 = feature_select_el.value;
-    features[feature_id1]['all_features'] = features;
-    let feature_id2 = feature_select_el2.value;
-
-    // set_date_onclicks(feature_id);
-    // Change the URL in the address bar
-    // update_url(feature_id, plot_date);
-    // draw_charts(readings, features[feature_id1],features[feature_id2]);
-    if (feature_id2 == 'none') {
-        chart_svg.select("#graph_elements").remove();
-
-        draw_chart(readings, features[feature_id1]);
-
-    } else {
-
-        console.log('featuers');
-        //exrtact all features with ranges --needed for mouseover viz
-        features[feature_id2]['all_features'] = features;
-
-        console.log(features, features[feature_id1]['all_features'], features[feature_id2]['all_features'])
-
-        draw_chart(readings, features[feature_id1], features[feature_id2]);
-
-    }
-    // draw_chart(readings, features[feature_id1], features[feature_id2]);
-}
-
-function onchange_feature_select(e, readings, features) {
-    console.log("onchange_feature_select", window.location.href);
-    //let features = sensor_metadata["acp_type_info"]["features"];
-    let feature_id = feature_select_el.value;
-
-    //exrtact all features with ranges --needed for mouseover viz
-    features[feature_id]['all_features'] = features;
-
-    set_date_onclicks(feature_id);
-    // Change the URL in the address bar
-    update_url(feature_id, plot_date);
-    draw_chart(readings, features[feature_id]);
-}
-
-function set_date_onclicks(feature_id) {
-    //set up onclick calls for datepicker
-    document.getElementById('form_date').addEventListener('change', (event) => {
-        let updated_date = event.target.value;
-        date_picker_change(updated_date,feature_id)
-    });
-
-    // set up onclick calls for day/week forwards/back buttons
-    document.getElementById("back_1_week").onclick = function () {
-        date_shift(-7, feature_id)
-    };
-    document.getElementById("back_1_day").onclick = function () {
-        date_shift(-1, feature_id)
-    };
-    document.getElementById("forward_1_week").onclick = function () {
-        date_shift(7, feature_id)
-    };
-    document.getElementById("forward_1_day").onclick = function () {
-        date_shift(1, feature_id)
-    };
-}
 
 function set_zoom_hint(zoom) {
     if (zoom) {
@@ -288,62 +240,6 @@ function set_zoom_hint(zoom) {
     } else {
         zoom_hint_el.innerHTML = '(doubleclick to zoom back out)';
     }
-}
-
-// Subscribe to RTMonitor to receive incremental data points and update chart
-function plot_realtime() {
-    var client_data = {};
-    var VERSION = 1;
-    client_data.rt_client_id = 'unknown';
-    client_data.rt_token = 'unknown';
-    client_data.rt_client_name = 'rtmonitor_api.js V' + VERSION;
-
-    var URL = SENSOR_REALTIME;
-
-    var sock = new SockJS(URL);
-
-    sock.onopen = function () {
-        console.log('open');
-        var msg_obj = {
-            msg_type: 'rt_connect',
-            client_data: self.client_data
-        };
-
-        sock.send(JSON.stringify(msg_obj));
-    };
-
-    sock.onmessage = function (e) {
-        console.log('message', e.data);
-        var msg = JSON.parse(e.data);
-        if (msg.msg_type != null && msg.msg_type == "rt_nok") {
-            console.log('Error', e.data);
-        }
-        if (msg.msg_type != null && msg.msg_type == "rt_connect_ok") {
-            console.log("Connected")
-            var msg_obj = {
-                msg_type: "rt_subscribe",
-                request_id: "A",
-                filters: [{
-                    test: "=",
-                    key: "acp_id",
-                    value: "csn-node-test"
-                }]
-            }
-            sock.send(JSON.stringify(msg_obj))
-        }
-        if (msg.msg_type != null && msg.msg_type == "rt_data") {
-            console.log('Other', e.data)
-            //var sData = getAptData();
-            sData = msg.request_data[0].weight;
-            console.log("sData:", sData);
-            tempData.datasets[0].data.push(sData);
-            tempData.datasets[0].data.shift();
-            var now = new Date();
-            tempData.labels.push(now.getHours());
-            //DEBUG this var not used in this version of chart page
-            //myNewChart.update();
-        }
-    };
 }
 
 // ******************************************

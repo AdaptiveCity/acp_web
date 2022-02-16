@@ -99,14 +99,14 @@ class RotasHeatMap {
 
         //declare the main colorscheme for the heatmap
         //https://observablehq.com/@d3/color-schemes ; set by 'd3.interpolate'+color-scheme
-        this.color_scheme = d3.scaleSequential(d3.interpolatePlasma) //interpolateViridis//interpolatePlasma//interpolateInferno
+        this.color_scheme = d3.scaleSequential(d3.interpolateTurbo); //interpolateViridis//interpolatePlasma//interpolateInferno
 
         //make a global c_conf reference from the parent class;
         //this creates a colorbar svg on the right side of the screen
         this.c_conf = this.jb_tools.canvas_conf(90, 240, 15, 8, 15, 32);
 
         //heatmap opacity
-        this.default_opacity = 0.75;
+        this.default_opacity = 0.85;
         this.sensor_opacity = this.floor_plan.sensor_opacity;
         //-------MISC STYLING END------//
 
@@ -172,6 +172,9 @@ class RotasHeatMap {
             parent.update_url('resolution', parent.resolution)
             parent.update_resolution(parent, parent.resolution);
         });
+
+
+
     }
 
     //UPDATES THE URL WITH THE SELECTED FEATURE/HEATMAP RESOLUTION
@@ -597,7 +600,7 @@ class RotasHeatMap {
             let new_acp_ts = msg.acp_ts;
             let new_payload = msg.payload_cooked;
 
-            console.log(acp_id, new Date(parseInt(new_acp_ts)*1000).toLocaleTimeString("en-GB"), new_acp_ts);
+         //   console.log(acp_id, new Date(parseInt(new_acp_ts)*1000).toLocaleTimeString("en-GB"), new_acp_ts);
 
             //variable that controls that any new value in packet
             //is different from old
@@ -811,6 +814,8 @@ class RotasHeatMap {
         let C = 0;
         let D = 0;
 
+		let rect_size=0*parent.rect_size;
+		
         //magic happens here;
         //We iterate through all the sensors in the crate and try to calculate how to weigh
         //their reading values in a spatial context.
@@ -827,11 +832,20 @@ class RotasHeatMap {
                 //following from this, we can't calculate that cell_value = 0.95*valueA(from sensorA)+0.05*valueB, because the the coefficient for
                 //sensorB readings has to be higher because it is closer! For this reason, we have to run  a second loop to calculate the reverse.
                 sensor_data_points.forEach(sensor_point_alt => {
-                    B += combined_dist / sensor_point_alt.dist;
+
+                let sensor_dist_alt=sensor_point_alt.dist;
+
+                sensor_dist_alt=sensor_dist_alt<rect_size?rect_size:sensor_dist_alt;
+               
+                    B += combined_dist /sensor_dist_alt;
                 });
 
                 //calculate the inverse coefficient from the distance
-                let A = combined_dist / sensor_point.dist;
+                let sensor_distance=sensor_point.dist;
+                sensor_distance=sensor_distance<rect_size?rect_size:sensor_distance;
+                
+                let A = combined_dist / sensor_distance;
+                // console.log('A',A,sensor_distance)
 
                 //multiply the coefficient with the sensor reading value, multiplying the sensor's reading by its relative distance coefficient
                 C = A * (1 / B) * sensor_point.value;
@@ -1042,6 +1056,39 @@ class RotasHeatMap {
         parent.floor_plan.get_choropleth(parent.floor_plan);
     }
 
+
+
+	rotas_redraw(parent){
+   parent.get_min_max(parent,  parent.feature);
+        //reset the colorbar
+        parent.set_colorbar(parent);
+	
+		d3.selectAll('.'+SELECTED_CRATE+'_rect').nodes().forEach(rect => {
+
+let loc_list=JSON.parse("["+rect.dataset.loc+"]");                               
+
+   let loc = {
+                x: parseFloat(loc_list[0]),
+                y: parseFloat(loc_list[1]),
+                scale: parseFloat(loc_list[2])
+            }
+
+                    let cell_value = parent.get_cell_value(parent, SELECTED_CRATE, loc).toFixed(2); //round to 2dec places ;
+        		    let color = parent.color_scheme(cell_value);
+        		    
+					                d3.select(rect)
+								.style("fill", function (d) {
+                                    return color
+             					                   })                 
+           				.attr('data-value', cell_value)
+			
+		})
+		
+                  
+     
+	}
+
+
     //----------------------------------------------------------------//
     //-------------------END HEATMAP CALCULATIONS---------------------//
     //----------------------------------------------------------------//
@@ -1226,12 +1273,20 @@ class RotasHeatMap {
         //console.log('value arr', value_array, feature, parent.feature)
 
         //reset the main variable
+        // parent.min_max_range = {
+            // max: q90(value_array).toFixed(2), //max or the 90th percentile value to reduce outliers
+            // min: q05(value_array).toFixed(2), //min or the 10th percentile value to reduce outliers
+            // max_abs: Math.max(...value_array).toFixed(2), //absolute max
+            // min_abs: Math.min(...value_array).toFixed(2) //absolute min
+        // };
+
         parent.min_max_range = {
-            max: q90(value_array).toFixed(2), //max or the 90th percentile value to reduce outliers
-            min: q05(value_array).toFixed(2), //min or the 10th percentile value to reduce outliers
-            max_abs: Math.max(...value_array).toFixed(2), //absolute max
-            min_abs: Math.min(...value_array).toFixed(2) //absolute min
-        };
+                    max: 600,//q90(value_array).toFixed(2), //max or the 90th percentile value to reduce outliers
+                    min: 380,//q05(value_array).toFixed(2), //min or the 10th percentile value to reduce outliers
+                    max_abs: Math.max(...value_array).toFixed(2), //absolute max
+                    min_abs: Math.min(...value_array).toFixed(2) //absolute min
+                };
+        
 
         //for colors, we want the heatmap to have a range of min and max, where min and max are adjusted
         //for 95%/5% percentiles;
@@ -1357,6 +1412,9 @@ class RotasHeatMap {
 }
 
 
+
+
+
 let FULL_DATA={};
 let ALL_SENSORS=[];
 let SENSOR_INDICES={}
@@ -1397,9 +1455,14 @@ if(date){
 			ALL_SENSORS=all_sensors;
 
 			console.log('updating:')
-	
+			let start_time=FULL_DATA[ALL_SENSORS[0]].readings[0].acp_ts;
+			let readings_len=FULL_DATA[ALL_SENSORS[0]].readings.length-1;
+			let end_time=FULL_DATA[ALL_SENSORS[0]].readings[readings_len].acp_ts;
+	        move_slider(start_time, end_time);
+
 
         });
+
 	
 }
 
@@ -1411,6 +1474,8 @@ function get_url_param(parameter){
 }
 
 function roll_update(time, sub_mid){
+
+let timing=false;
 
 	const map = (value, x1, y1, x2, y2) => (value - x1) * (y2 - x2) / (y1 - x1) + x2;
     let param_date=get_url_param('date');
@@ -1445,19 +1510,26 @@ let preselected_date;
 		
 		time_calc=selected_date.setHours(time[0],time[1],0,0)/1000;
 
-		console.log('\nmidnight1',format_time(midnight),midnight, '\nmidnight2',format_time(preselected_date),preselected_date,'\ntime_cal',format_time(time_calc),time_calc);
+	//	console.log('\nmidnight1',format_time(midnight),midnight, '\nmidnight2',format_time(preselected_date),preselected_date,'\ntime_cal',format_time(time_calc),time_calc);
 	}
 
+if(timing){
+
+	 console.time('[TOTAL RETRIEVAL TIME LAPSED]');
+	
+}
 	for (let i =0; i<ALL_SENSORS.length;i++){
 
 
 		let sensor=ALL_SENSORS[i];
 
+if(timing){
         console.time('[RETRIEVAL TIME LAPSED '+sensor+' ]');
+}
 		let reading_length=FULL_DATA[sensor].readings.length;
 
 		let adjusted_index=parseInt(map(time_calc, parseInt(midnight), parseInt(preselected_date), 0,reading_length));
-		console.log(time_calc, parseInt(midnight), parseInt(preselected_date), 0,reading_length, '---', adjusted_index);
+	//	console.log(time_calc, parseInt(midnight), parseInt(preselected_date), 0,reading_length, '---', adjusted_index);
 
 		//let sliced_arr=FULL_DATA[sensor].readings.slice(adjusted_index-20,adjusted_index+20);
 //		console.log('SLICED ARR',sliced_arr);
@@ -1494,25 +1566,97 @@ let preselected_date;
 		let midnight_ts=FULL_DATA[sensor].readings[0].acp_ts;
 		let selected_reading=msg.payload_cooked[rt_heatmap.feature];
 		msg.payload_cooked[rt_heatmap.feature]=selected_reading-midnight_reading;
-		console.log(sensor,selected_reading,'-',midnight_reading,  format_time(midnight_ts));
+	//	console.log(sensor,selected_reading,'-',midnight_reading,  format_time(midnight_ts));
 		}
 		
-		console.log('FINAL_TIME '+sensor, format_time(msg.acp_ts))
+	//	console.log('FINAL_TIME '+sensor, format_time(msg.acp_ts))
+if(timing){
 
         console.timeEnd('[RETRIEVAL TIME LAPSED '+sensor+' ]');
-        
+}        
 		rt_heatmap.update_sensor_data(rt_heatmap, msg); 
 		rt_heatmap.update_crate_heatmap(rt_heatmap, SELECTED_CRATE, sensor);
-	  //get min/max for the selected feature
 
-        rt_heatmap.get_min_max(rt_heatmap,  rt_heatmap.feature);
+
+
+	  //get min/max for the selected feature
+ 		 rt_heatmap.get_min_max(rt_heatmap,  rt_heatmap.feature);
         //reset the colorbar
         rt_heatmap.set_colorbar(rt_heatmap);
-		}
-		console.log('SELECTED FEATURE', rt_heatmap.feature )
 
+
+      
+		}
+	//	console.log('SELECTED FEATURE', rt_heatmap.feature )
+if(timing){
+
+
+	 console.timeEnd('[TOTAL RETRIEVAL TIME LAPSED]');
+
+	 	 console.time('[HEATMAP REDRAW]');
+
+	                // rt_heatmap.rotas_redraw(rt_heatmap);
+	 console.timeEnd('[HEATMAP REDRAW]');
+}
 }
 
+function move_slider(start, end){
+
+console.log('START',start, 'END', end);
+
+
+let slider = document.getElementById("myRange");
+let output = document.getElementById("demo");
+output.innerHTML = format_time(slider.value); // Display the default slider value
+let current_value=slider.value;
+
+let button_forward=document.getElementById("button_forward");
+let button_backward=document.getElementById("button_backward");
+
+button_forward.onclick = function(){
+
+	console.log('pre-click', slider.value,format_time(slider.value))
+	let pre_click=slider.value;
+	slider.value=parseInt(slider.value)+300;
+	console.log('saved_val', pre_click+300,pre_click,300)
+	console.log('postclick', slider.value,format_time(slider.value))
+
+	output.innerHTML =format_time(slider.value);
+	roll_update(get_hours(slider.value), false);
+	current_value=slider.value;
+	output.innerHTML = format_time(slider.value); // Display the default slider value
+	
+	console.log(format_time(slider.value),slider.value)
+
+};
+
+button_backward.onclick = function(){
+	//slider.value-=300;
+	slider.value=parseInt(slider.value)-300;
+	output.innerHTML =format_time(slider.value);
+	roll_update(get_hours(slider.value), false);
+	current_value=slider.value;
+	output.innerHTML = format_time(slider.value); // Display the default slider value
+	
+	console.log(format_time(slider.value),slider.value)
+};
+
+// Update the current slider value (each time you drag the slider handle)
+slider.oninput = function() {
+  output.innerHTML =format_time(this.value);
+roll_update(get_hours(this.value), false)
+current_value=this.value;
+//	console.log(get_hours(this.value));
+
+
+  
+}
+
+//document.getElementById("myRange").value = "75";
+document.getElementById("myRange").min=parseInt(start);
+document.getElementById("myRange").max=parseInt(end);
+
+}
 
 
 function recursiveFunction (arr, x, start, end) {
@@ -1548,6 +1692,20 @@ function nearInt(op, target, range) {
 
 function format_time(s) {
   return new Date(s * 1e3).toISOString().slice(-13, -5);
+}
+
+function get_hours(UNIX_timestamp){
+	  let a = new Date(UNIX_timestamp * 1000);
+	  let months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+	  let year = a.getFullYear();
+	  let month = months[a.getMonth()];
+	  let date = a.getDate();
+	  let hour = a.getHours();
+	  let min = a.getMinutes();
+	  let sec = a.getSeconds();
+	 // var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+	let time=[hour,min];
+	  return time;
 }
   
 // Driver code
