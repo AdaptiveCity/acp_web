@@ -7,6 +7,12 @@ const LOW_REZ = 8;
 //modify to define in read_url()
 const SELECTED_CRATE='GW20-FF';
 
+
+
+let FULL_DATA={};
+let ALL_SENSORS=[];
+let SENSOR_INDICES={};
+
 class RotasHeatMap {
 
     // Called to create instance in page :let rt_heatmap = new HeatMap(floor_plan);
@@ -111,6 +117,8 @@ class RotasHeatMap {
         //-------MISC STYLING END------//
 
 
+		this.value_ranges={'temperature':[14,21],'co2':[380,600], 'humidity':[30,55],'vdd':[3500,3700]}
+
         //--------RT MONITOR MISC----------//
         //set div id's show status change upon connect
         this.txt_div_id = 'rain_rt';
@@ -141,6 +149,10 @@ class RotasHeatMap {
         //--------------------------------------//
         this.setup_controls(this);
 
+		
+		get_day_crate();
+		
+		
     }
 
 
@@ -632,8 +644,10 @@ class RotasHeatMap {
 //            console.log('-----------------------------')
 
         } catch (error) {
-            console.log('failed to update the data struct with payloads', error)
-            console.log('msg received:', msg)
+			console.log(msg.acp_id, ' has no co2');
+
+            //console.log('failed to update the data struct with payloads', error)
+            //console.log('msg received:', msg)
         }
 
     }
@@ -752,7 +766,7 @@ class RotasHeatMap {
 
     //calculate the color value of a heatmap cell
     //takes in the crate and coordinates of a cell as arguments
-    get_cell_value(parent, crate, coords) {
+    get_cell_value_old(parent, crate, coords) {
 
         //select on of the features (co2, temperature, humidity etc)
         //TODO:user URL
@@ -770,7 +784,9 @@ class RotasHeatMap {
         //an object with sensor's location embedded in it
         let sensor_loc = {};
 
-        //iterate through all sensors in crates that have sensors
+        //iterate through all sensors in the selected crate
+        //and calculate the distance from the sensor to the 
+        //selected cell (rect)
         parent.crates_with_sensors[crate].forEach(sensor => {
 
             //if the sensor does not have the requested feature (e.g. co2), skip it
@@ -794,6 +810,14 @@ class RotasHeatMap {
             //get the distance from the sensor_loc to the cell (rect) location
             let dist = parent.jb_tools.dist(sensor_loc, rect_loc)
 
+			//option A, make far away sensors appear REALLY far away
+            // if(dist>65){
+					// dist=999;
+             // }
+
+            //option B, disregard thos sensors altogether
+
+            
             //push the sensor to the list of sensors used for the calculation of the cell (rect) color value
             sensor_data_points.push({
                 'sensor': sensor.acp_id,
@@ -814,7 +838,8 @@ class RotasHeatMap {
         let C = 0;
         let D = 0;
 
-		let rect_size=0*parent.rect_size;
+		//debug limit color thresholding
+		//let rect_size=0*parent.rect_size;
 		
         //magic happens here;
         //We iterate through all the sensors in the crate and try to calculate how to weigh
@@ -830,19 +855,19 @@ class RotasHeatMap {
                 //e.g. sensor A is 95% of the total distance (TD) away from cell (far), whereas sensor B is 5% of the total distance away (close);
                 //TD is dist(sensorA, cell_location)+dist(sensorB, cell_location);
                 //following from this, we can't calculate that cell_value = 0.95*valueA(from sensorA)+0.05*valueB, because the the coefficient for
-                //sensorB readings has to be higher because it is closer! For this reason, we have to run  a second loop to calculate the reverse.
+                //sensorB readings has to be higher because it is closer! For this reason, we have to run  a second loop to calculate the inverse.
                 sensor_data_points.forEach(sensor_point_alt => {
 
                 let sensor_dist_alt=sensor_point_alt.dist;
 
-                sensor_dist_alt=sensor_dist_alt<rect_size?rect_size:sensor_dist_alt;
+               // sensor_dist_alt=sensor_dist_alt<rect_size?rect_size:sensor_dist_alt;
                
                     B += combined_dist /sensor_dist_alt;
                 });
 
                 //calculate the inverse coefficient from the distance
                 let sensor_distance=sensor_point.dist;
-                sensor_distance=sensor_distance<rect_size?rect_size:sensor_distance;
+               // sensor_distance=sensor_distance<rect_size?rect_size:sensor_distance;
                 
                 let A = combined_dist / sensor_distance;
                 // console.log('A',A,sensor_distance)
@@ -864,6 +889,99 @@ class RotasHeatMap {
         //DEBUG (randomised color) myColor(Math.floor(Math.random()*100))
     }
 
+
+//calculate the color value of a heatmap cell
+    //takes in the crate and coordinates of a cell as arguments
+    get_cell_value(parent, crate, coords) {
+
+        //select on of the features (co2, temperature, humidity etc)
+        //TODO:user URL
+        let feature = parent.feature; //document.getElementById('features_list').value;
+
+        //get cell's coordinates and scale
+        let rect_loc = coords;
+        let scale = coords.scale
+
+        //variable used to calculate cumulative distance from a cell to all sensors around it
+        let combined_dist = 0;
+
+        //a list that will contain all crates' sensors and their values
+        let sensor_data_points = [];
+        //an object with sensor's location embedded in it
+        let sensor_loc = {};
+
+        //iterate through all sensors in the selected crate
+        //and calculate the distance from the sensor to the 
+        //selected cell (rect)
+        parent.crates_with_sensors[crate].forEach(sensor => {
+
+            //if the sensor does not have the requested feature (e.g. co2), skip it
+            if (sensor.payload[feature] == undefined) {
+                return 0
+            }
+
+            //get sensor's location
+            let x_value = parent.sensor_data[sensor.acp_id]['location']['x'];
+            let y_value = -parent.sensor_data[sensor.acp_id]['location']['y'];
+
+            //pass the location to the sensor_loc object and adjust the scale for rendering
+            //+add the offset from the svg matrix transformation
+
+
+            sensor_loc = {
+                x: x_value * scale + parent.consolidated_svg.x_off,
+                y: y_value * scale + parent.consolidated_svg.y_off
+            };
+
+            //get the distance from the sensor_loc to the cell (rect) location
+            let dist = parent.jb_tools.dist(sensor_loc, rect_loc)
+
+			//option A, make far away sensors appear REALLY far away
+            // if(dist>65){
+					// dist=999;
+             // }
+
+            //option B, disregard thos sensors altogether
+
+            
+            //push the sensor to the list of sensors used for the calculation of the cell (rect) color value
+            sensor_data_points.push({
+                'sensor': sensor.acp_id,
+                'value': sensor.payload[feature],
+                'dist': dist
+            });
+
+            //add the distance from the cell to the sensor to the cumulative distance  variable
+            //(keeps track of the total distance from the cell to all sensors)
+            combined_dist += dist;
+        });
+
+
+	let final_val=0;
+	let sense_radius=50;
+
+
+ 	let cumul_A=0;
+ 	let cumul_B=0;
+	  sensor_data_points.forEach(sensor_point => {
+
+			  	// cumul_A+=sensor_point.value/(sensor_point.dist*sensor_point.dist);
+				// cumul_B+=1/(sensor_point.dist*sensor_point.dist);
+
+				 cumul_A+=sensor_point.value/Math.pow(sensor_point.dist,20);
+				 cumul_B+=1/Math.pow(sensor_point.dist,20);
+				// 
+			  	// cumul_A+=sensor_point.value/sensor_point.dist;
+				// cumul_B+=1/sensor_point.dist;
+
+
+	  });
+
+//console.log('hi')
+		
+		return cumul_A/cumul_B;
+
+    }
 
     //used when generating the heatmap for the first time (not redrawing)
     show_heatmap_original(parent) {
@@ -1076,11 +1194,18 @@ let loc_list=JSON.parse("["+rect.dataset.loc+"]");
                     let cell_value = parent.get_cell_value(parent, SELECTED_CRATE, loc).toFixed(2); //round to 2dec places ;
         		    let color = parent.color_scheme(cell_value);
         		    
-					                d3.select(rect)
+					         d3.select(rect)
 								.style("fill", function (d) {
                                     return color
              					                   })                 
            				.attr('data-value', cell_value)
+           				.on("mouseover", function (d) {
+           				console.log('setting color bar value to ', cell_value)
+                    			parent.set_cbar_value(parent, cell_value)
+               						 })
+               			 .on("mouseout", function (d) {
+                   		 d3.select('#hover_val').remove();
+                				})
 			
 		})
 		
@@ -1178,7 +1303,7 @@ let loc_list=JSON.parse("["+rect.dataset.loc+"]");
             .attr("x", parent.c_conf.left + parent.c_conf.width / 2)
             .attr("width", bar_width)
             .attr("height", 2.5)
-            .style("fill", 'lime'); // lime colored rectangle to make it distinctive from the colorbar
+            .style("fill", 'white'); // lime colored rectangle to make it distinctive from the colorbar
 
         //add a white background for text
         d3.select('#hover_val').append('g')
@@ -1279,10 +1404,10 @@ let loc_list=JSON.parse("["+rect.dataset.loc+"]");
             // max_abs: Math.max(...value_array).toFixed(2), //absolute max
             // min_abs: Math.min(...value_array).toFixed(2) //absolute min
         // };
-
+		
         parent.min_max_range = {
-                    max: 600,//q90(value_array).toFixed(2), //max or the 90th percentile value to reduce outliers
-                    min: 380,//q05(value_array).toFixed(2), //min or the 10th percentile value to reduce outliers
+                    max: parent.value_ranges[parent.feature][1],//q90(value_array).toFixed(2), //max or the 90th percentile value to reduce outliers
+                    min: parent.value_ranges[parent.feature][0],//q05(value_array).toFixed(2), //min or the 10th percentile value to reduce outliers
                     max_abs: Math.max(...value_array).toFixed(2), //absolute max
                     min_abs: Math.min(...value_array).toFixed(2) //absolute min
                 };
@@ -1415,10 +1540,6 @@ let loc_list=JSON.parse("["+rect.dataset.loc+"]");
 
 
 
-let FULL_DATA={};
-let ALL_SENSORS=[];
-let SENSOR_INDICES={}
-
 function get_day_crate(){
 
 let	url='http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_day_crate/wgb/'+String(SELECTED_CRATE)+'/';
@@ -1475,7 +1596,7 @@ function get_url_param(parameter){
 
 function roll_update(time, sub_mid){
 
-let timing=false;
+let timing=true;
 
 	const map = (value, x1, y1, x2, y2) => (value - x1) * (y2 - x2) / (y1 - x1) + x2;
     let param_date=get_url_param('date');
@@ -1490,7 +1611,7 @@ let time_calc;
 let preselected_date;
 	//if there's no date specified use the preselected date	
 	if(!param_date){
-	console.log('no param date yo')
+	console.log('date==today')
 	//solve this mess because I think what happens is 
 	//there is a mismatch between the ranges of now and then
 	//and midnight then vs the time specified
@@ -1518,14 +1639,16 @@ if(timing){
 	 console.time('[TOTAL RETRIEVAL TIME LAPSED]');
 	
 }
+
+if(true){
+        console.time('[RETRIEVAL TIME LAPSED '+'a'+' ]');
+}
 	for (let i =0; i<ALL_SENSORS.length;i++){
 
 
 		let sensor=ALL_SENSORS[i];
 
-if(timing){
-        console.time('[RETRIEVAL TIME LAPSED '+sensor+' ]');
-}
+
 		let reading_length=FULL_DATA[sensor].readings.length;
 
 		let adjusted_index=parseInt(map(time_calc, parseInt(midnight), parseInt(preselected_date), 0,reading_length));
@@ -1570,33 +1693,34 @@ if(timing){
 		}
 		
 	//	console.log('FINAL_TIME '+sensor, format_time(msg.acp_ts))
-if(timing){
-
-        console.timeEnd('[RETRIEVAL TIME LAPSED '+sensor+' ]');
-}        
+       
 		rt_heatmap.update_sensor_data(rt_heatmap, msg); 
-		rt_heatmap.update_crate_heatmap(rt_heatmap, SELECTED_CRATE, sensor);
+	//	rt_heatmap.update_crate_heatmap(rt_heatmap, SELECTED_CRATE, sensor);
 
 
 
+
+
+      
+		}
+
+if(true){
+
+        console.timeEnd('[RETRIEVAL TIME LAPSED '+'a'+' ]');
+} 
+		
 	  //get min/max for the selected feature
  		 rt_heatmap.get_min_max(rt_heatmap,  rt_heatmap.feature);
         //reset the colorbar
         rt_heatmap.set_colorbar(rt_heatmap);
 
+	             rt_heatmap.rotas_redraw(rt_heatmap);
 
-      
-		}
-	//	console.log('SELECTED FEATURE', rt_heatmap.feature )
 if(timing){
 
+	// console.timeEnd('[HEATMAP REDRAW]');
+	 	 console.timeEnd('[TOTAL RETRIEVAL TIME LAPSED]');
 
-	 console.timeEnd('[TOTAL RETRIEVAL TIME LAPSED]');
-
-	 	 console.time('[HEATMAP REDRAW]');
-
-	                // rt_heatmap.rotas_redraw(rt_heatmap);
-	 console.timeEnd('[HEATMAP REDRAW]');
 }
 }
 
@@ -1607,27 +1731,34 @@ console.log('START',start, 'END', end);
 
 let slider = document.getElementById("myRange");
 let output = document.getElementById("demo");
-output.innerHTML = format_time(slider.value); // Display the default slider value
+
+//output.innerHTML = format_time(slider.value); // Display the default slider value
 let current_value=slider.value;
 
 let button_forward=document.getElementById("button_forward");
 let button_backward=document.getElementById("button_backward");
 
+let button_forward_1min=document.getElementById("button_forward1");
+let button_backward_1min=document.getElementById("button_backward1");
+
+let button_del_sensors=document.getElementById("button_del_circle");
+
+button_del_sensors.onclick = function(){
+//d3.selectAll('.sensor_node').remove();
+d3.selectAll('.sensor_node').attr('pointer-events', 'none');
+
+	
+};
+
+
 button_forward.onclick = function(){
 
-	console.log('pre-click', slider.value,format_time(slider.value))
 	let pre_click=slider.value;
 	slider.value=parseInt(slider.value)+300;
-	console.log('saved_val', pre_click+300,pre_click,300)
-	console.log('postclick', slider.value,format_time(slider.value))
 
-	output.innerHTML =format_time(slider.value);
 	roll_update(get_hours(slider.value), false);
-	current_value=slider.value;
 	output.innerHTML = format_time(slider.value); // Display the default slider value
 	
-	console.log(format_time(slider.value),slider.value)
-
 };
 
 button_backward.onclick = function(){
@@ -1635,26 +1766,41 @@ button_backward.onclick = function(){
 	slider.value=parseInt(slider.value)-300;
 	output.innerHTML =format_time(slider.value);
 	roll_update(get_hours(slider.value), false);
-	current_value=slider.value;
+	output.innerHTML = format_time(slider.value); // Display the default slider value
+};
+
+button_forward1.onclick = function(){
+
+	let pre_click=slider.value;
+	slider.value=parseInt(slider.value)+60;
+
+	roll_update(get_hours(slider.value), false);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
 	
-	console.log(format_time(slider.value),slider.value)
+};
+
+button_backward1.onclick = function(){
+	//slider.value-=300;
+	slider.value=parseInt(slider.value)-60;
+	output.innerHTML =format_time(slider.value);
+	roll_update(get_hours(slider.value), false);
+	output.innerHTML = format_time(slider.value); // Display the default slider value
 };
 
 // Update the current slider value (each time you drag the slider handle)
 slider.oninput = function() {
   output.innerHTML =format_time(this.value);
 roll_update(get_hours(this.value), false)
-current_value=this.value;
-//	console.log(get_hours(this.value));
-
-
   
 }
 
 //document.getElementById("myRange").value = "75";
 document.getElementById("myRange").min=parseInt(start);
-document.getElementById("myRange").max=parseInt(end);
+let start_plus24=parseInt(start)+86400;
+document.getElementById("myRange").max=parseInt(start_plus24);
+document.getElementById("myRange").value=parseInt(end);
+
+output.innerHTML = format_time(parseInt(end));
 
 }
 
@@ -1707,7 +1853,174 @@ function get_hours(UNIX_timestamp){
 	let time=[hour,min];
 	  return time;
 }
-  
-// Driver code
-let arr = [1, 3, 5, 7, 8, 9];
-let x = 5;
+//////////////////////////////////////////////////
+
+function load_graph(){
+
+	let url_link="http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_crate_chart/wgb/FN07/";
+		// set the dimensions and margins of the graph
+	const margin = {top: 10, right: 30, bottom: 30, left: 60},
+	    width = window.innerWidth - margin.left - margin.right,
+	    height = 400 - margin.top - margin.bottom;
+	
+	// append the svg object to the body of the page
+	const svg = d3.select("#my_dataviz")
+	  .append("svg")
+	    .attr("width", width + margin.left + margin.right)
+	    .attr("height", height + margin.top + margin.bottom)
+	  .append("g")
+	    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+
+	    	//Read the data
+	d3.json(url_link,{crossOrigin: "anonymous"})
+		.then(function(data) {
+				let datum=[];
+				data['readings'].forEach(
+								 (element) =>{
+											 try{
+												 datum.push({'date':parseInt(element.acp_ts), 'value':element.payload_cooked[rt_heatmap.feature]});
+												 console.log({'date':parseInt(element.acp_ts), 'value':element.payload_cooked[rt_heatmap.feature]});
+												 }
+											 catch(err){
+				    							 //console.log('skipping',format_time(parseInt(element.acp_ts)));
+													 }
+											 }
+										 );
+				//console.log(datum);
+	  			console.log('done');
+
+
+
+
+
+	    // Add X axis --> it is a date format
+	    // const x = d3.scaleLinear()
+	      // .domain(d3.extent(datum, d => d.date))
+	      // .range([ 0, width ]);
+	      // 
+	    // svg.append("g")
+	      // .attr("transform", "translate(0," + height + ")")
+	      // .call(d3.axisBottom(x))   ;
+
+	        let len=datum.length-1;
+	        var x = d3.scaleTime()
+	          .domain([datum[0].acp_ts,datum[len].acp_ts ])
+	          .range([0, width]);
+	          
+	        var xAxis = d3.axisBottom(x)
+	          .tickFormat(d3.timeFormat("%H:%M:%S"))
+	          .ticks(50);
+	          
+	        svg.append("g")
+	          .attr("class", "x axis")
+	          .attr("transform", "translate(0," + height + ")")
+	          .call(xAxis)
+	          .selectAll("text")
+	          .attr("y", -5)
+	          .attr("x", 30)
+	          .attr("transform", "rotate(90)")
+
+	    // Add Y axis
+	    const y = d3.scaleLinear()
+	      .domain( [380, 600])
+	      .range([ height, 0 ]);
+	    svg.append("g")
+	      .call(d3.axisLeft(y));
+
+	      
+	    // // Add the line
+	    svg.append("path")
+	      .datum(datum)
+	      .attr("fill", "none")
+	      .attr("stroke", "#FFFFFF")
+	      .attr("stroke-width", 1.5)
+	      .attr("d", d3.line()
+	        .x(d => x(d.date))
+	        .y(d => y(d.value))
+	        )
+	    // Add the points
+	    svg
+	      .append("g")
+	      .selectAll("dot")
+	      .data(data)
+	      .join("circle")
+	        .attr("cx", d => x(d.date))
+	        .attr("cy", d => y(d.value))
+	        .attr("r", 10)
+	        .attr("fill", "#FFFFFF")
+	
+
+
+
+
+
+
+	  			
+	    					}
+	 	);
+}
+
+function test_graph(){
+
+	
+	// set the dimensions and margins of the graph
+	const margin = {top: 10, right: 30, bottom: 30, left: 60},
+	    width = 460 - margin.left - margin.right,
+	    height = 400 - margin.top - margin.bottom;
+	
+	// append the svg object to the body of the page
+	const svg = d3.select("#my_dataviz")
+	  .append("svg")
+	    .attr("width", width + margin.left + margin.right)
+	    .attr("height", height + margin.top + margin.bottom)
+	  .append("g")
+	    .attr("transform", `translate(${margin.left},${margin.top})`);
+	
+	//Read the data
+	d3.csv("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/connectedscatter.csv",
+	  // When reading the csv, I must format variables:
+	  function(d){
+	    return { date : d3.timeParse("%Y-%m-%d")(d.date), value : d.value }
+	  }).then(
+	  // Now I can use this dataset:
+	  function(data) {
+	    // Add X axis --> it is a date format
+	    const x = d3.scaleTime()
+	      .domain(d3.extent(data, d => d.date))
+	      .range([ 0, width ]);
+	    svg.append("g")
+	      .attr("transform", "translate(0," + height + ")")
+	      .call(d3.axisBottom(x));
+	    // Add Y axis
+	    const y = d3.scaleLinear()
+	      .domain( [8000, 9200])
+	      .range([ height, 0 ]);
+	    svg.append("g")
+	      .call(d3.axisLeft(y));
+	    // Add the line
+	    svg.append("path")
+	      .datum(data)
+	      .attr("fill", "none")
+	      .attr("stroke", "#69b3a2")
+	      .attr("stroke-width", 1.5)
+	      .attr("d", d3.line()
+	        .x(d => x(d.date))
+	        .y(d => y(d.value))
+	        )
+	    // Add the points
+	    svg
+	      .append("g")
+	      .selectAll("dot")
+	      .data(data)
+	      .join("circle")
+	        .attr("cx", d => x(d.date))
+	        .attr("cy", d => y(d.value))
+	        .attr("r", 5)
+	        .attr("fill", "#69b3a2")
+	})
+	
+	
+	
+}
+
