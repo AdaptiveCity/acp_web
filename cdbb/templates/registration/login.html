@@ -26,6 +26,13 @@ Login
 
 {% block content %}
 
+  {% if messages %}
+    {% for message in messages %}
+        {% if message.tags %}  <script>alert("{{ message }}")</script> {% endif %}
+
+    {% endfor %}
+  {% endif %}
+
   {% if form.errors %}
     <p>Your username and password didn't match. Please try again.</p>
   {% endif %}

@@ -8,6 +8,7 @@ from django.shortcuts import redirect
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.conf import settings
+from django.contrib import messages
 
 import requests
 import json
@@ -27,7 +28,7 @@ class HomeView(TemplateView):
         
         access_response = requests.get(request_url)
 
-        print(access_response.text)
+        print(f'respose_text: {access_response.text}, user: {person_id}, url: {request.path}')
 
         if not access_response.json()['permission']:
             return HttpResponseRedirect('/accounts/login/')
@@ -52,7 +53,7 @@ class MapView(TemplateView):
         
         access_response = requests.get(request_url)
 
-        print(access_response.text)
+        print(f'respose_text: {access_response.text}, user: {person_id}, url: {request.path}')
 
         if not access_response.json()['permission']:
             return HttpResponseRedirect('/accounts/login/')
@@ -92,19 +93,26 @@ class BuildingView(TemplateView):
     template_name = 'space/building.html'
 
     def get(self, request, *args, **kwargs):
+        crate_id = kwargs['crate_id']
+
         person_id = str(request.user)
-        object_id = '__'.join(request.path.split('/'))
-        object_type = 'url'
+        object_id = crate_id
+        object_type = 'crate'
         operation_type = 'read'
 
         request_url = settings.API_PERMISSIONS+f'get_permission/{person_id}/{object_id}/{object_type}/{operation_type}'
         
         access_response = requests.get(request_url)
 
-        print(access_response.text)
+        print(f'respose_text: {access_response.text}, user: {person_id}, url: {request.path}')
 
         if not access_response.json()['permission']:
-            return HttpResponseRedirect('/accounts/login/')
+            if person_id == 'AnonymousUser':
+                return HttpResponseRedirect('/accounts/login/')
+            else:
+                messages.error(request, f"User {person_id} does not have access. Try login with a different account.")
+                return HttpResponseRedirect('/accounts/login/')
+
         return super().get(request, *args, **kwargs)
 
     # We override get_context_data to return the vars to embed in the template
@@ -127,19 +135,26 @@ class FloorView(TemplateView):
     template_name = 'space/floor.html'
 
     def get(self, request, *args, **kwargs):
+        crate_id = kwargs['crate_id']
+
         person_id = str(request.user)
-        object_id = '__'.join(request.path.split('/'))
-        object_type = 'url'
+        object_id = crate_id
+        object_type = 'crate'
         operation_type = 'read'
 
         request_url = settings.API_PERMISSIONS+f'get_permission/{person_id}/{object_id}/{object_type}/{operation_type}'
         
         access_response = requests.get(request_url)
 
-        print(access_response.text)
+        print(f'respose_text: {access_response.text}, user: {person_id}, url: {request.path}')
 
         if not access_response.json()['permission']:
-            return HttpResponseRedirect('/accounts/login/')
+            if person_id == 'AnonymousUser':
+                return HttpResponseRedirect('/accounts/login/')
+            else:
+                messages.error(request, f"User {person_id} does not have access. Try login with a different account.")
+                return HttpResponseRedirect('/accounts/login/')
+
         return super().get(request, *args, **kwargs)
 
     # We override get_context_data to return the vars to embed in the template
@@ -177,19 +192,26 @@ class FloorspaceView(TemplateView):
     template_name = 'space/floorspace.html'
 
     def get(self, request, *args, **kwargs):
+        crate_id = kwargs['crate_id']
+
         person_id = str(request.user)
-        object_id = '__'.join(request.path.split('/'))
-        object_type = 'url'
+        object_id = crate_id
+        object_type = 'crate'
         operation_type = 'read'
 
         request_url = settings.API_PERMISSIONS+f'get_permission/{person_id}/{object_id}/{object_type}/{operation_type}'
         
         access_response = requests.get(request_url)
 
-        print(access_response.text)
+        print(f'respose_text: {access_response.text}, user: {person_id}, url: {request.path}')
 
         if not access_response.json()['permission']:
-            return HttpResponseRedirect('/accounts/login/')
+            if person_id == 'AnonymousUser':
+                return HttpResponseRedirect('/accounts/login/')
+            else:
+                messages.error(request, f"User {person_id} does not have access. Try login with a different account.")
+                return HttpResponseRedirect('/accounts/login/')
+
         return super().get(request, *args, **kwargs)
 
     # We override get_context_data to return the vars to embed in the template
@@ -234,10 +256,15 @@ class RainHomeView(TemplateView):
         
         access_response = requests.get(request_url)
 
-        print(access_response.text)
+        print(f'respose_text: {access_response.text}, user: {person_id}, url: {request.path}')
 
         if not access_response.json()['permission']:
-            return HttpResponseRedirect('/accounts/login/')
+            if person_id == 'AnonymousUser':
+                return HttpResponseRedirect('/accounts/login/')
+            else:
+                messages.error(request, f"User {person_id} does not have access. Try login with a different account.")
+                return HttpResponseRedirect('/accounts/login/')
+
         return super().get(request, *args, **kwargs)
 
 #Heatmap view aka Rain
@@ -246,19 +273,26 @@ class RainView(TemplateView):
     template_name = 'space/floor_rain.html'
 
     def get(self, request, *args, **kwargs):
+        crate_id = kwargs['crate_id']
+
         person_id = str(request.user)
-        object_id = '__'.join(request.path.split('/'))
-        object_type = 'url'
+        object_id = crate_id
+        object_type = 'crate'
         operation_type = 'read'
 
         request_url = settings.API_PERMISSIONS+f'get_permission/{person_id}/{object_id}/{object_type}/{operation_type}'
         
         access_response = requests.get(request_url)
 
-        print(access_response.text)
+        print(f'respose_text: {access_response.text}, user: {person_id}, url: {request.path}')
 
         if not access_response.json()['permission']:
-            return HttpResponseRedirect('/accounts/login/')
+            if person_id == 'AnonymousUser':
+                return HttpResponseRedirect('/accounts/login/')
+            else:
+                messages.error(request, f"User {person_id} does not have access. Try login with a different account.")
+                return HttpResponseRedirect('/accounts/login/')
+
         return super().get(request, *args, **kwargs)
 
     # We override get_context_data to return the vars to embed in the template
@@ -318,10 +352,14 @@ class CrateRainView(TemplateView):
     
         access_response = requests.get(request_url)
 
-        print('respose_text: ',access_response.text)
+        print(f'respose_text: {access_response.text}, user: {person_id}, url: {request.path}')
 
         if not access_response.json()['permission']:
-            return HttpResponseRedirect('/accounts/login/')
+            if person_id == 'AnonymousUser':
+                return HttpResponseRedirect('/accounts/login/')
+            else:
+                messages.error(request, f"User {person_id} does not have access. Try login with a different account.")
+                return HttpResponseRedirect('/accounts/login/')
         
         return super().get(request, *args, **kwargs)
 
@@ -339,7 +377,7 @@ class CrateRainView(TemplateView):
             system = bim_info[crate_id]["acp_location"]["system"]
 
             # Get metadata for all sensors in the same crate (including selected sensor)
-            response = requests.get(settings.API_SENSORS+f'get_floor_number/{system}/{floor_number}/')
+            response = requests.get(settings.API_SENSORS+f'get_bim/{system}/{crate_id}/')
             sensors_info = response.json()
 
             # Get floor SVG
@@ -350,7 +388,7 @@ class CrateRainView(TemplateView):
             feature = self.request.GET.get('feature')
             if not feature:
                 feature = 'temperature'
-            response = requests.get(settings.API_READINGS+f'get_floor_feature/{system}/{floor_number}/{feature}/?metadata=true')
+            response = requests.get(settings.API_READINGS+f'get_crate_feature/{system}/{crate_id}/{feature}/?metadata=true')
             readings_info = response.json()
 
             context['CRATE_ID'] = crate_id
@@ -378,10 +416,15 @@ class SplashHomeView(TemplateView):
         
         access_response = requests.get(request_url)
 
-        print(access_response.text)
+        print(f'respose_text: {access_response.text}, user: {person_id}, url: {request.path}')
 
         if not access_response.json()['permission']:
-            return HttpResponseRedirect('/accounts/login/')
+            if person_id == 'AnonymousUser':
+                return HttpResponseRedirect('/accounts/login/')
+            else:
+                messages.error(request, f"User {person_id} does not have access. Try login with a different account.")
+                return HttpResponseRedirect('/accounts/login/')
+
         return super().get(request, *args, **kwargs)
 
 #Splash view aka draw ripples and check which sensors are (in)active
@@ -390,19 +433,26 @@ class SplashView(TemplateView):
     template_name = 'space/floor_splash.html'
 
     def get(self, request, *args, **kwargs):
+        crate_id = kwargs['crate_id']
+
         person_id = str(request.user)
-        object_id = '__'.join(request.path.split('/'))
-        object_type = 'url'
+        object_id = crate_id
+        object_type = 'crate'
         operation_type = 'read'
 
         request_url = settings.API_PERMISSIONS+f'get_permission/{person_id}/{object_id}/{object_type}/{operation_type}'
         
         access_response = requests.get(request_url)
 
-        print(access_response.text)
+        print(f'respose_text: {access_response.text}, user: {person_id}, url: {request.path}')
 
         if not access_response.json()['permission']:
-            return HttpResponseRedirect('/accounts/login/')
+            if person_id == 'AnonymousUser':
+                return HttpResponseRedirect('/accounts/login/')
+            else:
+                messages.error(request, f"User {person_id} does not have access. Try login with a different account.")
+                return HttpResponseRedirect('/accounts/login/')
+
         return super().get(request, *args, **kwargs)
 
     # We override get_context_data to return the vars to embed in the template
@@ -419,7 +469,7 @@ class SplashView(TemplateView):
             system = bim_info[crate_id]["acp_location"]["system"]
 
             # Get metadata for all sensors in the same crate (including selected sensor)
-            response = requests.get(settings.API_SENSORS+f'get_floor_number/{system}/{floor_number}/')
+            response = requests.get(settings.API_SENSORS+f'get_floor_number/{system}/{floor_number}/?person_id={str(self.request.user)}')
             sensors_info = response.json()
 
             # Get floor SVG
