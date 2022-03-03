@@ -7,11 +7,13 @@ const LOW_REZ = 8;
 //modify to define in read_url()
 const SELECTED_CRATE='GW20-FF';
 
-let DIST_POW=2.5;
+
 
 let FULL_DATA={};
 let ALL_SENSORS=[];
 let SENSOR_INDICES={};
+
+let DIST_POW=2.5;
 
 class RotasHeatMap {
 
@@ -105,7 +107,7 @@ class RotasHeatMap {
 
         //declare the main colorscheme for the heatmap
         //https://observablehq.com/@d3/color-schemes ; set by 'd3.interpolate'+color-scheme
-        this.color_scheme = d3.scaleSequential(d3.interpolateTurbo); //interpolateViridis//interpolatePlasma//interpolateInferno/RdYlGn
+        this.color_scheme = d3.scaleSequential(d3.interpolateRdYlGn); //interpolateViridis//interpolatePlasma//interpolateInferno/RdYlGn
 
         //make a global c_conf reference from the parent class;
         //this creates a colorbar svg on the right side of the screen
@@ -113,11 +115,11 @@ class RotasHeatMap {
 
         //heatmap opacity
         this.default_opacity = 0.85;
-        this.sensor_opacity = this.floor_plan.sensor_opacity;
+        this.sensor_opacity = 1;//this.floor_plan.sensor_opacity;
         //-------MISC STYLING END------//
 
 
-		this.value_ranges={'temperature':[14,21],'co2':[380,600], 'humidity':[30,55],'vdd':[3500,3700]}
+		this.value_ranges={'temperature':[-1,1],'co2':[-50,50], 'humidity':[-1.25,1.25],'vdd':[3500,3700]}
 
         //--------RT MONITOR MISC----------//
         //set div id's show status change upon connect
@@ -1247,7 +1249,7 @@ let loc_list=JSON.parse("["+rect.dataset.loc+"]");
                     .attr("class", 'sensor_node')
                     .attr("id", sensor_id + "_hm")
                     .attr('data-acp_id', sensor_id)
-                    .style("opacity", parent.floor_plan.sensor_opacity)
+                    .style("opacity", parent.sensor_opacity)
                     .style("fill", "pink")
                     .style('stroke', 'black')
                     .on('mouseover', function (d) {
@@ -1415,7 +1417,7 @@ let loc_list=JSON.parse("["+rect.dataset.loc+"]");
 
         //for colors, we want the heatmap to have a range of min and max, where min and max are adjusted
         //for 95%/5% percentiles;
-        parent.color_scheme.domain([parent.min_max_range.min, parent.min_max_range.max]);
+        parent.color_scheme.domain([parent.min_max_range.max, parent.min_max_range.min]);
 
         //for the animation delay, we can choose either, since it's less important
         parent.animation_delay.domain([parent.min_max_range.min_abs, parent.min_max_range.max_abs]);
@@ -1542,7 +1544,7 @@ let loc_list=JSON.parse("["+rect.dataset.loc+"]");
 
 function get_day_crate(){
 
-let	url='http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_day_crate/wgb/'+String(SELECTED_CRATE)+'/';
+let	url='http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_day_roc/wgb/'+String(SELECTED_CRATE)+'/';
 
 
 const queryString = window.location.search;
@@ -1743,10 +1745,8 @@ let button_backward_1min=document.getElementById("button_backward1");
 
 let button_del_sensors=document.getElementById("button_del_circle");
 
-button_del_sensors.onclick = function(){
-//d3.selectAll('.sensor_node').remove();
-d3.selectAll('.sensor_node').attr('pointer-events', 'none');
-};
+let button_play=document.getElementById("button_play");
+let button_stop=document.getElementById("button_stop");
 
 let slider_voronoi=document.getElementById("voronoi_slider");
 let output_voronoi=document.getElementById("vor_val");
@@ -1775,14 +1775,31 @@ button_play.onclick = function(){
 
 
 button_stop.onclick = function(){
-	    clearInterval(ticking_timer);
-};
 
+	    clearInterval(ticking_timer);
+	
+};
 slider_voronoi.oninput = function() {
   output_voronoi.innerHTML =this.value;
-	DIST_POW=this.value
+DIST_POW=this.value
 	roll_update(get_hours(slider.value), false);
+
 }
+
+// Update the current slider value (each time you drag the slider handle)
+slider.oninput = function() {
+  output.innerHTML =format_time(this.value);
+roll_update(get_hours(this.value), false)
+}
+
+
+
+
+button_del_sensors.onclick = function(){
+//d3.selectAll('.sensor_node').remove();
+d3.selectAll('.sensor_node').attr('pointer-events', 'none');
+
+};
 
 
 button_forward.onclick = function(){
@@ -1821,12 +1838,8 @@ button_backward1.onclick = function(){
 	output.innerHTML = format_time(slider.value); // Display the default slider value
 };
 
-// Update the current slider value (each time you drag the slider handle)
-slider.oninput = function() {
-  output.innerHTML =format_time(this.value);
-roll_update(get_hours(this.value), false)
-  
-}
+
+
 
 //document.getElementById("myRange").value = "75";
 document.getElementById("myRange").min=parseInt(start);

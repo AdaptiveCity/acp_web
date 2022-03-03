@@ -30,6 +30,8 @@ var viz_tools = new VizTools2();
 var YYYY='2022';
 var MM='01';
 var DD='20';
+
+
 // Called on page load
 function init() {
 
@@ -46,7 +48,7 @@ function init() {
 
     feature_select_el = document.getElementById("form_feature");
     feature_select_el2 = document.getElementById("form_feature2");
-    console.log(feature_select_el, feature_select_el2)
+    console.log('FEATURES',feature_select_el, feature_select_el2)
 
     chart_tooltip_el = d3.select('#chart_tooltip'); //document.getElementById('chart_tooltip');
 
@@ -212,6 +214,8 @@ function init_feature_select(readings, sensor_metadata) {
 
     feature_select_el2.appendChild(option_none);
 
+    //temporary hack
+    //FEATURE='temperature';
 
     if (feature_count == 0) {
         console.log("No features listed in sensor_metadata");
@@ -231,6 +235,7 @@ function init_feature_select(readings, sensor_metadata) {
         selected_feature = features[feature_id];
         selected_feature["feature_id"] = feature_id;
     } else {
+    	console.log('featured features', features)
         selected_feature = features[FEATURE];
         selected_feature['feature_id'] = FEATURE;
     }

@@ -23,7 +23,7 @@
 <!-- FloorPlan -->
 <script type='text/javascript' src="{% static 'space/js/floor_plan.js' %}"></script>
 <!-- Rain class  -->
-<script type='text/javascript' src="{% static 'space/js/rotas_heatmap.js' %}"></script>
+<script type='text/javascript' src="{% static 'space/js/rotas_roc_heatmap.js' %}"></script>
 
 <!-- RTMonitor tests -->
 <script type='text/javascript' src="{% static 'space/js/RTconnect.js' %}"></script>
@@ -48,7 +48,7 @@
 {% endblock %}
 
 {% block header_title %}
-ROTAS app
+ROTAS ROC app
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -62,7 +62,7 @@ ROTAS app
         &gt; <a href="{% url 'space_home' %}">Space</a>
     </div>
     <div class="breadcrumb">
-        &gt; <a href="{% url 'space_rain_home' %}">ROTAS</a>
+        &gt; <a href="{% url 'space_rain_home' %}">ROTAS ROC</a>
     </div>
     <div class="breadcrumb">
         &gt; Floor {{ CRATE_ID }}
@@ -238,13 +238,15 @@ ROTAS app
 </div>
 <div id='voronoi_div' style="width:10%">
   <h4>Voronoi: <span id="vor_val"></span></h4>
-  <input type="range" min="1" max="10" value="2" class="slider" id="voronoi_slider">
+  <input type="range" min="1" max="12" value="3" class="slider" id="voronoi_slider">
 </div>
 <br>
 
 <div>
     <button class="button button_a" id='button_del_circle'>remove sensors</button>
 </div>
+
+
 <div id="my_dataviz"></div> 
 
 <!-- TOOLTIP - will be made visible/invisible as mouse moves over sensors -->
