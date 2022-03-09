@@ -14,6 +14,7 @@ let ALL_SENSORS=[];
 let SENSOR_INDICES={};
 
 let DIST_POW=2.5;
+let SUBTRACT_MIDNIGHT=false;
 
 class RotasHeatMap {
 
@@ -1781,15 +1782,15 @@ button_stop.onclick = function(){
 };
 slider_voronoi.oninput = function() {
   output_voronoi.innerHTML =this.value;
-DIST_POW=this.value
-	roll_update(get_hours(slider.value), false);
+	DIST_POW=this.value
+	roll_update(get_hours(slider.value), SUBTRACT_MIDNIGHT);
 
 }
 
 // Update the current slider value (each time you drag the slider handle)
 slider.oninput = function() {
   output.innerHTML =format_time(this.value);
-roll_update(get_hours(this.value), false)
+roll_update(get_hours(this.value), SUBTRACT_MIDNIGHT)
 }
 
 
@@ -1807,7 +1808,7 @@ button_forward.onclick = function(){
 	let pre_click=slider.value;
 	slider.value=parseInt(slider.value)+300;
 
-	roll_update(get_hours(slider.value), false);
+	roll_update(get_hours(slider.value), SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
 	
 };
@@ -1816,7 +1817,7 @@ button_backward.onclick = function(){
 	//slider.value-=300;
 	slider.value=parseInt(slider.value)-300;
 	output.innerHTML =format_time(slider.value);
-	roll_update(get_hours(slider.value), false);
+	roll_update(get_hours(slider.value), SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
 };
 
@@ -1825,7 +1826,7 @@ button_forward1.onclick = function(){
 	let pre_click=slider.value;
 	slider.value=parseInt(slider.value)+60;
 
-	roll_update(get_hours(slider.value), false);
+	roll_update(get_hours(slider.value), SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
 	
 };
@@ -1834,7 +1835,7 @@ button_backward1.onclick = function(){
 	//slider.value-=300;
 	slider.value=parseInt(slider.value)-60;
 	output.innerHTML =format_time(slider.value);
-	roll_update(get_hours(slider.value), false);
+	roll_update(get_hours(slider.value), SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
 };
 

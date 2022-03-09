@@ -8,8 +8,11 @@ const LOW_REZ = 8;
 const SELECTED_CRATE='GW20-FF';
 
 let DIST_POW=2.5;
+let SUBTRACT_MIDNIGHT=false;
 
 let FULL_DATA={};
+let FULL_DATA_OG={};
+
 let ALL_SENSORS=[];
 let SENSOR_INDICES={};
 
@@ -117,7 +120,8 @@ class RotasHeatMap {
         //-------MISC STYLING END------//
 
 
-		this.value_ranges={'temperature':[14,21],'co2':[380,600], 'humidity':[30,55],'vdd':[3500,3700]}
+		this.value_ranges={'temperature':[14,21],'co2':[380,600], 'humidity':[30,55],'vdd':[3500,3700]};
+			this.value_ranges_subtr={'temperature':[-2,2],'co2':[-40,100], 'humidity':[30,55],'vdd':[3500,3700]};
 
         //--------RT MONITOR MISC----------//
         //set div id's show status change upon connect
@@ -1397,7 +1401,18 @@ let loc_list=JSON.parse("["+rect.dataset.loc+"]");
 
         //console.log('value arr', value_array, feature, parent.feature)
 
-        //reset the main variable
+
+if(!SUBTRACT_MIDNIGHT){
+    parent.min_max_range = {
+                    max: parent.value_ranges[parent.feature][1],//q90(value_array).toFixed(2), //max or the 90th percentile value to reduce outliers
+                    min: parent.value_ranges[parent.feature][0],//q05(value_array).toFixed(2), //min or the 10th percentile value to reduce outliers
+                    max_abs: Math.max(...value_array).toFixed(2), //absolute max
+                    min_abs: Math.min(...value_array).toFixed(2) //absolute min
+                };
+    
+	
+}   else{
+	            //reset the main variable
         // parent.min_max_range = {
             // max: q90(value_array).toFixed(2), //max or the 90th percentile value to reduce outliers
             // min: q05(value_array).toFixed(2), //min or the 10th percentile value to reduce outliers
@@ -1405,14 +1420,16 @@ let loc_list=JSON.parse("["+rect.dataset.loc+"]");
             // min_abs: Math.min(...value_array).toFixed(2) //absolute min
         // };
 		
+//reset the main variable
         parent.min_max_range = {
-                    max: parent.value_ranges[parent.feature][1],//q90(value_array).toFixed(2), //max or the 90th percentile value to reduce outliers
-                    min: parent.value_ranges[parent.feature][0],//q05(value_array).toFixed(2), //min or the 10th percentile value to reduce outliers
-                    max_abs: Math.max(...value_array).toFixed(2), //absolute max
-                    min_abs: Math.min(...value_array).toFixed(2) //absolute min
-                };
-        
-
+            max: parent.value_ranges_subtr[parent.feature][1], //max or the 90th percentile value to reduce outliers
+            min: parent.value_ranges_subtr[parent.feature][0], //min or the 10th percentile value to reduce outliers
+            max_abs: Math.max(...value_array).toFixed(2), //absolute max
+            min_abs: Math.min(...value_array).toFixed(2) //absolute min
+        };
+	
+}     
+    	
         //for colors, we want the heatmap to have a range of min and max, where min and max are adjusted
         //for 95%/5% percentiles;
         parent.color_scheme.domain([parent.min_max_range.min, parent.min_max_range.max]);
@@ -1573,6 +1590,10 @@ if(date){
 
 			console.log(all_sensors);
 			FULL_DATA=received_data;
+			
+			
+			FULL_DATA_OG=JSON.parse(JSON.stringify(FULL_DATA));
+
 			ALL_SENSORS=all_sensors;
 
 			console.log('updating:')
@@ -1639,10 +1660,6 @@ if(timing){
 	 console.time('[TOTAL RETRIEVAL TIME LAPSED]');
 	
 }
-
-if(true){
-        console.time('[RETRIEVAL TIME LAPSED '+'a'+' ]');
-}
 	for (let i =0; i<ALL_SENSORS.length;i++){
 
 
@@ -1665,14 +1682,19 @@ if(true){
 		//index_start=0;
 		//index_finish=reading_length-1;
 
-
-		let new_index=recursiveFunction(FULL_DATA[sensor].readings,time_calc,index_start,index_finish);
+		let full_data_copy=FULL_DATA;
+		let new_index=recursiveFunction(full_data_copy[sensor].readings,time_calc,index_start,index_finish);
+		if(new_index==false){
+			console.log('BINARY SEARCH FAILED, using ',adjusted_index)
+		}
 		new_index=new_index==false?adjusted_index:new_index;		
 		//console.log('adj_index',adjusted_index);
   //let msg=FULL_DATA[sensor].readings[adjusted_index];
   	//	console.log('MSG fail',reading_length, new_index);
   		
 		let msg=FULL_DATA[sensor].readings[new_index];
+		let msg2=FULL_DATA[sensor].readings[new_index];
+	
 
 		//sensor step
 		//be wary that some sensors have 5x fewer readings than others, notably
@@ -1683,45 +1705,52 @@ if(true){
 	//	console.log('MSG: ',msg);
 		 rt_heatmap.feature=get_url_param('feature');
 
-
+let msg_object;
 		if(sub_mid){
 		let midnight_reading=FULL_DATA[sensor].readings[0].payload_cooked[rt_heatmap.feature];
 		let midnight_ts=FULL_DATA[sensor].readings[0].acp_ts;
-		let selected_reading=msg.payload_cooked[rt_heatmap.feature];
-		msg.payload_cooked[rt_heatmap.feature]=selected_reading-midnight_reading;
-	//	console.log(sensor,selected_reading,'-',midnight_reading,  format_time(midnight_ts));
-		}
 		
+		let selected_reading=FULL_DATA[sensor].readings[new_index].payload_cooked[rt_heatmap.feature];
+		
+		console.log(sensor, new_index, selected_reading);
+		
+		let midnight_delta=selected_reading-midnight_reading;
+		 msg_object=JSON.parse(JSON.stringify(msg));
+		
+		msg_object.payload_cooked[rt_heatmap.feature]=midnight_delta;	
+		
+		console.log(sensor,selected_reading,'-',midnight_reading,  format_time(midnight_ts),	msg_object.payload_cooked[rt_heatmap.feature]);
+
+		}
+
 	//	console.log('FINAL_TIME '+sensor, format_time(msg.acp_ts))
-       
+
+       if(sub_mid){
+    				console.log('MSG:', msg_object.payload_cooked[rt_heatmap.feature]);
+
+		rt_heatmap.update_sensor_data(rt_heatmap, msg_object); 
+	   	
+       }else{
+       					console.log('MSG:', msg.payload_cooked[rt_heatmap.feature]);
+
 		rt_heatmap.update_sensor_data(rt_heatmap, msg); 
-	//	rt_heatmap.update_crate_heatmap(rt_heatmap, SELECTED_CRATE, sensor);
-
-
-
-
-
+	
+       }//	rt_heatmap.update_crate_heatmap(rt_heatmap, SELECTED_CRATE, sensor);
       
 		}
-
-if(true){
-
-        console.timeEnd('[RETRIEVAL TIME LAPSED '+'a'+' ]');
-} 
-		
 	  //get min/max for the selected feature
  		 rt_heatmap.get_min_max(rt_heatmap,  rt_heatmap.feature);
         //reset the colorbar
         rt_heatmap.set_colorbar(rt_heatmap);
 
-	             rt_heatmap.rotas_redraw(rt_heatmap);
+	    rt_heatmap.rotas_redraw(rt_heatmap);
 
 if(timing){
 
 	// console.timeEnd('[HEATMAP REDRAW]');
 	 	 console.timeEnd('[TOTAL RETRIEVAL TIME LAPSED]');
-
 }
+
 }
 
 function move_slider(start, end){
@@ -1781,7 +1810,7 @@ button_stop.onclick = function(){
 slider_voronoi.oninput = function() {
   output_voronoi.innerHTML =this.value;
 	DIST_POW=this.value
-	roll_update(get_hours(slider.value), false);
+	roll_update(get_hours(slider.value), SUBTRACT_MIDNIGHT);
 }
 
 
@@ -1790,7 +1819,7 @@ button_forward.onclick = function(){
 	let pre_click=slider.value;
 	slider.value=parseInt(slider.value)+300;
 
-	roll_update(get_hours(slider.value), false);
+	roll_update(get_hours(slider.value), SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
 	
 };
@@ -1799,7 +1828,7 @@ button_backward.onclick = function(){
 	//slider.value-=300;
 	slider.value=parseInt(slider.value)-300;
 	output.innerHTML =format_time(slider.value);
-	roll_update(get_hours(slider.value), false);
+	roll_update(get_hours(slider.value), SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
 };
 
@@ -1808,7 +1837,7 @@ button_forward1.onclick = function(){
 	let pre_click=slider.value;
 	slider.value=parseInt(slider.value)+60;
 
-	roll_update(get_hours(slider.value), false);
+	roll_update(get_hours(slider.value), SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
 	
 };
@@ -1817,14 +1846,14 @@ button_backward1.onclick = function(){
 	//slider.value-=300;
 	slider.value=parseInt(slider.value)-60;
 	output.innerHTML =format_time(slider.value);
-	roll_update(get_hours(slider.value), false);
+	roll_update(get_hours(slider.value), SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
 };
 
 // Update the current slider value (each time you drag the slider handle)
 slider.oninput = function() {
   output.innerHTML =format_time(this.value);
-roll_update(get_hours(this.value), false)
+roll_update(get_hours(this.value), SUBTRACT_MIDNIGHT)
   
 }
 
@@ -1848,11 +1877,12 @@ function recursiveFunction (arr, x, start, end) {
     let mid=Math.floor((start + end)/2);
 
   	let arr_val=parseInt(arr[mid].acp_ts);
+  	let time_threshold=180;
     // Compare mid with given key x
 //    if (arr[mid]===x) return true;
 //	console.log('BUG check',format_time(arr_val),format_time(x), arr_val-x,Math.abs(arr_val-x) )
      //if(nearInt(arr_val, x,30)) return mid;//600seconds is 10mins
-    if(Math.abs(arr_val-x)<150) return mid;//600seconds is 10mins
+    if(Math.abs(arr_val-x)<time_threshold) return mid;//600seconds is 10mins
                    
     // If element at mid is greater than x,
     // search in the left half of mid
