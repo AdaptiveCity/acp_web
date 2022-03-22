@@ -87,7 +87,7 @@ Real-time Building Information Management
 <div class="card">
     <a class="card_link" href="{% url 'space_home' %}">
         <div class="card_title">
-            Space
+            Building Objects
         </div>
         <div class="card_image">
             <img src="{% static 'space/images/space.png' %}"/>
@@ -119,17 +119,16 @@ Real-time Building Information Management
 </div>
 
 <div class="card">
-    <a class="card_link" href="{% url 'dm_home' %}"><!-- DEBUG need BIM url -->
+    <a class="card_link" href="{% url 'people_home' %}"><!-- DEBUG need BIM url -->
         <div class="card_title">
-            Data Management
+            People
         </div>
         <div class="card_image">
-            <img src="{% static 'home/images/data_management.png' %}"/>
+            <img src="{% static 'people/images/people_xkcd.png' %}"/>
         </div>
         <div class="card_text">
             <div class="card_text_content">
-                Administration pages for uploading and updating reference information on this
-                platform, e.g. sensor metadata and building object data.
+                View and manage data for people, such as which office they occupy.
             </div>
         </div>
     </a>

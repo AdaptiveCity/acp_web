@@ -1,42 +1,39 @@
 "use strict"
 
-class SensorEdit {
+class PersonEdit {
 
     constructor() {
-        console.log("sensor_edit.js loading...");
+        console.log("person_edit.js loading...");
     }
 
     init() {
         parent = this;
         console.log("init()");
-        parent.handle_sensor_metadata(parent, SENSOR_METADATA);
+        parent.handle_person_metadata(parent, PERSON_METADATA);
     }
 
-    // Will handle the return jsonobject from the sensors API request
-    handle_sensor_metadata(parent, sensor_metadata) {
-        console.log("sensor_edit handle_sensor_metadata got", sensor_metadata);
+    // Will handle the return jsonobject from the persons API request
+    handle_person_metadata(parent, person_metadata) {
+        console.log("person_edit handle_person_metadata got", person_metadata);
 
-        // Delete the type info returned by the API
-        delete sensor_metadata.acp_type_info;
-
-        this.init_edit(sensor_metadata);
+        this.init_edit(person_metadata);
     }
 
     // ***************************************
     // Initialize the edit box
     // ***************************************
-    init_edit(sensor_metadata) {
+    init_edit(person_metadata) {
 
-        this.update_required(sensor_metadata);
+        this.update_required(person_metadata);
 
-        // Display the Sensor Metadata jsonobject
-        let sensor_metadata_txt = JSON.stringify(sensor_metadata, null, 4);
+        // Display the Person Metadata jsonobject
+        let person_metadata_txt = JSON.stringify(person_metadata, null, 4);
 
-        console.log(sensor_metadata_txt);
+        console.log(person_metadata_txt);
         this.edit_box_el = document.getElementById("edit_box");
-        //let edit_html = sensor_metadata_txt.replace(/(\r\n|\n|\r)/gm, '<br/>');
+        //let edit_html = person_metadata_txt.replace(/(\r\n|\n|\r)/gm, '<br/>');
         //this.edit_box.innerHTML = edit_html;
-        this.edit_box_el.innerHTML = sensor_metadata_txt;
+        this.edit_box_el.innerHTML = person_metadata_txt;
 
         this.edit_form_el = document.getElementById("edit_form");
         let parent = this;
@@ -55,13 +52,14 @@ class SensorEdit {
     }
 
     // Add properties (e.g. "acp_commit") if they're not already in data
-    update_required(sensor_metadata) {
+    update_required(person_metadata) {
 
-        sensor_metadata["acp_ts"] = this.acp_ts_now();
+        person_metadata["acp_ts"] = this.acp_ts_now();
 
-        sensor_metadata["acp_commit"] = {
+        person_metadata["acp_commit"] = {
                 "acp_person_id": ACP_PERSON_ID, // from template
                 "acp_person_name": ACP_PERSON_NAME ? ACP_PERSON_NAME : "ADD YOUR FULL NAME",
+                "date": (new Date()).toISOString(),
                 "comment": ""
         }
     }
@@ -104,8 +102,7 @@ class SensorEdit {
             "$.acp_commit.acp_person_id",
             "$.acp_commit.acp_person_name",
             "$.acp_ts",
-            "$.acp_type_id",
-            "$.acp_id"
+            "$.person_id"
         ];
 
         console.log("validating");
@@ -126,8 +123,8 @@ class SensorEdit {
             }
         }
 
-        if (jsonPath(metadata_obj,"$.acp_id") != ACP_ID) {
-                parent.error_box(parent, "acp_id must be "+ACP_ID);
+        if (jsonPath(metadata_obj,"$.person_id") != PERSON_ID) {
+                parent.error_box(parent, "person_id must be "+PERSON_ID);
                 return false;
             }
 
@@ -206,4 +203,4 @@ class SensorEdit {
         return (Date.now() / 1000).toFixed(3);
     }
 
-} // end class SensorEdit
+} // end class PersonEdit

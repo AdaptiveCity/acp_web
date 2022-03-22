@@ -1,44 +1,36 @@
-{% extends "data_management/sensor/sensor_template.html" %}
+{% extends "people/person/person_template.html" %}
 {% load static %}
-{% block title %}{{ ACP_ID }} History{% endblock %}
+{% block title %}{{ PERSON_ID }} Summary{% endblock %}
 
 {% block head %}
     <!-- Our style sheets -->
-    <link rel="stylesheet" type="text/css" href="{% static 'data_management/css/sensor_history.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'people/css/history.css' %}" />
 
-    <!-- chart.js defines class SensorChart-->
-    <script type='text/javascript' src="{% static 'data_management/js/sensor_history.js' %}"></script>
+    <script type='text/javascript' src="{% static 'people/js/person_history.js' %}"></script>
 
     <!-- Page local script -->
     <script type="text/javascript">
-        var ACP_ID = '{{ ACP_ID }}'; // e.g. 'temperature'
-        // Note this embeds "acp_type_id" in the link, to be replaced in the JS
-        var SENSOR_TYPE_LINK = "{% url 'sensor_type' 'acp_type_id' %}";
-        // This link will embed the correct acp_id value as was given for this page
-        var SENSOR_CHART_LINK = "{% url 'sensor_chart' acp_id %}";
+        var PERSON_ID = '{{ PERSON_ID }}';
 
-        var API_SENSOR_INFO = JSON.parse('{{ API_SENSOR_INFO|escapejs }}');
-        var API_SENSOR_HISTORY = JSON.parse('{{ API_SENSOR_HISTORY|escapejs }}');
-        var ACP_TYPE_INFO = JSON.parse('{{ ACP_TYPE_INFO|escapejs }}');
-
+        var API_PERSON_HISTORY = JSON.parse('{{ API_PERSON_HISTORY|escapejs }}');
     </script>
 {% endblock %}
 
 {% block header_title %}
-Sensor History {{ ACP_ID }}
+Person History {{ PerSON_ID }}
 {% endblock %}
 
-{% block sensor_breadcrumbs %}
+{% block person_breadcrumbs %}
     <div class="breadcrumb">
-        &gt; Metadata
+        &gt; History
     </div>
-{% endblock %} <!-- end sensor_breadcrumbs -->
+{% endblock %} <!-- end person_breadcrumbs -->
 
-{% block sensor_content %}
+{% block person_content %}
 
-<div id="sensor_history">
-    <h2>Sensor History</h2>
-    <!-- javascript will add  sensor history data -->
+<div id="person_history">
+    <h2>Person History</h2>
+    <!-- javascript will add  person history data -->
 </div>
 
 <div id="popup">
@@ -49,13 +41,13 @@ Sensor History {{ ACP_ID }}
     </pre>
 </div>
 
-{% endblock %} <!-- end sensor_content -->
+{% endblock %} <!-- end person_content -->
 
 <!-- This script will always be placed at bottom of page (by master cdbb.html template) -->
 {% block lazy_script %}
 <script>
     console.log('lazy_script');
-    var sensor_history = new SensorHistory();
-    sensor_history.init();
+    var person_history = new PersonHistory();
+    person_history.init();
 </script>
 {% endblock %} <!-- lazy_script -->

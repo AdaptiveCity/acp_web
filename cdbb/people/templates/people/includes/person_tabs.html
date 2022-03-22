@@ -1,0 +1,14 @@
+<div class="contextual_links">
+    {% if '/person/' in request.path %}<div class="contextual_link_active">{% else %}<div class="contextual_link">{% endif %}
+        <a href="{% url 'people_person' person_id %}">Person</a>
+    </div>
+    {% if '/person_location/' in request.path %}<div class="contextual_link_active">{% else %}<div class="contextual_link">{% endif %}
+        <a href="{% url 'people_person_location' person_id %}">Location</a>
+    </div>
+    {% if '/person_history/' in request.path %}<div class="contextual_link_active">{% else %}<div class="contextual_link">{% endif %}
+        <a href="{% url 'people_person_history' person_id %}">History</a>
+    </div>
+    {% if '/person_edit/' in request.path %}<div class="contextual_link_active">{% else %}<div class="contextual_link">{% endif %}
+        <a href="{% url 'people_person_edit' person_id %}">Edit</a>
+    </div>
+</div><!-- end contextual_links -->

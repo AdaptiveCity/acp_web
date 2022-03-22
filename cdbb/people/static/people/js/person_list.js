@@ -38,12 +38,12 @@ class PersonList {
         console.log("handle_person_list got", person_list);
 
         // We will convert the person_list['types'] list into an object for easier lookup.
-        let insts_obj = person_list['insts'];
+        let insts_obj = person_list['insts_info'];
 
         // Display the person List jsononbject
         //let person_list_txt = JSON.stringify(person_list, null, 2);
         //parent.person_list_el.innerHTML = "<pre>" + this.escapeHTML(person_list_txt) + "</pre>";
-        let people = person_list["people"];
+        let people = person_list["people_info"];
 
         // Contruct and append the table heading row.
         let heading_tr = parent.make_heading();
@@ -73,41 +73,42 @@ class PersonList {
 
         let inst_id_th = document.createElement('th');
         inst_id_th.className = 'person_list_inst_id';
-        inst_id_th.textContent = 'inst_id';
+        inst_id_th.textContent = 'Institutions';
         heading_tr.appendChild(inst_id_th);
+
+        let bim_th = document.createElement('th');
+        bim_th.className = 'person_list_bim';
+        bim_th.textContent = 'Office location';
+        heading_tr.appendChild(bim_th);
 
         let date_th = document.createElement('th');
         date_th.className = 'person_list_date';
         date_th.textContent = 'Date Added';
         heading_tr.appendChild(date_th);
 
-        let features_th = document.createElement('th');
-        features_th.className = 'person_list_features';
-        features_th.textContent = 'Features';
-        heading_tr.appendChild(features_th);
-
         return heading_tr;
     }
 
     // Contruct a 'tr' DOM object for a person
-    make_row(person, types_obj) {
+    make_row(person, insts_obj) {
         let person_tr = document.createElement('tr');
 
         // person_id (person identifier)
         let person_id_td = document.createElement('td');
         let person_id_a = document.createElement('a');
         person_id_a.href = PERSON_LINK.replace('person_id', person['person_id']); // cunning eh?
-        person_id_a.textContent = person['person_id'];
+        person_id_a.textContent = person['person_id'] + ' ' + person['name'];
         person_id_td.appendChild(person_id_a);
         person_tr.appendChild(person_id_td);
 
-        // inst_id (person type identifier)
-        let inst_id_td = document.createElement('td');
-        let inst_id_a = document.createElement('a');
-        inst_id_a.href = INST_LINK.replace('inst_id', person['inst_id']);
-        inst_id_a.textContent = person['inst_id'];
-        inst_id_td.appendChild(inst_id_a);
-        person_tr.appendChild(inst_id_td);
+        // insts (person type identifier)
+        let insts_td = parent.make_insts(person, insts_obj);
+        person_tr.appendChild(insts_td);
+
+        // Building info, e.g. rooms occupied
+        // Make a 'td' containing e.g. "temperature,humidity" from the person.bim array
+        let bim_td = parent.make_bim(person);
+        person_tr.appendChild(bim_td);
 
         // DATE
         let date_td = document.createElement('td');
@@ -118,41 +119,42 @@ class PersonList {
         date_td.textContent = date_str;
         person_tr.appendChild(date_td);
 
-        // FEATURES (such as temperature, humidity, co2)
-        // Make a 'td' containing e.g. "temperature,humidity" from the person.features array
-        let features_td = parent.make_features(person, types_obj);
-        person_tr.appendChild(features_td);
-
         return person_tr
+    }
+
+    make_insts(person, insts_obj) {
+        let insts_td = document.createElement('td');
+        if (person.hasOwnProperty('insts')) {
+            for (let inst_id in person['insts']) {
+                let inst_name = inst_id;
+                if (insts_obj.hasOwnProperty(inst_id) && insts_obj[inst_id].hasOwnProperty['name']) {
+                    inst_name = insts_obj[inst_id]['name'];
+                };
+                let insts_a = document.createElement('a');
+                insts_a.className = "person_list_inst";
+                insts_a.href = INST_LINK.replace('inst_id', inst_id);
+                insts_a.textContent = inst_name;
+                insts_td.appendChild(insts_a);
+            }
+        }
+        return insts_td;
     }
 
     // Get comma-separated string of feature names for a given person
     // person has property 'inst_id' which is lookup into the types info that was also returned by the API.
-    make_features(person, types_obj) {
-        //console.log('make_features() given',types_obj);
-        let features_txt = '';
-        if ('inst_id' in person) {
-            let inst_id = person['inst_id'];
-            if (inst_id in types_obj) {
-                let person_type_info = types_obj[inst_id]; // This lookup was the point of having 'types_obj'.
-                let person_features = person_type_info['features']; // list of features.
-                let first = true; // just for the comma
-                for (const feature_id in person_features) {
-                    if (!first) {
-                        features_txt += ', ';
-                    }
-                    features_txt += person_features[feature_id]['name'];
-                    first = false;
-                }
-            } else {
-                features_txt = 'type undefined';
+    make_bim(person) {
+        //console.log('make_bim() given',insts_obj);
+        let bim_td = document.createElement('td');
+        if (person.hasOwnProperty('bim')) {
+            for (let crate_id in person['bim']) {
+                let bim_a = document.createElement('a');
+                bim_a.className = "person_list_bim";
+                bim_a.href = BIM_LINK.replace('crate_id', crate_id);
+                bim_a.textContent = crate_id;
+                bim_td.appendChild(bim_a);
             }
-        } else {
-            features_txt = 'person undefined';
         }
-        let person_td = document.createElement('td');
-        person_td.textContent = features_txt;
-        return person_td;
+        return bim_td;
     }
 
     // Filter rows (via display="" or display="none") if they match words in user_filter

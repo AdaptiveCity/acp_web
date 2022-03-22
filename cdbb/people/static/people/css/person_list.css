@@ -44,3 +44,11 @@
   text-align: left; /* Left-align text */
   padding: 3px; /* Add padding */
 }
+
+.person_list_inst {
+    display: block;
+}
+
+.person_list_bim {
+    display: block;
+}

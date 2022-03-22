@@ -1,71 +1,61 @@
 "use strict"
 
-class SensorHistory {
+class PersonHistory {
 
     constructor() {
-        console.log("sensor_history.js loaded...");
+        console.log("person_history.js loaded...");
     }
 
     init() {
         parent = this;
         console.log("init()");
         parent.init_popup(parent);
-        parent.sensor_history_el = document.getElementById('sensor_history');
-        parent.handle_sensor_history(parent);
+        parent.person_history_el = document.getElementById('person_history');
+        parent.handle_person_history(parent);
     }
 
-    // Sort API_SENSOR_HISTORY by `acp_ts` timestamp (newest first)
+    // Sort API_PERSON_HISTORY by `acp_ts` timestamp (newest first)
     sort_history(parent) {
-        API_SENSOR_HISTORY.sort(function(a,b) {
+        API_PERSON_HISTORY.sort(function(a,b) {
             let a_datetime = parent.make_date(a["acp_ts"]);
             let b_datetime = parent.make_date(b["acp_ts"]);
             return b_datetime - a_datetime;
         });
     }
 
-    // Will handle the return jsonobject from the sensors API request
-    // Note full history is  [ API_SENSOR_INFO ] append API_SENSOR_HISTORY
-    handle_sensor_history(parent) {
-        console.log("handle_sensor_history");
+    // Will handle the return jsonobject from the People API request
+    handle_person_history(parent) {
+        console.log("handle_person_history");
 
         try {
             parent.sort_history(parent);
         } catch (e) {
-            API_SENSOR_HISTORY = [];
+            API_PERSON_HISTORY = [];
         }
 
         // Create DOM object to hold this history list
-        let sensor_history_el = document.getElementById('sensor_history');
+        let person_history_el = document.getElementById('person_history');
 
         let history_length = 0;
         try {
-            history_length = API_SENSOR_HISTORY.length;
+            history_length = API_PERSON_HISTORY.length;
         } catch {
             history_length = 0;
         }
         console.log('history_length=',history_length);
 
-        if (typeof API_SENSOR_INFO == "undefined") {
-            let error_div = document.createElement('div');
-            error_div.className = 'error_div';
-            let error_text = 'An error occurred - no metadata found for this sensor.';
-            error_div.appendChild(document.createTextNode(error_text));
-            sensor_history_el.appendChild(error_div);
-            return;
-        }
-
         let history_table = document.createElement('table');
-        history_table.className = 'sensor_history_table';
+        history_table.className = 'person_history_table';
 
-        let history_index = 0;
+        let history_index = 1;
 
-        let current_info = API_SENSOR_INFO;
+        let current_info = API_PERSON_HISTORY[0];
 
         do {
             let previous_info = null;
 
             if (history_index < history_length) {
-                previous_info = API_SENSOR_HISTORY[history_index];
+                previous_info = API_PERSON_HISTORY[history_index];
                 history_index++;
             }
 
@@ -75,15 +65,14 @@ class SensorHistory {
 
         } while (current_info != null);
 
-        sensor_history_el.appendChild(history_table);
+        person_history_el.appendChild(history_table);
     }
 
     // Add a new row to the history page
     // previous_record is needed for the 'diff' column
     history_add_row(history_el, record, previous_record) {
-        // Newest record is API_SENSOR_INFO
         let record_el = document.createElement('tr');
-        record_el.className = "sensor_history_record";
+        record_el.className = "history_record";
 
         // If user 'clicks' the history record, popup will open and stay open (with close button)
         record_el.onclick = function(el) {
@@ -109,7 +98,7 @@ class SensorHistory {
 
     history_add_ts(record_el, record) {
         let ts_el = document.createElement('td');
-        ts_el.className = "sensor_history_ts";
+        ts_el.className = "history_ts";
 
         let datetime = parent.make_date(record['acp_ts']);
 
@@ -122,7 +111,7 @@ class SensorHistory {
 
     history_add_diff(record_el, record, previous_record) {
         let diff_el = document.createElement('td');
-        diff_el.className = "sensor_history_diff";
+        diff_el.className = "history_diff";
         record_el.appendChild(diff_el);
 
         if (record==null || previous_record==null) {
@@ -132,7 +121,7 @@ class SensorHistory {
         for (let property_name in record) {
             if (!(property_name in previous_record)) {
                 let prop_el = document.createElement('div');
-                prop_el.className = "sensor_history_diff_prop_pos";
+                prop_el.className = "history_diff_prop_pos";
                 prop_el.innerText = '+'+property_name;
                 diff_el.appendChild(prop_el);
             }
@@ -141,7 +130,7 @@ class SensorHistory {
         for (let property_name in previous_record) {
             if (!(property_name in record)) {
                 let prop_el = document.createElement('div');
-                prop_el.className = "sensor_history_diff_prop_neg";
+                prop_el.className = "history_diff_prop_neg";
                 prop_el.innerText = '-'+property_name;
                 diff_el.appendChild(prop_el);
             }
@@ -150,10 +139,10 @@ class SensorHistory {
 
     history_add_commit_comment(record_el, record) {
         let comment_el = document.createElement('td');
-        comment_el.className = "sensor_history_comment";
+        comment_el.className = "history_comment";
 
         let person_el = document.createElement('td');
-        person_el.className = "sensor_history_person";
+        person_el.className = "history_person";
 
         let acp_person_id = null;
         let acp_person_name = null;
@@ -262,7 +251,7 @@ class SensorHistory {
     // show_popup is called when a history record is clicked
     fix_popup(parent, record_el, record) {
         parent.popup_fixed = true;
-        record_el.className = 'sensor_history_record_selected';
+        record_el.className = 'history_record_selected';
         parent.popup_close_el.style.display = 'block';
         parent.popup_close_el.onclick = function (el) {
             parent.unfix_popup(parent, record_el);
@@ -275,8 +264,8 @@ class SensorHistory {
     unfix_popup(parent, record_el) {
         console.log("popup unfix");
         parent.popup_fixed = false;
-        record_el.className = "sensor_history_record";
+        record_el.className = "history_record";
         parent.popup_el.style.display = "none";
     }
 
-} // end class SensorHistory
+} // end class PersonHistory

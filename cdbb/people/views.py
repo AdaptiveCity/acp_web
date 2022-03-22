@@ -23,25 +23,8 @@ class PeoplePersonView(LoginRequiredMixin, TemplateView):
             context = super().get_context_data(**kwargs)
             context['PERSON_ID'] = self.kwargs['person_id']
 
-            response = requests.get(settings.API_PEOPLE+'get/'+self.kwargs['person_id']+'/')
-            try:
-                person_metadata = response.json()
-            except json.decoder.JSONDecodeError:
-                    context["PERSON_METADATA"] = '{ "acp_error": "Person metadata unavailable" }'
-                    return context
+            response = requests.get(settings.API_PEOPLE+'get/'+self.kwargs['person_id']+'/?insts_metadata=true')
 
-            context['PERSON_METADATA'] = json.dumps(person_metadata)
-
-            return context
-
-class PeoplePersonMetadataView(LoginRequiredMixin, TemplateView):
-    template_name = 'people/person/person_metadata.html'
-
-    def get_context_data(self, **kwargs):
-            context = super().get_context_data(**kwargs)
-            context['PERSON_ID'] = self.kwargs['person_id']
-
-            response = requests.get(settings.API_PEOPLE+'get/'+self.kwargs['person_id']+'/')
             try:
                 person_metadata = response.json()
             except json.decoder.JSONDecodeError:
@@ -62,12 +45,9 @@ class PeoplePersonHistoryView(LoginRequiredMixin, TemplateView):
             try:
                 person_history_obj = response.json()
             except json.decoder.JSONDecodeError:
-                context["API_PERSON_INFO"] = '{ "acp_error": "Person history unavailable" }'
-                context['API_PERSON_HISTORY'] = '[]'
+                context["API_PERSON_HISTORY"] = '{ "acp_error": "Person history unavailable" }'
                 return context
 
-            if 'person_info' in person_history_obj:
-                context['API_PERSON_INFO'] = json.dumps(person_history_obj['person_info'])
             if 'person_history' in person_history_obj:
                 context['API_PERSON_HISTORY'] = json.dumps(person_history_obj['person_history'])
             return context
@@ -134,17 +114,17 @@ class PeoplePersonEditView(LoginRequiredMixin, TemplateView):
             except json.decoder.JSONDecodeError:
                 print(f'person_edit non-json in plain_text_value',file=sys.stderr)
                 #DEBUG can return person_edit error message here
-                return redirect('dm_person_edit',person_id=person_id)
+                return redirect('people_person_edit',person_id=person_id)
 
             res = requests.post(settings.API_PEOPLE+'update/'+self.kwargs['person_id']+'/',
                                 json=person_metadata_obj)
             if res.ok:
                 print(f'person_edit wrote data to update',file=sys.stderr)
-                return redirect('dm_person_history',person_id=person_id)
+                return redirect('people_person_history',person_id=person_id)
             else:
                 print(f'person_edit bad response from api/people/update',file=sys.stderr)
                 #DEBUG will return to edit page here
-            return redirect('dm_person_history',person_id=person_id)
+            return redirect('people_person_history',person_id=person_id)
 
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
@@ -162,13 +142,13 @@ class PeoplePersonEditView(LoginRequiredMixin, TemplateView):
             return context
 
 class PeoplePersonListView(LoginRequiredMixin, TemplateView):
-    template_name = 'people/person_list.html'
+    template_name = 'people/person/person_list.html'
 
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
 
             # Make Persons API call to get person metadata for all people
-            response = requests.get(settings.API_PEOPLE + 'list/?type_metadata=true')
+            response = requests.get(settings.API_PEOPLE + 'person_list/?insts_metadata=true')
             try:
                 people_info = response.json()
             except json.decoder.JSONDecodeError:
@@ -176,13 +156,5 @@ class PeoplePersonListView(LoginRequiredMixin, TemplateView):
                 return context
 
             context['API_PEOPLE_INFO'] = json.dumps(people_info)
-
-            # e.g. &feature=temperature
-            selected_feature = self.request.GET.get('feature',None)
-            if selected_feature is not None:
-                print("PeoplePersonListView feature in request '"+selected_feature)
-                context['FEATURE'] = selected_feature
-            else:
-                print("PeoplePersonListView no feature",kwargs)
 
             return context

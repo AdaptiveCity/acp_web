@@ -27,7 +27,7 @@ People Data
 
 <div class="card">
         <div class="card_title">
-            People
+            People List
         </div>
         <div class="card_image">
             <a class="card_link" href="{% url 'people_person_list' %}">
@@ -43,32 +43,16 @@ People Data
 
 <div class="card">
         <div class="card_title">
-            Groups
+            People on a Map
         </div>
         <div class="card_image">
-            <a class="card_link" href="{% url 'people_person_list' %}">
-                <img src="{% static 'images/elsys_ems.png' %}"/>
+            <a class="card_link" href="{% url 'space_map' %}">
+                <img src="{% static 'people/images/person_map.png' %}"/>
             </a>
         </div>
         <div class="card_text">
             <div class="card_text_content">
-                Manage reference data for Groups.
-            </div>
-        </div>
-</div>
-
-<div class="card">
-        <div class="card_title">
-            Institutions
-        </div>
-        <div class="card_image">
-            <a class="card_link" href="{% url 'people_person_list' %}">
-                <img src="{% static 'space/images/space.png' %}"/>
-            </a>
-        </div>
-        <div class="card_text">
-            <div class="card_text_content">
-                Manage reference data for institutions.
+                View people office locations.
             </div>
         </div>
 </div>

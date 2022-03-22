@@ -1,9 +1,9 @@
 {% extends "cdbb.html" %}
 {% load static %}
-{% block title %}CDBB Sensor{% endblock %}
+{% block title %}Person{% endblock %}
 
 {% block header_title %}
-Sensor {{ ACP_ID }}
+Person {{ PERSON_ID }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -14,23 +14,20 @@ Sensor {{ ACP_ID }}
         </a>
     </div>
     <div class="breadcrumb">
-        &gt; <a href="{% url 'dm_home' %}">Data Management</a>
+        &gt; <a href="{% url 'people_person_list' %}">People</a>
     </div>
     <div class="breadcrumb">
-        &gt; <a href="{% url 'dm_sensors' %}">Sensors</a>
+        &gt; Person {{ PERSON_ID }}
     </div>
-    <div class="breadcrumb">
-        &gt; Sensor {{ ACP_ID }}
-    </div>
-    {% block sensor_breadcrumbs %}
+    {% block person_breadcrumbs %}
     {% endblock %}
 </div>
 {% endblock %}
 
 {% block content %}
 
-{% include "data_management/includes/sensor_tabs.html" %}
+{% include "people/includes/person_tabs.html" %}
 
-    {% block sensor_content %}
+    {% block person_content %}
     {% endblock %}
 {% endblock %} <!-- end content -->

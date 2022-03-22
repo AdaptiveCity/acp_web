@@ -3,7 +3,7 @@ from django.urls import path
 
 from .views import PeopleHomeView
 # People:
-from .views import PeoplePersonView, PeoplePersonLocationView, PeoplePersonMetadataView, PeoplePersonHistoryView
+from .views import PeoplePersonView, PeoplePersonLocationView, PeoplePersonHistoryView
 from .views import PeoplePersonEditView, PeoplePersonListView
 # Groups:
 #from .views import PeopleGroupView, PeopleGroupsView, PeopleGroupEditView, PeopleGroupHistoryView
@@ -15,7 +15,6 @@ urlpatterns = [
 
     path('person/<person_id>/', PeoplePersonView.as_view(), name='people_person'),
     path('person_location/<person_id>/', PeoplePersonLocationView.as_view(), name='people_person_location'),
-    path('person_metadata/<person_id>/', PeoplePersonMetadataView.as_view(), name='people_person_metadata'),
     path('person_history/<person_id>/', PeoplePersonHistoryView.as_view(), name='people_person_history'),
     path('person_edit/<person_id>/', PeoplePersonEditView.as_view(), name='people_person_edit'),
     path('person_list/', PeoplePersonListView.as_view(), name='people_person_list')

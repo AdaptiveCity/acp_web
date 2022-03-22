@@ -1,27 +1,27 @@
 {% extends "cdbb.html" %}
 {% load static %}
-{% block title %}CDBB Sensor Types{% endblock %}
+{% block title %}CDBB Person List{% endblock %}
 
 {% block head %}
     <!-- Our style sheets -->
-    <link rel="stylesheet" type="text/css" href="{% static 'sensor/css/sensor_types.css' %}" />
+    <link rel="stylesheet" type="text/css" href="/static_web/people/css/person_list.css" />
 
-    <!-- chart.js defines class SensorChart-->
-    <script type='text/javascript' src="{% static 'sensor/js/sensor_types.js' %}"></script>
+    <script type='text/javascript' src="/static_web/people/js/person_list.js"></script>
 
     <!-- Page local script -->
     <script type="text/javascript">
+        var PERSON_LINK = "{% url 'people_person' 'person_id' %}"; // we will replace id as required
+        //DEBUG temporary link ref to INST page
+        var INST_LINK = "{% url 'people_person' 'inst_id' %}"; // we will replace id as required
+        //DEBUG temporary link ref to BIM object page
+        var BIM_LINK = "{% url 'people_person' 'crate_id' %}"; // we will replace id as required
+        var API_PEOPLE_INFO = JSON.parse('{{ API_PEOPLE_INFO | escapejs }}');
 
-        var API_SENSORS_INFO = JSON.parse('{{ API_SENSORS_INFO | escapejs }}');
-
-        var SENSOR_LIST_LINK = "{% url 'sensor_list' %}";
-        var SENSOR_TYPE_LINK = "{% url 'dm_sensor_type' 'acp_type_id' %}";
-        var FEATURE = '{{ FEATURE }}'; // e.g. 'temperature'
     </script>
 {% endblock %}
 
 {% block header_title %}
-Sensor types
+Person list
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -32,12 +32,12 @@ Sensor types
         </a>
     </div>
     <div class="breadcrumb">
-        <a href="{% url 'dm_home' %}">
-            Data Management
+        <a href="{% url 'people_home' %}">
+            People
         </a>
     </div>
     <div class="breadcrumb">
-         &gt; Sensor types
+         &gt; Person list
     </div>
 </div>
 {% endblock %}
@@ -50,9 +50,9 @@ Sensor types
     <input type="text" id="list_search_input" placeholder="Filter (multiple words will work)..."/>
 </div>
 
-<div id="sensor_types">
-    <table id="sensor_types_table">
-    <!-- JS will embed a row-per-sensor-type -->
+<div id="person_list">
+    <table id="person_list_table">
+    <!-- JS will embed a row-per-person -->
     </table>
 </div>
 
@@ -62,7 +62,7 @@ Sensor types
 {% block lazy_script %}
 <script>
     console.log('lazy_script');
-    var sensor_types = new SensorTypes();
-    sensor_types.init();
+    var person_list = new PersonList();
+    person_list.init();
 </script>
 {% endblock %} <!-- lazy_script -->
