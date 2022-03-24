@@ -1,0 +1,28 @@
+{% extends "cdbb.html" %}
+{% load static %}
+{% block title %}CDBB Display Home{% endblock %}
+
+{% block head %}
+
+{% endblock %}
+
+{% block header_title %}
+Display
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <div class="breadcrumb">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/home_icon.png' %}" />
+        </a>
+    </div>
+    <div class="breadcrumb">
+         &gt; Display
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+{% endblock %}
