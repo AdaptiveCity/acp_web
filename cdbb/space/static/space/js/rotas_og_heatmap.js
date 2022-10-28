@@ -5,10 +5,7 @@ const HIGH_REZ = 3;
 const LOW_REZ = 8;
 
 //modify to define in read_url()
-//const SELECTED_CRATE='GW20-FF';
-
-const SELECTED_CRATE='corridor-middle-GF';
-
+const SELECTED_CRATE='GW20-FF';
 
 let DIST_POW=2.5;
 let SUBTRACT_MIDNIGHT=false;
@@ -111,7 +108,7 @@ class RotasHeatMap {
 
         //declare the main colorscheme for the heatmap
         //https://observablehq.com/@d3/color-schemes ; set by 'd3.interpolate'+color-scheme
-        this.color_scheme = d3.scaleSequential(d3.interpolateTurbo); //interpolateViridis//interpolatePlasma//interpolateInferno/RdYlGn
+        this.color_scheme = d3.scaleSequential(d3.interpolatePlasma); //interpolateViridis//interpolatePlasma//interpolateInferno/RdYlGn
 
         //make a global c_conf reference from the parent class;
         //this creates a colorbar svg on the right side of the screen
@@ -124,7 +121,7 @@ class RotasHeatMap {
 
 
 		this.value_ranges={'temperature':[14,21],'co2':[380,600], 'humidity':[30,55],'vdd':[3500,3700]};
-			this.value_ranges_subtr={'temperature':[-1,5],'co2':[-40,100], 'humidity':[30,55],'vdd':[3500,3700]};
+			this.value_ranges_subtr={'temperature':[-2,2],'co2':[-40,100], 'humidity':[30,55],'vdd':[3500,3700]};
 
         //--------RT MONITOR MISC----------//
         //set div id's show status change upon connect
@@ -651,7 +648,7 @@ class RotasHeatMap {
 //            console.log('-----------------------------')
 
         } catch (error) {
-			console.log('ERROR msg probably null', msg, ' has no co2');
+			console.log(msg.acp_id, ' has no co2');
 
             //console.log('failed to update the data struct with payloads', error)
             //console.log('msg received:', msg)
@@ -681,7 +678,7 @@ class RotasHeatMap {
 
          
             //recalculate the rect value based on the new feature
-            let cell_value = parent.get_cell_value(parent, selected_crate, rect_loc);
+            let cell_value = parent.get_cell_value_old(parent, selected_crate, rect_loc); //RATHER THAN JUST get_cell_value()
 
             //transform the feature value into a color
             let color = parent.color_scheme(cell_value);
@@ -735,7 +732,7 @@ class RotasHeatMap {
                 }
 
                 //recalculate the rect value based on the new feature
-                let cell_value = parent.get_cell_value(parent, selected_crate, rect_loc);
+                let cell_value = parent.get_cell_value_old(parent, selected_crate, rect_loc);
 
                 //transform the feature value into a color
                 let color = parent.color_scheme(cell_value);
@@ -1096,7 +1093,7 @@ class RotasHeatMap {
                                 scale: scale.toFixed(1) //round
                             }
 
-                            let cell_value = parent.get_cell_value(parent, selected_crate, loc).toFixed(2); //round to 2dec places ;
+                            let cell_value = parent.get_cell_value_old(parent, selected_crate, loc).toFixed(2); //round to 2dec places ;
                             let color = parent.color_scheme(cell_value);
 
                             //draw the cells (rects) on screen
@@ -1198,7 +1195,7 @@ let loc_list=JSON.parse("["+rect.dataset.loc+"]");
                 scale: parseFloat(loc_list[2])
             }
 
-                    let cell_value = parent.get_cell_value(parent, SELECTED_CRATE, loc).toFixed(2); //round to 2dec places ;
+                    let cell_value = parent.get_cell_value_old(parent, SELECTED_CRATE, loc).toFixed(2); //round to 2dec places ;
         		    let color = parent.color_scheme(cell_value);
         		    
 					         d3.select(rect)
@@ -1571,7 +1568,6 @@ const date = urlParams.get('date');
 
 if(date){
 	url+='?date='+String(date)+'/'
-	console.log('selected date is ',date);
 }
 
 	 //local file loading from Django
@@ -1585,8 +1581,8 @@ if(date){
 			console.log(Object.keys(received_data));
 	
 			for (let j=0;j<Object.keys(received_data).length;j++){
-				let sensor= Object.keys(received_data)[j];
-				console.log(sensor, received_data[sensor].readings.length);
+				let sensor= Object.keys(received_data)[j]
+				console.log(sensor, received_data[sensor].readings.length)
 				if (received_data[sensor].readings.length>10){
 					all_sensors.push(sensor)
 				}
@@ -1613,82 +1609,11 @@ if(date){
 }
 
 
-function get_day_chrono_crate(){
-
-let	url='http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_day_crate/wgb/'+String(SELECTED_CRATE)+'/';
-
-
-const queryString = window.location.search;
-const urlParams = new URLSearchParams(queryString);
-const date = urlParams.get('date');
-
-let chrono_readings={};
- 
-if(date){
-	url+='?date='+String(date)+'/';
-	console.log('selected date is ',date);
-	}
-
-	 //local file loading from Django
-        d3.json(url, {crossOrigin: "anonymous"}).then(
-
-        	function (received_data) {
-				let pre_chrono_readings=[];
-					
-				console.log(Object.keys(received_data));
-
-
-				//iterate through the list of sensors supplied by the api
-				for (let j=0;j<Object.keys(received_data).length;j++){
-
-					//get the sensors acp id
-					let sensor= Object.keys(received_data)[j];
-					let sensor_readings=received_data[sensor].readings;
-
-					console.log(sensor, sensor_readings.length, pre_chrono_readings.length);
-
-					pre_chrono_readings.push(...sensor_readings);
-				}
-
-
-				//iterate through the list of chrono data points
-				for (let k=0;k<pre_chrono_readings.length;k++){
-
-					//convert string acp_ts to int to be used as a dict key
-					let ts_key_parsed=parseInt(pre_chrono_readings[k].acp_ts);
-
-					console.log(ts_key_parsed, pre_chrono_readings[k].acp_ts)
-
-					if (typeof(chrono_readings[ts_key_parsed])=='undefined'){
-
-						chrono_readings[ts_key_parsed]=[];
-						chrono_readings[ts_key_parsed].push(pre_chrono_readings[k]);
-					}
-					
-					else {chrono_readings[ts_key_parsed].push(pre_chrono_readings[k]);}
-				}
-
-				console.log(chrono_readings);
-
-
-				return chrono_readings;
-
-
-	        });
-
-}
-
-
-
 function get_url_param(parameter){
 	const queryString = window.location.search;
 	const urlParams = new URLSearchParams(queryString);
 	return urlParams.get(parameter);
 }
-
-
-
-
 
 function roll_update(time, sub_mid){
 
@@ -1759,11 +1684,9 @@ if(timing){
 
 		let full_data_copy=FULL_DATA;
 		let new_index=recursiveFunction(full_data_copy[sensor].readings,time_calc,index_start,index_finish);
-		
 		if(new_index==false){
 			console.log('BINARY SEARCH FAILED, using ',adjusted_index)
 		}
-		
 		new_index=new_index==false?adjusted_index:new_index;		
 		//console.log('adj_index',adjusted_index);
   //let msg=FULL_DATA[sensor].readings[adjusted_index];
@@ -1783,13 +1706,7 @@ if(timing){
 		 rt_heatmap.feature=get_url_param('feature');
 
 let msg_object;
-
-		console.log('INCOMING FLASH ', sensor);
-       rt_heatmap.draw_splash(rt_heatmap, sensor, true);
-
-
 		if(sub_mid){
-		
 		let midnight_reading=FULL_DATA[sensor].readings[0].payload_cooked[rt_heatmap.feature];
 		let midnight_ts=FULL_DATA[sensor].readings[0].acp_ts;
 		
@@ -1798,7 +1715,6 @@ let msg_object;
 		console.log(sensor, new_index, selected_reading);
 		
 		let midnight_delta=selected_reading-midnight_reading;
-		
 		 msg_object=JSON.parse(JSON.stringify(msg));
 		
 		msg_object.payload_cooked[rt_heatmap.feature]=midnight_delta;	
@@ -1810,20 +1726,16 @@ let msg_object;
 	//	console.log('FINAL_TIME '+sensor, format_time(msg.acp_ts))
 
        if(sub_mid){
-    	//console.log('MSG:', msg_object.payload_cooked[rt_heatmap.feature]);
+    				console.log('MSG:', msg_object.payload_cooked[rt_heatmap.feature]);
 
-		//rt_heatmap.update_sensor_data(rt_heatmap, msg_object); 
+		rt_heatmap.update_sensor_data(rt_heatmap, msg_object); 
 	   	
        }else{
+       					console.log('MSG:', msg.payload_cooked[rt_heatmap.feature]);
 
-       	//console.log('MSG:',msg, msg.payload_cooked[rt_heatmap.feature]);
-
-		//rt_heatmap.update_sensor_data(rt_heatmap, msg); 
+		rt_heatmap.update_sensor_data(rt_heatmap, msg); 
 	
        }//	rt_heatmap.update_crate_heatmap(rt_heatmap, SELECTED_CRATE, sensor);
-
-
-
       
 		}
 	  //get min/max for the selected feature
@@ -1851,7 +1763,6 @@ let output = document.getElementById("demo");
 
 //output.innerHTML = format_time(slider.value); // Display the default slider value
 let current_value=slider.value;
-console.log('selected_time');
 
 let button_forward=document.getElementById("button_forward");
 let button_backward=document.getElementById("button_backward");

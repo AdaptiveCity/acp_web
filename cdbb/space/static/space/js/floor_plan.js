@@ -61,7 +61,7 @@ class FloorPlan {
         //-------------------------------------------//
 
         //----set parametrs for drawn sensors on the floorplan----//
-        this.sensor_opacity = 0.0;
+        this.sensor_opacity = 0.75;
         // radius is calculated wrt scale so we have consistent sensor radius across all spacefloors
         this.radius_scaling = 1.75; // a parameters that helps calculates the sensor radius in response to svg scale
         //calculated in handle_sensors_metadata()
