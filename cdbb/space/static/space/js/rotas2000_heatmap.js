@@ -19,6 +19,9 @@ let FULL_DATA_OG={};
 let ALL_SENSORS=[];
 let SENSOR_INDICES={};
 
+
+let TIME_BUS={};
+
 class RotasHeatMap {
 
     // Called to create instance in page :let rt_heatmap = new HeatMap(floor_plan);
@@ -1629,6 +1632,11 @@ if(date){
 	console.log('selected date is ',date);
 	}
 
+
+
+
+
+
 	 //local file loading from Django
         d3.json(url, {crossOrigin: "anonymous"}).then(
 
@@ -1657,7 +1665,7 @@ if(date){
 					//convert string acp_ts to int to be used as a dict key
 					let ts_key_parsed=parseInt(pre_chrono_readings[k].acp_ts);
 
-					console.log(ts_key_parsed, pre_chrono_readings[k].acp_ts)
+				// /	console.log(ts_key_parsed, pre_chrono_readings[k].acp_ts)
 
 					if (typeof(chrono_readings[ts_key_parsed])=='undefined'){
 
@@ -1676,6 +1684,145 @@ if(date){
 
 	        });
 
+
+
+
+
+	        
+
+}
+
+function do_rotas(){
+
+
+let	url='http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_day_crate/wgb/'+String(SELECTED_CRATE)+'/';
+
+
+const queryString = window.location.search;
+const urlParams = new URLSearchParams(queryString);
+const date = urlParams.get('date');
+
+let chrono_readings={};
+ 
+if(date){
+	url+='?date='+String(date)+'/';
+	console.log('selected date is ',date);
+	}
+
+
+
+let myPromise = new Promise(function(myResolve, myReject) {
+  let req = new XMLHttpRequest();
+
+  let response;
+  req.open('GET',url);
+  req.onload = function() {
+    if (req.status == 200) {
+    response=JSON.parse(req.response);
+    console.log('req response',response, req);
+      myResolve(response);
+    } else {
+      myReject("File not Found");
+    }
+  };
+  req.send();
+});
+
+myPromise.then(
+  function(value) {
+
+ let chrono_obj= print_data(value);
+ 
+
+console.log('PROMISE SEQUENCE',chrono_obj);
+
+let chrono_list=Object.keys(chrono_obj);
+
+let start=chrono_list[0]
+let finish=chrono_list[chrono_list.length-1];
+
+TIME_BUS=chrono_obj;
+
+console.log('SF', start, finish);
+move_slider(start,finish); //modify move slider to take TIME BUS as an argumetn so no global level variable would be needed
+
+  },
+  
+  function(error) {console.log('NOOOPE', value);}
+);
+
+
+function print_data(received_data) {
+
+
+				let pre_chrono_readings=[];
+					
+				console.log(Object.keys(received_data));
+
+
+				//iterate through the list of sensors supplied by the api
+				for (let j=0;j<Object.keys(received_data).length;j++){
+
+					//get the sensors acp id
+					let sensor= Object.keys(received_data)[j];
+
+					let sensor_readings=received_data[sensor].readings;
+					
+					console.log('sensor_readings',sensor_readings);
+					console.log(sensor, sensor_readings.length, pre_chrono_readings.length);
+
+					pre_chrono_readings.push(...sensor_readings);
+				}
+
+
+				//iterate through the list of chrono data points
+				for (let k=0;k<pre_chrono_readings.length;k++){
+
+					//convert string acp_ts to int to be used as a dict key
+					let ts_key_parsed=parseInt(pre_chrono_readings[k].acp_ts);
+
+					console.log(ts_key_parsed, pre_chrono_readings[k].acp_ts)
+
+					if (typeof(chrono_readings[ts_key_parsed])=='undefined'){
+
+						chrono_readings[ts_key_parsed]=[];
+						chrono_readings[ts_key_parsed].push(pre_chrono_readings[k]);
+					}
+					
+					else {chrono_readings[ts_key_parsed].push(pre_chrono_readings[k]);}
+				}
+
+			//	console.log(chrono_readings);
+
+
+				return chrono_readings;
+
+
+	        
+}
+
+	
+}
+
+function roll_update_new(unix_ts, sub_mid){
+
+	 rt_heatmap.feature=get_url_param('feature');
+
+	let time_bus_list=TIME_BUS[unix_ts];
+
+	console.log(time_bus_list, unix_ts);
+	
+	for (let i=0; i<time_bus_list.length;i++){
+
+	let time_bus_sensor=time_bus_list[i].acp_id
+			console.log('INCOMING FLASH ', time_bus_sensor);
+       rt_heatmap.draw_splash(rt_heatmap, time_bus_sensor, true);
+	
+	}
+
+	
+
+
 }
 
 
@@ -1685,10 +1832,6 @@ function get_url_param(parameter){
 	const urlParams = new URLSearchParams(queryString);
 	return urlParams.get(parameter);
 }
-
-
-
-
 
 function roll_update(time, sub_mid){
 
@@ -1848,10 +1991,12 @@ console.log('START',start, 'END', end);
 
 let slider = document.getElementById("myRange");
 let output = document.getElementById("demo");
+let output_ts = document.getElementById("demo2");
+
 
 //output.innerHTML = format_time(slider.value); // Display the default slider value
 let current_value=slider.value;
-console.log('selected_time');
+console.log('selected_time',current_value);
 
 let button_forward=document.getElementById("button_forward");
 let button_backward=document.getElementById("button_backward");
@@ -1871,6 +2016,11 @@ let output_voronoi=document.getElementById("vor_val");
 output_voronoi.innerHTML =DIST_POW;
 
 let ticking_timer;
+
+
+//-------------------------------------------------------------------//
+//							BUTTON DEFINITIONS						 //
+//-------------------------------------------------------------------//
 
 button_play.onclick = function(){
 
@@ -1899,7 +2049,7 @@ button_stop.onclick = function(){
 slider_voronoi.oninput = function() {
   output_voronoi.innerHTML =this.value;
 	DIST_POW=this.value
-	roll_update(get_hours(slider.value), SUBTRACT_MIDNIGHT);
+	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
 }
 
 
@@ -1908,17 +2058,20 @@ button_forward.onclick = function(){
 	let pre_click=slider.value;
 	slider.value=parseInt(slider.value)+300;
 
-	roll_update(get_hours(slider.value), SUBTRACT_MIDNIGHT);
+	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
-	
+	output_ts.innerHTML = 'UNIX_TS';//format_time(slider.value); // Display the default slider value
+
 };
 
 button_backward.onclick = function(){
 	//slider.value-=300;
 	slider.value=parseInt(slider.value)-300;
 	output.innerHTML =format_time(slider.value);
-	roll_update(get_hours(slider.value), SUBTRACT_MIDNIGHT);
+	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
+	output_ts.innerHTML = 'UNIX_TS';//
+
 };
 
 button_forward1.onclick = function(){
@@ -1926,23 +2079,32 @@ button_forward1.onclick = function(){
 	let pre_click=slider.value;
 	slider.value=parseInt(slider.value)+60;
 
-	roll_update(get_hours(slider.value), SUBTRACT_MIDNIGHT);
+	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
-	
+	output_ts.innerHTML = 'UNIX_TS';//
+
 };
 
 button_backward1.onclick = function(){
 	//slider.value-=300;
 	slider.value=parseInt(slider.value)-60;
 	output.innerHTML =format_time(slider.value);
-	roll_update(get_hours(slider.value), SUBTRACT_MIDNIGHT);
+	output_ts.innerHTML = 'UNIX_TS';//
+
+	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
 };
+
+//------------------------------------------------------//
+//						SLIDER 							//
+//------------------------------------------------------//
+
 
 // Update the current slider value (each time you drag the slider handle)
 slider.oninput = function() {
   output.innerHTML =format_time(this.value);
-roll_update(get_hours(this.value), SUBTRACT_MIDNIGHT)
+  output_ts.innerHTML = this.value;//
+  roll_update_new(this.value, SUBTRACT_MIDNIGHT);
   
 }
 
@@ -1953,6 +2115,7 @@ document.getElementById("myRange").max=parseInt(start_plus24);
 document.getElementById("myRange").value=parseInt(end);
 
 output.innerHTML = format_time(parseInt(end));
+output_ts.innerHTML = 'UNIX_TS';//
 
 }
 
