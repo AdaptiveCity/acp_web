@@ -84,7 +84,11 @@ class RotasHeatMap {
         //------FETCH THE DATA FOR SENSORS------//
         //--------------------------------------//
 
-        this.handle_sensors_metadata(this, API_READINGS_INFO);
+//rewrite handle_sensors_metadata becayse otherwise we/re ignoring the timestmap at the url level
+//and getting wrong data.
+
+        this.handle_sensors_metadata(this, API_READINGS_INFO);//this disregards the selected date on the url
+        console.log('API READINGS', API_READINGS_INFO);
         //parent.get_local_sensors(parent);
 
     }
@@ -581,12 +585,17 @@ class RotasHeatMap {
             //let path_val = jsonPath(d, feature['jsonpath']); //d.payload_cooked.temperature;
             //TODO USE JSONPATH
             try {
-                let sensor_type = results['sensors'][sensor]['acp_type_id']
+                let sensor_type = results['sensors'][sensor]['acp_type_id'];
+                console.log('current_sensor: ',sensor);
+
                 parent.sensor_data[sensor] = {
                     'acp_id': sensor,
                     'location': results['sensors'][sensor].acp_location_xyz,
                     'crate_id': results['sensors'][sensor].crate_id,
+
+                    //the problem lies with payload because it's the only one targeting results
                     'payload': results['readings'][sensor].payload_cooked, // change with jsonPath -- charts.js example
+
                     'features': results['sensor_types'][sensor_type].features,
                     'acp_ts': results['readings'][sensor].acp_ts
                 }
@@ -1449,113 +1458,6 @@ if(!SUBTRACT_MIDNIGHT){
     //-------------------END UTILITY FUNCTIONS-------------------------//
     //-----------------------------------------------------------------//
 
-    //-----------------------------------------------------------------//
-    //------------------------FAKE DEPLOYMENT--------------------------//
-    //-----------------------------------------------------------------//
-
-
-    //callback to update sensors (for faked sensor data)
-    update_callback(parent, acp_id, walk) {
-        parent.draw_splash(parent, acp_id, true)
-    }
-
-    //async update for faked sensor data - updates all;
-    //iterates through sensors and sets them to update on screen every *x* milliseconds
-    fake_splashes(parent) {
-        console.log(parent.sensor_data)
-        for (let sensor in parent.sensor_data) {
-            console.log('incoming update ', sensor)
-            let wildcard = false //Math.random() < 0.5;
-            window.setInterval(parent.update_callback, parent.jb_tools.random_int(8000, 8000 * 10), parent, sensor, wildcard);
-        }
-    }
-
-    //show fake path on LL
-    fake_path(parent) {
-        let sens_list;
-        switch (CRATE_ID) {
-            case 'GF':
-                sens_list = [
-                    "elsys-ers-04f006",
-                    "elsys-ers-04f007",
-                    "elsys-snd-04bb60",
-                    "elsys-ers-04f005",
-                    "elsys-co2-0558bb",
-                    "elsys-co2-0558b2",
-                    "elsys-co2-0558b5",
-                    "elsys-co2-0559f5",
-                    "elsys-co2-0559f4",
-                    "elsys-co2-0559f7",
-                ]
-                break;
-            case 'FF':
-                sens_list = [
-                    "elsys-ems-050368",
-                    "elsys-co2-055872",
-                    "elsys-eye-04d243",
-                    "elsys-eye-04d241",
-                    "elsys-eye-04d23c",
-                    "elsys-eye-04d245",
-                    "elsys-co2-0559fa",
-                    "elsys-eye-04d23e",
-                    "elsys-co2-05586f"
-                ];
-                break;
-            case 'll_0':
-                sens_list = [
-                    "elsys-co2-0520ba",
-                    "elsys-ems-0503e0",
-                    "elsys-eye-044504",
-                    "elsys-co2-0520bb",
-                    "elsys-co2-0520bc",
-                    "elsys-co2-0520bd",
-                    "elsys-co2-0520be",
-                    "elsys-co2-0520bf",
-                    "elsys-co2-0520c0",
-                    "elsys-co2-0520c1",
-                    "elsys-co2-0520c2",
-                    "elsys-co2-0520c3"
-                ];
-                break;
-        }
-
-
-
-        let counter = 1;
-        for (let i = 0; i < sens_list.length; i++) {
-            let sensor = sens_list[i];
-            console.log('incoming update ', sensor)
-            window.setTimeout(parent.update_callback, counter * 1000, parent, sensor, false);
-            counter++;
-        }
-    }
-
-    // Alternative to get_readings() using local file for sensors API response
-    get_local_sensors(parent) {
-
-        console.log('loading local data')
-
-        //we have fake data only for wgb and vlab
-        let selection = CRATE_ID == 'FF' ? 'WGB' : 'VLAB'; //for now leaving the Lockdown Lab away from this
-
-        //local file loading from Django
-        d3.json(window.location.origin + "/static_web/js/" + selection + "_JSON.json", {
-            crossOrigin: "anonymous"
-
-        }).then(function (received_data) {
-            console.log('heatmap received', received_data)
-            parent.handle_sensors_metadata(parent, received_data)
-
-            //-----------------------------------//
-            //---generate and show the heatmap---//
-            //-----------------------------------//
-            parent.show_heatmap(parent);
-        });
-    }
-
-    //-----------------------------------------------------------------//
-    //---------------------END FAKE DEPLOYMENT-------------------------//
-    //-----------------------------------------------------------------//
 
 }
 
@@ -1695,60 +1597,60 @@ if(date){
 function do_rotas(){
 
 
-let	url='http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_day_crate/wgb/'+String(SELECTED_CRATE)+'/';
+	let	url='http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_day_crate/wgb/'+String(SELECTED_CRATE)+'/';
 
 
-const queryString = window.location.search;
-const urlParams = new URLSearchParams(queryString);
-const date = urlParams.get('date');
+	const queryString = window.location.search;
+	const urlParams = new URLSearchParams(queryString);
+	const date = urlParams.get('date');
 
-let chrono_readings={};
- 
-if(date){
-	url+='?date='+String(date)+'/';
-	console.log('selected date is ',date);
-	}
+	let chrono_readings={};
+	 
+	if(date){
+		url+='?date='+String(date)+'/';
+		console.log('selected date is ',date);
+		}
 
 
 
-let myPromise = new Promise(function(myResolve, myReject) {
-  let req = new XMLHttpRequest();
+	let myPromise = new Promise(function(myResolve, myReject) {
+	  let req = new XMLHttpRequest();
 
-  let response;
-  req.open('GET',url);
-  req.onload = function() {
-    if (req.status == 200) {
-    response=JSON.parse(req.response);
-    console.log('req response',response, req);
-      myResolve(response);
-    } else {
-      myReject("File not Found");
-    }
-  };
-  req.send();
-});
+	  let response;
+	  req.open('GET',url);
+	  req.onload = function() {
+	    if (req.status == 200) {
+	    response=JSON.parse(req.response);
+	    console.log('req response',response, req);
+	      myResolve(response);
+	    } else {
+	      myReject("File not Found");
+	    }
+	  };
+	  req.send();
+	});
 
-myPromise.then(
-  function(value) {
+	myPromise.then(
+	  function(value) {
 
- let chrono_obj= print_data(value);
- 
+	 let chrono_obj= print_data(value);
+	 
 
-console.log('PROMISE SEQUENCE',chrono_obj);
+	console.log('PROMISE SEQUENCE',chrono_obj);
 
-let chrono_list=Object.keys(chrono_obj);
+	let chrono_list=Object.keys(chrono_obj);
 
-let start=chrono_list[0]
-let finish=chrono_list[chrono_list.length-1];
+	let start=chrono_list[0]
+	let finish=chrono_list[chrono_list.length-1];
 
-TIME_BUS=chrono_obj;
+	TIME_BUS=chrono_obj;
 
-console.log('SF', start, finish);
-move_slider(start,finish); //modify move slider to take TIME BUS as an argumetn so no global level variable would be needed
+	console.log('SF', start, finish);
+	move_slider(start,finish); //modify move slider to take TIME BUS as an argumetn so no global level variable would be needed
 
-  },
-  
-  function(error) {console.log('NOOOPE', value);}
+	  },
+	  
+	  function(error) {console.log('NOOOPE', value);}
 );
 
 
@@ -1797,9 +1699,7 @@ function print_data(received_data) {
 
 				return chrono_readings;
 
-
-	        
-}
+			}
 
 	
 }
@@ -1807,9 +1707,24 @@ function print_data(received_data) {
 function roll_update_new(unix_ts, sub_mid){
 
 	 rt_heatmap.feature=get_url_param('feature');
+	 
+let time_bus_list=TIME_BUS[unix_ts];
 
-	let time_bus_list=TIME_BUS[unix_ts];
+console.log('definition',time_bus_list, time_bus_list==undefined );
+	if(time_bus_list==undefined){
+	//check the two surroundin timestamps at i-1 and i+1
+	//and select which one has the smallest delta	
+	//https://stackoverflow.com/questions/8584902/get-the-closest-number-out-of-an-array
+	let closest_value = Object.keys(TIME_BUS).reduce((prev, curr) => Math.abs(curr - unix_ts) < Math.abs(prev - unix_ts) ? curr : prev);
 
+	time_bus_list=TIME_BUS[closest_value];
+	 console.log('not exact value found, ',closest_value,' instead of ',unix_ts, '. delta ', closest_value-unix_ts);
+	 	
+	}
+	else{
+		time_bus_list=TIME_BUS[unix_ts];
+	}
+	
 	console.log(time_bus_list, unix_ts);
 	
 	for (let i=0; i<time_bus_list.length;i++){
@@ -1986,44 +1901,69 @@ if(timing){
 
 function move_slider(start, end){
 
+//-------------------------------------------------------------------//
+//							BUTTON DEFINITIONS						 //
+//-------------------------------------------------------------------//
+
 console.log('START',start, 'END', end);
 
+//----------define slider inputs----------------//
 
 let slider = document.getElementById("myRange");
 let output = document.getElementById("demo");
 let output_ts = document.getElementById("demo2");
 
-
 //output.innerHTML = format_time(slider.value); // Display the default slider value
 let current_value=slider.value;
-console.log('selected_time',current_value);
 
-let button_forward=document.getElementById("button_forward");
-let button_backward=document.getElementById("button_backward");
-
-let button_forward_1min=document.getElementById("button_forward1");
-let button_backward_1min=document.getElementById("button_backward1");
-
-let button_del_sensors=document.getElementById("button_del_circle");
-
-button_del_sensors.onclick = function(){
-//d3.selectAll('.sensor_node').remove();
-d3.selectAll('.sensor_node').attr('pointer-events', 'none');
-};
-
+//-----voronoi slider inputs-----//
 let slider_voronoi=document.getElementById("voronoi_slider");
 let output_voronoi=document.getElementById("vor_val");
 output_voronoi.innerHTML =DIST_POW;
+//---end voronoi slider inputs---//
+
+//-------------end slider inputs----------------//
+
+
+console.log('selected_time',current_value);
+
+
+//----------define button inputs----------------//
+
+let button_forward_1=document.getElementById("button_forward_1");
+let button_forward_10=document.getElementById("button_forward_10");
+let button_forward_60=document.getElementById("button_forward_60");
+let button_forward_300=document.getElementById("button_forward_300");
+
+
+let button_backward_1=document.getElementById("button_backward_1");
+let button_backward_10=document.getElementById("button_backward_10");
+let button_backward_60=document.getElementById("button_backward_60");
+let button_backward_300=document.getElementById("button_backward_300");
+
+//-------------end button inputs----------------//
+
+
+//-------------d3.js housekeeping----------------//
+
+//remove user interaction with sensors circles 
+let button_del_sensors=document.getElementById("button_del_circle");
+
+button_del_sensors.onclick = function(){
+	d3.selectAll('.sensor_node').attr('pointer-events', 'none');
+};
+
+//-------------d3.js housekeeping----------------//
+
+
+//--------------------------------------------------------//
+//----------define play/stop button events----------------//
+//--------------------------------------------------------//
 
 let ticking_timer;
 
-
-//-------------------------------------------------------------------//
-//							BUTTON DEFINITIONS						 //
-//-------------------------------------------------------------------//
-
+//sets off the timer function, allowing us to march forward in time
 button_play.onclick = function(){
-
 	//get duration
 	let duration=document.getElementById("duration").value==''?60:document.getElementById("duration").value;
 	let speed=document.getElementById("speed").value==''?250:document.getElementById("speed").value;
@@ -2041,62 +1981,112 @@ button_play.onclick = function(){
 	}, speed);
 };
 
-
+//stop timer prematurely
 button_stop.onclick = function(){
 	    clearInterval(ticking_timer);
 };
 
-slider_voronoi.oninput = function() {
-  output_voronoi.innerHTML =this.value;
-	DIST_POW=this.value
-	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
-}
+//----------------------------------------------------------//
+//-------define all forward and backward button events------//
+//----------------------------------------------------------//
 
 
-button_forward.onclick = function(){
+//---------------forward------------------//
+
+button_forward_1.onclick = function(){
 
 	let pre_click=slider.value;
-	slider.value=parseInt(slider.value)+300;
+	slider.value=parseInt(slider.value)+1;
 
 	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
-	output_ts.innerHTML = 'UNIX_TS';//format_time(slider.value); // Display the default slider value
+	output_ts.innerHTML = slider.value;//format_time(slider.value); // Display the default slider value
 
 };
 
-button_backward.onclick = function(){
-	//slider.value-=300;
-	slider.value=parseInt(slider.value)-300;
-	output.innerHTML =format_time(slider.value);
+button_forward_10.onclick = function(){
+
+	let pre_click=slider.value;
+	slider.value=parseInt(slider.value)+10;
+
 	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
-	output_ts.innerHTML = 'UNIX_TS';//
+	output_ts.innerHTML = slider.value;//
 
 };
 
-button_forward1.onclick = function(){
+
+button_forward_60.onclick = function(){
 
 	let pre_click=slider.value;
 	slider.value=parseInt(slider.value)+60;
 
 	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
-	output_ts.innerHTML = 'UNIX_TS';//
+	output_ts.innerHTML = slider.value;//format_time(slider.value); // Display the default slider value
 
 };
 
-button_backward1.onclick = function(){
+button_forward_300.onclick = function(){
+
+	let pre_click=slider.value;
+	slider.value=parseInt(slider.value)+300;
+
+	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
+	output.innerHTML = format_time(slider.value); // Display the default slider value
+	output_ts.innerHTML = slider.value;//
+
+};
+
+//---------------backward------------------//
+
+button_backward_1.onclick = function(){
 	//slider.value-=300;
-	slider.value=parseInt(slider.value)-60;
+	slider.value=parseInt(slider.value)-1;
 	output.innerHTML =format_time(slider.value);
-	output_ts.innerHTML = 'UNIX_TS';//
+	output_ts.innerHTML = slider.value;//
 
 	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
 };
 
+
+button_backward_10.onclick = function(){
+	//slider.value-=300;
+	slider.value=parseInt(slider.value)-10;
+	output.innerHTML =format_time(slider.value);
+	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
+	output.innerHTML = format_time(slider.value); // Display the default slider value
+	output_ts.innerHTML = slider.value;//
+
+};
+
+button_backward_60.onclick = function(){
+	//slider.value-=300;
+	slider.value=parseInt(slider.value)-60;
+	output.innerHTML =format_time(slider.value);
+	output_ts.innerHTML = slider.value;//
+
+	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
+	output.innerHTML = format_time(slider.value); // Display the default slider value
+};
+
+
+button_backward_300.onclick = function(){
+	//slider.value-=300;
+	slider.value=parseInt(slider.value)-300;
+	output.innerHTML =format_time(slider.value);
+	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
+	output.innerHTML = format_time(slider.value); // Display the default slider value
+	output_ts.innerHTML = slider.value;//
+
+};
+
+
+//----------end define button events----------------//
+
 //------------------------------------------------------//
-//						SLIDER 							//
+//----------------define slider events------------------//
 //------------------------------------------------------//
 
 
@@ -2107,6 +2097,15 @@ slider.oninput = function() {
   roll_update_new(this.value, SUBTRACT_MIDNIGHT);
   
 }
+
+//when moving voronoi slider, redraw the heatmap
+slider_voronoi.oninput = function() {
+  output_voronoi.innerHTML =this.value;
+	DIST_POW=this.value
+	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
+}
+
+
 
 //document.getElementById("myRange").value = "75";
 document.getElementById("myRange").min=parseInt(start);
