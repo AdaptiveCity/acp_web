@@ -6,9 +6,10 @@ const LOW_REZ = 8;
 
 //modify to define in read_url()
 //const SELECTED_CRATE='GW20-FF';
+console.log('URL ID, ', window.location.pathname);
 
-const SELECTED_CRATE='corridor-middle-GF';
-
+const SELECTED_CRATE=window.location.pathname.split('/')[3];//'corridor-middle-GF';
+console.log('URL ID, ', window.location.pathname.split('/')[3]);
 
 let DIST_POW=2.5;
 let SUBTRACT_MIDNIGHT=false;
@@ -88,6 +89,8 @@ class RotasHeatMap {
 //and getting wrong data.
 
         this.handle_sensors_metadata(this, API_READINGS_INFO);//this disregards the selected date on the url
+        this.handle_sensors_metadata_d3(this, API_READINGS_INFO);//this disregards the selected date on the url
+
         console.log('API READINGS', API_READINGS_INFO);
         //parent.get_local_sensors(parent);
 
@@ -568,6 +571,37 @@ class RotasHeatMap {
 
         //DEBUG create new URL with querystring '?<new feature>&resolution=medium'
         console.log("CHANGE FEATURE NOT IMPLEMENTED");
+    }
+
+
+    handle_sensors_metadata_d3(parent, results){
+    	    	
+    	const queryString = window.location.search;
+    	const urlParams = new URLSearchParams(queryString);
+    	const date = urlParams.get('date');
+    	const feature = urlParams.get('feature');
+		let FLOOR_NUMBER=1;
+
+    	let	url='http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_floor_feature/WGB/'+FLOOR_NUMBER+'/'+feature+
+	'/?metadata=true&date='+date;
+
+	console.log('DATA RECEIVO', url);
+    	
+    	if(date){
+    		url+='?date='+String(date)+'/'
+    		console.log('selected date is ',date);
+    	}
+    	
+    		 //local file loading from Django
+    	        d3.json(url, {
+    	            crossOrigin: "anonymous"
+    	
+    	        }).then(function (received_data) {
+
+    	        	console.log('DATA RECEIVO', received_data);
+    	        })
+
+    	        
     }
 
     // Returns a "list object" (i.e. dictionary on acp_id) of sensors on
