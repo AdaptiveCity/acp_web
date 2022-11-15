@@ -89,9 +89,10 @@ class RotasHeatMap {
 //and getting wrong data.
 
         this.handle_sensors_metadata(this, API_READINGS_INFO);//this disregards the selected date on the url
-        this.handle_sensors_metadata_d3(this, API_READINGS_INFO);//this disregards the selected date on the url
+        //this.handle_sensors_metadata_d3(this);//this disregards the selected date on the url
+        //this.show_heatmap(this);
 
-        console.log('API READINGS', API_READINGS_INFO);
+       // console.log('API READINGS', API_READINGS_INFO);
         //parent.get_local_sensors(parent);
 
     }
@@ -168,6 +169,7 @@ class RotasHeatMap {
 
 		
 		get_day_crate();
+		//do_rotas();
 		
 		
     }
@@ -574,35 +576,39 @@ class RotasHeatMap {
     }
 
 
-    handle_sensors_metadata_d3(parent, results){
+    handle_sensors_metadata_d3(parent){
     	    	
     	const queryString = window.location.search;
     	const urlParams = new URLSearchParams(queryString);
     	const date = urlParams.get('date');
     	const feature = urlParams.get('feature');
-		let FLOOR_NUMBER=1;
 
-    	let	url='http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_floor_feature/WGB/'+FLOOR_NUMBER+'/'+feature+
-	'/?metadata=true&date='+date;
+		let floor_number=determine_floor();
 
-	console.log('DATA RECEIVO', url);
+    	let	url='http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_floor_feature/WGB/'+floor_number+'/'+feature+'/?metadata=true&date='+date;
+
+		console.log('QUERY URL', url);
     	
     	if(date){
     		url+='?date='+String(date)+'/'
     		console.log('selected date is ',date);
     	}
     	
-    		 //local file loading from Django
-    	        d3.json(url, {
-    	            crossOrigin: "anonymous"
-    	
-    	        }).then(function (received_data) {
+    	 //load get_floor_feature url
+    	 d3.json(url, {crossOrigin: "anonymous"})
 
-    	        	console.log('DATA RECEIVO', received_data);
-    	        })
+    	        	.then(function (received_data) {
+   	        	  		parent.init();
 
-    	        
-    }
+    		        	//console.log('DATA RECEIVO URL', received_data);
+      					//console.log('DATA RECEIVO API', API_READINGS_INFO);
+	   	        	    parent.handle_sensors_metadata(parent, API_READINGS_INFO); 
+						//do_rotas();
+
+
+   	      });
+
+   	}
 
     // Returns a "list object" (i.e. dictionary on acp_id) of sensors on
     // given floor#/coordinate system
@@ -1195,6 +1201,8 @@ class RotasHeatMap {
         //iterate through results to extract data required to show sensors on the floorplan
         let results = parent.sensor_data;
 
+        
+
         //redraw the sensors on the newly generated heatmap;
         //mandatory passing the consolidated svg object due to svg offsetting
         parent.attach_sensors(parent, results, consolidated_svg)
@@ -1717,7 +1725,7 @@ function print_data(received_data) {
 					//convert string acp_ts to int to be used as a dict key
 					let ts_key_parsed=parseInt(pre_chrono_readings[k].acp_ts);
 
-					console.log(ts_key_parsed, pre_chrono_readings[k].acp_ts)
+					//console.log(ts_key_parsed, pre_chrono_readings[k].acp_ts)
 
 					if (typeof(chrono_readings[ts_key_parsed])=='undefined'){
 
@@ -1729,7 +1737,6 @@ function print_data(received_data) {
 				}
 
 			//	console.log(chrono_readings);
-
 
 				return chrono_readings;
 
@@ -1744,16 +1751,21 @@ function roll_update_new(unix_ts, sub_mid){
 	 
 let time_bus_list=TIME_BUS[unix_ts];
 
-console.log('definition',time_bus_list, time_bus_list==undefined );
+console.log('definition',time_bus_list, time_bus_list==undefined, unix_ts );
 	if(time_bus_list==undefined){
+//don't show anything for that point in time;
+		return;
+
+
 	//check the two surroundin timestamps at i-1 and i+1
 	//and select which one has the smallest delta	
 	//https://stackoverflow.com/questions/8584902/get-the-closest-number-out-of-an-array
-	let closest_value = Object.keys(TIME_BUS).reduce((prev, curr) => Math.abs(curr - unix_ts) < Math.abs(prev - unix_ts) ? curr : prev);
 
-	time_bus_list=TIME_BUS[closest_value];
-	 console.log('not exact value found, ',closest_value,' instead of ',unix_ts, '. delta ', closest_value-unix_ts);
-	 	
+	// let closest_value = Object.keys(TIME_BUS).reduce((prev, curr) => Math.abs(curr - unix_ts) < Math.abs(prev - unix_ts) ? curr : prev);
+// 
+	// time_bus_list=TIME_BUS[closest_value];
+	 // console.log('not exact value found, ',closest_value,' instead of ',unix_ts, '. delta ', closest_value-unix_ts);
+	 	// 
 	}
 	else{
 		time_bus_list=TIME_BUS[unix_ts];
@@ -1762,6 +1774,7 @@ console.log('definition',time_bus_list, time_bus_list==undefined );
 	console.log(time_bus_list, unix_ts);
 	
 	for (let i=0; i<time_bus_list.length;i++){
+	console.log('timebus', time_bus_list.length, unix_ts);
 
 	let time_bus_sensor=time_bus_list[i].acp_id
 			console.log('INCOMING FLASH ', time_bus_sensor);
@@ -1774,6 +1787,21 @@ console.log('definition',time_bus_list, time_bus_list==undefined );
 
 }
 
+function determine_floor(){
+	
+	if(SELECTED_CRATE.includes("GF" || SELECTED_CRATE[0]=='G')){
+		return 0;	
+	}
+	else if (SELECTED_CRATE.includes("FF")|| SELECTED_CRATE[0]=='F'){
+		return 1;
+	}
+	else if (SELECTED_CRATE.includes("SF")|| SELECTED_CRATE[0]=='S'){
+		return 2;
+	}
+	else{
+		return false;		
+	}
+}
 
 
 function get_url_param(parameter){
@@ -1856,7 +1884,19 @@ if(timing){
 			console.log('BINARY SEARCH FAILED, using ',adjusted_index)
 		}
 		
-		new_index=new_index==false?adjusted_index:new_index;		
+
+if(SELECTED_CRATE.includes("GF")){
+	
+}
+else if (SELECTED_CRATE.includes("SF")){
+	
+}
+else if (SELECTED_CRATE.includes("FF")){
+	
+}
+else{
+	
+}		new_index=new_index==false?adjusted_index:new_index;		
 		//console.log('adj_index',adjusted_index);
   //let msg=FULL_DATA[sensor].readings[adjusted_index];
   	//	console.log('MSG fail',reading_length, new_index);
@@ -1964,6 +2004,12 @@ console.log('selected_time',current_value);
 
 //----------define button inputs----------------//
 
+let button_play=document.getElementById("button_play");
+let button_stop=document.getElementById("button_stop");
+
+let button_skip_f=document.getElementById("button_skip_forward");
+let button_skip_b=document.getElementById("button_skip_backward");
+
 let button_forward_1=document.getElementById("button_forward_1");
 let button_forward_10=document.getElementById("button_forward_10");
 let button_forward_60=document.getElementById("button_forward_60");
@@ -2000,19 +2046,22 @@ let ticking_timer;
 button_play.onclick = function(){
 	//get duration
 	let duration=document.getElementById("duration").value==''?60:document.getElementById("duration").value;
-	let speed=document.getElementById("speed").value==''?250:document.getElementById("speed").value;
-
+	let initial_duration=duration;
+	let speed=(document.getElementById("speed").value==''?1:document.getElementById("speed").value);
+	let 
 
 	ticking_timer = setInterval(function(){
+			console.log('timer ', duration)
+
 	  if(duration <= 0){
 	    clearInterval(ticking_timer);
 		console.log('timer done')
 	  } else {
-	  document.getElementById('button_forward1').click();
+	  document.getElementById('button_forward_1').click();
 	  	console.log('timer ticking ',duration)
 	  }
 	  duration -= 1;
-	}, speed);
+	}, (1/speed)*1000);
 };
 
 //stop timer prematurely
@@ -2032,7 +2081,7 @@ button_forward_1.onclick = function(){
 	let pre_click=slider.value;
 	slider.value=parseInt(slider.value)+1;
 
-	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
+	roll_update_new(slider.value, SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
 	output_ts.innerHTML = slider.value;//format_time(slider.value); // Display the default slider value
 
@@ -2043,7 +2092,7 @@ button_forward_10.onclick = function(){
 	let pre_click=slider.value;
 	slider.value=parseInt(slider.value)+10;
 
-	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
+	roll_update_new(slider.value, SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
 	output_ts.innerHTML = slider.value;//
 
@@ -2055,7 +2104,7 @@ button_forward_60.onclick = function(){
 	let pre_click=slider.value;
 	slider.value=parseInt(slider.value)+60;
 
-	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
+	roll_update_new(slider.value, SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
 	output_ts.innerHTML = slider.value;//format_time(slider.value); // Display the default slider value
 
@@ -2066,7 +2115,7 @@ button_forward_300.onclick = function(){
 	let pre_click=slider.value;
 	slider.value=parseInt(slider.value)+300;
 
-	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
+	roll_update_new(slider.value, SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
 	output_ts.innerHTML = slider.value;//
 
@@ -2080,7 +2129,7 @@ button_backward_1.onclick = function(){
 	output.innerHTML =format_time(slider.value);
 	output_ts.innerHTML = slider.value;//
 
-	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
+	roll_update_new(slider.value, SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
 };
 
@@ -2089,7 +2138,7 @@ button_backward_10.onclick = function(){
 	//slider.value-=300;
 	slider.value=parseInt(slider.value)-10;
 	output.innerHTML =format_time(slider.value);
-	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
+	roll_update_new(slider.value, SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
 	output_ts.innerHTML = slider.value;//
 
@@ -2101,7 +2150,7 @@ button_backward_60.onclick = function(){
 	output.innerHTML =format_time(slider.value);
 	output_ts.innerHTML = slider.value;//
 
-	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
+	roll_update_new(slider.value, SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
 };
 
@@ -2110,7 +2159,7 @@ button_backward_300.onclick = function(){
 	//slider.value-=300;
 	slider.value=parseInt(slider.value)-300;
 	output.innerHTML =format_time(slider.value);
-	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
+	roll_update_new(slider.value, SUBTRACT_MIDNIGHT);
 	output.innerHTML = format_time(slider.value); // Display the default slider value
 	output_ts.innerHTML = slider.value;//
 

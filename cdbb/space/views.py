@@ -345,10 +345,18 @@ class Rotas2000(LoginRequiredMixin, TemplateView):
             space_info = response.json()
 
             # Get feature readings
-            feature = self.request.GET.get('feature')
+            feature = self.request.GET.get('feature')          
             if not feature:
                 feature = 'co2'
-            response = requests.get(settings.API_READINGS+f'get_floor_feature/{system}/{floor_number}/{feature}/?metadata=true')
+
+            # Get feature readings
+            date = self.request.GET.get('date')          
+            if not date:
+                date = ''
+                response = requests.get(settings.API_READINGS+f'get_floor_feature/{system}/{floor_number}/{feature}/')
+            else:
+                response = requests.get(settings.API_READINGS+f'get_floor_feature/{system}/{floor_number}/{feature}/'+'?metadata=true&date='+date)
+
             readings_info = response.json()
 
             context['CRATE_ID'] = crate_id
