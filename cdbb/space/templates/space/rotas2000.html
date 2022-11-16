@@ -214,51 +214,72 @@ THIS IS ROTAS 2000 app
    
     <!-- end MAIN CONTENT -->
 </div>
- <div class="slidecontainer">
-      <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
-       <h2>Time: <span id="demo"></span></h2>
-       <h3>UNIX: <span id="demo2"></span></h3>
 
-    </div>
+<div id='main_ui_components'>
 
-<div>
-<<<
- 	<button class="button button_back" id='button_backward_300'>-5min</button>
-    <button class="button button_back" id='button_backward_60'>-1min</button>
-   	<button class="button button_back" id='button_backward_10'>-10s</button>
-    <button class="button button_back" id='button_backward_1'>-1s</button>
-	|&nbsp;&nbsp;
-    <button class="button button_skip" id='button_skip_backward'>← || ←</button>
-    <button class="button button_skip" id='button_skip_forward'>→ || →</button>
-	&nbsp;&nbsp;|
-    <button class="button button_fwd" id='button_forward_1'>+1s</button>
-  	<button class="button button_fwd" id='button_forward_10'>+10s</button>
-    <button class="button button_fwd" id='button_forward_60'>+1min</button>
-    <button class="button button_fwd" id='button_forward_300'>+5min</button>
->>>
-</div>
-<br>
-<div id='player_div'>
-<form>
-  <label for="duration">Duration (seconds):</label><br>
-  <input type="text" id="duration" name="duration"><br>
-  <label for="speed">Speed increase(x times):</label><br>
-  <input type="text" id="speed" name="speed">
-</form>
- 	<button class="button button_control_1" id='button_play'>Play</button>
-    <button class="button button_control_2" id='button_stop'>Stop</button>
-    
-</div>
-<div id='voronoi_div' style="width:10%">
-  <h4>Voronoi: <span id="vor_val"></span></h4>
-  <input type="range" min="1" max="10" value="2" class="slider" id="voronoi_slider">
-</div>
-<br>
+	 <div class="slidecontainer">
+	      <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
+	       <h2>Time: <span id="demo"></span></h2>
+	       <h3>UNIX: <span id="demo2"></span></h3>
 
-<div>
-    <button class="button button_a" id='button_del_circle'>remove sensors</button>
+	 </div>
+
+	<div id='rotas_control'>
+
+		<span style="font-style: normal">&#9194;</span>
+
+	 	<button class="button button_back" id='button_backward_300'>-5min</button>
+	    <button class="button button_back" id='button_backward_60'>-1min</button>
+	   	<button class="button button_back" id='button_backward_10'>-10s</button>
+	    <button class="button button_back" id='button_backward_1'>-1s</button>
+
+		&nbsp;&nbsp;
+	    <button class="button button_skip" id='button_skip_backward'>&#9198;</button>
+		|&nbsp;
+		<span style="font-style: normal" id="ticker">&#11035;</span>
+	    &nbsp;|
+	    <button class="button button_skip" id='button_skip_forward'>&#9197;</button>
+		&nbsp;&nbsp;
+
+	    <button class="button button_fwd" id='button_forward_1'>+1s</button>
+	  	<button class="button button_fwd" id='button_forward_10'>+10s</button>
+	    <button class="button button_fwd" id='button_forward_60'>+1min</button>
+	    <button class="button button_fwd" id='button_forward_300'>+5min</button>
+
+		<span style="font-style: normal">&#9193;</span>
+	</div>
+
+	<br>	
+
+	<div id='player_controls'>
+		<form>
+		  <label for="duration">Duration (seconds):</label><br>
+		  <input type="text" id="duration" name="duration"><br>
+		  <label for="speed">Speed increase(x times):</label><br>
+		  <input type="text" id="speed" name="speed">
+		</form>
+		
+ 		<button class="button button_control_1" id='button_play'>Play &#9199;</button>
+    	<button class="button button_control_2" id='button_stop'>Stop &#9208;</button> 
+	</div>
+
+	<div id='voronoi_div' style="width:10%">
+ 		<h4>Voronoi: <span id="vor_val"></span></h4>
+  		<input type="range" min="1" max="10" value="2" class="slider" id="voronoi_slider">
+	</div>
+
+	<br>
+
+	<div>
+    	<button class="button button_a" id='button_del_circle'>remove sensors</button>
+	</div>
+	
+	<div id="my_dataviz"></div> 
+
 </div>
-<div id="my_dataviz"></div> 
+
+</div>
+
 
 <!-- TOOLTIP - will be made visible/invisible as mouse moves over sensors -->
 <div id="tooltip" class="tooltip">

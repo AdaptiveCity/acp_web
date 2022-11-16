@@ -583,9 +583,9 @@ class RotasHeatMap {
     	const date = urlParams.get('date');
     	const feature = urlParams.get('feature');
 
-		let floor_number=determine_floor();
+		//let floor_number=determine_floor();
 
-    	let	url='http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_floor_feature/WGB/'+floor_number+'/'+feature+'/?metadata=true&date='+date;
+    	let	url='http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_floor_feature/WGB/'+FLOOR_NUMBER+'/'+feature+'/?metadata=true&date='+date;
 
 		console.log('QUERY URL', url);
     	
@@ -1551,7 +1551,7 @@ if(date){
 			let start_time=FULL_DATA[ALL_SENSORS[0]].readings[0].acp_ts;
 			let readings_len=FULL_DATA[ALL_SENSORS[0]].readings.length-1;
 			let end_time=FULL_DATA[ALL_SENSORS[0]].readings[readings_len].acp_ts;
-	        move_slider(start_time, end_time);
+	        initiate_rotas_ui(start_time, end_time);
 
 
         });
@@ -1688,7 +1688,7 @@ function do_rotas(){
 	TIME_BUS=chrono_obj;
 
 	console.log('SF', start, finish);
-	move_slider(start,finish); //modify move slider to take TIME BUS as an argumetn so no global level variable would be needed
+	initiate_rotas_ui(start,finish); //modify move slider to take TIME BUS as an argumetn so no global level variable would be needed
 
 	  },
 	  
@@ -1745,62 +1745,106 @@ function print_data(received_data) {
 	
 }
 
-function roll_update_new(unix_ts, sub_mid){
 
-	 rt_heatmap.feature=get_url_param('feature');
+//given a timestamp, checks if there's any events on the TIME_BUS
+//and draws those splashes
+function check_for_splash(unix_ts){
 	 
-let time_bus_list=TIME_BUS[unix_ts];
+	let time_bus_list=TIME_BUS[unix_ts];
 
-console.log('definition',time_bus_list, time_bus_list==undefined, unix_ts );
+	console.log('TIME ',unix_ts );
+
 	if(time_bus_list==undefined){
-//don't show anything for that point in time;
-		return;
 
+	//don't show anything for that point in time;
+	return;
+
+	 
+	}
+	else{
+		time_bus_list=TIME_BUS[unix_ts];
+		
+		console.log('DEBUG LIST ',time_bus_list);
+	}
+
+	//if the time_bus_list is non empty, visualise it on screen
+	for (let i=0; i<time_bus_list.length;i++){
+
+		let time_bus_sensor=time_bus_list[i].acp_id
+	
+		console.log('INCOMING SPLASH [',(i+1),'/',time_bus_list.length,']', time_bus_sensor, unix_ts);
+
+       	rt_heatmap.draw_splash(rt_heatmap, time_bus_sensor, true);
+	}
+
+}
+
+
+//given a timestemp, skips time to the nearest splash event
+function roll_to_adjacent(unix_ts, direction){
+
+	//define nearest timestamp, could be past or future adjacent
+	let nearest_adjacent;
+	
+	//get the list of all available timestamps and sort it
+	let timestamp_list= Object.keys(TIME_BUS).sort()
 
 	//check the two surroundin timestamps at i-1 and i+1
 	//and select which one has the smallest delta	
 	//https://stackoverflow.com/questions/8584902/get-the-closest-number-out-of-an-array
+	let closest_value = timestamp_list.reduce((prev, curr) => Math.abs(curr - unix_ts) < Math.abs(prev - unix_ts) ? curr : prev);
 
-	// let closest_value = Object.keys(TIME_BUS).reduce((prev, curr) => Math.abs(curr - unix_ts) < Math.abs(prev - unix_ts) ? curr : prev);
-// 
-	// time_bus_list=TIME_BUS[closest_value];
-	 // console.log('not exact value found, ',closest_value,' instead of ',unix_ts, '. delta ', closest_value-unix_ts);
-	 	// 
+	//find the nearest timestamp in the future
+	if (direction=='forward'){
+		console.log('forward ', 'found:', closest_value,'OG', unix_ts)
+
+		if(closest_value>unix_ts){
+			nearest_adjacent= closest_value;
+		}
+		else{
+			//if nearest is less than current
+			console.log('is new less than og?',(closest_value<unix_ts));
+			let next_index=timestamp_list.indexOf(closest_value)+1;
+			let ts_list_len=timestamp_list.length;
+
+			nearest_adjacent = (next_index <ts_list_len) ? timestamp_list[next_index] :  false;
+
+		}
 	}
-	else{
-		time_bus_list=TIME_BUS[unix_ts];
+
+	//find the nearest timestamp in the past
+	if (direction=='backward'){
+		console.log('backward ', 'found:', closest_value,'OG', unix_ts)
+		if(closest_value<unix_ts){
+			nearest_adjacent= closest_value;
+		}
+		else{
+			//if nearest is less than current
+			console.log('is new less than og?',(closest_value<unix_ts));
+			let prev_index=timestamp_list.indexOf(closest_value)-1;
+			 nearest_adjacent = (prev_index >= 0) ? timestamp_list[prev_index] :  false;
+			
+		}
 	}
+
+
+	if(nearest_adjacent!=false){
 	
-	console.log(time_bus_list, unix_ts);
-	
-	for (let i=0; i<time_bus_list.length;i++){
-	console.log('timebus', time_bus_list.length, unix_ts);
+		let time_bus_list=TIME_BUS[nearest_adjacent];
 
-	let time_bus_sensor=time_bus_list[i].acp_id
-			console.log('INCOMING FLASH ', time_bus_sensor);
-       rt_heatmap.draw_splash(rt_heatmap, time_bus_sensor, true);
-	
+		//if the time_bus_list is non empty, visualise it on screen
+		for (let i=0; i<time_bus_list.length;i++){
+
+			let time_bus_sensor=time_bus_list[i].acp_id
+		
+			console.log('INCOMING SPLASH [',(i+1),'/',time_bus_list.length,']', time_bus_sensor, unix_ts);
+
+	       	rt_heatmap.draw_splash(rt_heatmap, time_bus_sensor, true);
+		}
 	}
 
-	
-
-
-}
-
-function determine_floor(){
-	
-	if(SELECTED_CRATE.includes("GF" || SELECTED_CRATE[0]=='G')){
-		return 0;	
-	}
-	else if (SELECTED_CRATE.includes("FF")|| SELECTED_CRATE[0]=='F'){
-		return 1;
-	}
-	else if (SELECTED_CRATE.includes("SF")|| SELECTED_CRATE[0]=='S'){
-		return 2;
-	}
-	else{
-		return false;		
-	}
+	return nearest_adjacent;
+		
 }
 
 
@@ -1884,19 +1928,7 @@ if(timing){
 			console.log('BINARY SEARCH FAILED, using ',adjusted_index)
 		}
 		
-
-if(SELECTED_CRATE.includes("GF")){
-	
-}
-else if (SELECTED_CRATE.includes("SF")){
-	
-}
-else if (SELECTED_CRATE.includes("FF")){
-	
-}
-else{
-	
-}		new_index=new_index==false?adjusted_index:new_index;		
+		new_index=new_index==false?adjusted_index:new_index;		
 		//console.log('adj_index',adjusted_index);
   //let msg=FULL_DATA[sensor].readings[adjusted_index];
   	//	console.log('MSG fail',reading_length, new_index);
@@ -1965,239 +1997,247 @@ let msg_object;
 
 	    rt_heatmap.rotas_redraw(rt_heatmap);
 
-if(timing){
+	if(timing){
 
-	// console.timeEnd('[HEATMAP REDRAW]');
-	 	 console.timeEnd('[TOTAL RETRIEVAL TIME LAPSED]');
+		// console.timeEnd('[HEATMAP REDRAW]');
+		 	 console.timeEnd('[TOTAL RETRIEVAL TIME LAPSED]');
+	}
+
 }
 
-}
+///-----PROBABLY NEED TO RENAME THIS FUNCTION BECAUSE IT IS REPOSNSIBLE FOR Ui
+function initiate_rotas_ui(start, end){
 
-function move_slider(start, end){
+	//-------------------------------------------------------------------//
+	//							BUTTON DEFINITIONS						 //
+	//-------------------------------------------------------------------//
 
-//-------------------------------------------------------------------//
-//							BUTTON DEFINITIONS						 //
-//-------------------------------------------------------------------//
+	console.log('START',start, 'END', end);
 
-console.log('START',start, 'END', end);
+	//----------define slider inputs----------------//
 
-//----------define slider inputs----------------//
+	let slider = document.getElementById("myRange");
+	let output = document.getElementById("demo");
+	let output_ts = document.getElementById("demo2");
 
-let slider = document.getElementById("myRange");
-let output = document.getElementById("demo");
-let output_ts = document.getElementById("demo2");
+	//output.innerHTML = format_time(slider.value); // Display the default slider value
+	let current_value=slider.value;
 
-//output.innerHTML = format_time(slider.value); // Display the default slider value
-let current_value=slider.value;
+	//-----voronoi slider inputs-----//
+	let slider_voronoi=document.getElementById("voronoi_slider");
+	let output_voronoi=document.getElementById("vor_val");
+	output_voronoi.innerHTML =DIST_POW;
+	//---end voronoi slider inputs---//
 
-//-----voronoi slider inputs-----//
-let slider_voronoi=document.getElementById("voronoi_slider");
-let output_voronoi=document.getElementById("vor_val");
-output_voronoi.innerHTML =DIST_POW;
-//---end voronoi slider inputs---//
-
-//-------------end slider inputs----------------//
-
-
-console.log('selected_time',current_value);
+	//-------------end slider inputs----------------//
 
 
-//----------define button inputs----------------//
-
-let button_play=document.getElementById("button_play");
-let button_stop=document.getElementById("button_stop");
-
-let button_skip_f=document.getElementById("button_skip_forward");
-let button_skip_b=document.getElementById("button_skip_backward");
-
-let button_forward_1=document.getElementById("button_forward_1");
-let button_forward_10=document.getElementById("button_forward_10");
-let button_forward_60=document.getElementById("button_forward_60");
-let button_forward_300=document.getElementById("button_forward_300");
+	console.log('selected_time',current_value);
 
 
-let button_backward_1=document.getElementById("button_backward_1");
-let button_backward_10=document.getElementById("button_backward_10");
-let button_backward_60=document.getElementById("button_backward_60");
-let button_backward_300=document.getElementById("button_backward_300");
+	//----------define button inputs----------------//
 
-//-------------end button inputs----------------//
+	let button_play=document.getElementById("button_play");
+	let button_stop=document.getElementById("button_stop");
 
+	let button_skip_f=document.getElementById("button_skip_forward");
+	let button_skip_b=document.getElementById("button_skip_backward");
 
-//-------------d3.js housekeeping----------------//
-
-//remove user interaction with sensors circles 
-let button_del_sensors=document.getElementById("button_del_circle");
-
-button_del_sensors.onclick = function(){
-	d3.selectAll('.sensor_node').attr('pointer-events', 'none');
-};
-
-//-------------d3.js housekeeping----------------//
+	let button_forward_1=document.getElementById("button_forward_1");
+	let button_forward_10=document.getElementById("button_forward_10");
+	let button_forward_60=document.getElementById("button_forward_60");
+	let button_forward_300=document.getElementById("button_forward_300");
 
 
-//--------------------------------------------------------//
-//----------define play/stop button events----------------//
-//--------------------------------------------------------//
+	let button_backward_1=document.getElementById("button_backward_1");
+	let button_backward_10=document.getElementById("button_backward_10");
+	let button_backward_60=document.getElementById("button_backward_60");
+	let button_backward_300=document.getElementById("button_backward_300");
 
-let ticking_timer;
+	//-------------end button inputs----------------//
 
-//sets off the timer function, allowing us to march forward in time
-button_play.onclick = function(){
-	//get duration
-	let duration=document.getElementById("duration").value==''?60:document.getElementById("duration").value;
-	let initial_duration=duration;
-	let speed=(document.getElementById("speed").value==''?1:document.getElementById("speed").value);
-	let 
 
-	ticking_timer = setInterval(function(){
+	//-------------d3.js housekeeping----------------//
+
+	//remove user interaction with sensors circles 
+	let button_del_sensors=document.getElementById("button_del_circle");
+
+	button_del_sensors.onclick = function(){
+		d3.selectAll('.sensor_node').attr('pointer-events', 'none');
+	};
+
+	//-------------d3.js housekeeping----------------//
+
+
+	//--------------------------------------------------------//
+	//----------define play/stop button events----------------//
+	//--------------------------------------------------------//
+
+	let ticking_timer;
+
+	//sets off the timer function, allowing us to march forward in time
+	button_play.onclick = function(){
+		//get duration
+		let duration=document.getElementById("duration").value==''?60:document.getElementById("duration").value;
+		let initial_duration=duration;
+		let speed=(document.getElementById("speed").value==''?1:document.getElementById("speed").value);
+		
+		ticking_timer = setInterval(function(){
 			console.log('timer ', duration)
 
-	  if(duration <= 0){
-	    clearInterval(ticking_timer);
-		console.log('timer done')
-	  } else {
-	  document.getElementById('button_forward_1').click();
-	  	console.log('timer ticking ',duration)
-	  }
-	  duration -= 1;
-	}, (1/speed)*1000);
-};
+		  if(duration <= 0){
+		    clearInterval(ticking_timer);
+			console.log('timer done')
+		  } else {
+		  	document.getElementById('button_forward_1').click();
+		  
+			//update the ticker box	⬛	is &#11035;⬜ is &#11036;
+			document.getElementById('ticker').innerHTML=(duration%2==0)?'&#11036':'&#11035';
 
-//stop timer prematurely
-button_stop.onclick = function(){
-	    clearInterval(ticking_timer);
-};
+		  	console.log('timer ticking ',duration,duration%2==0)
 
-//----------------------------------------------------------//
-//-------define all forward and backward button events------//
-//----------------------------------------------------------//
+		  }
+		  duration -= 1;
+		}, (1/speed)*1000);
+	};
 
-
-//---------------forward------------------//
-
-button_forward_1.onclick = function(){
-
-	let pre_click=slider.value;
-	slider.value=parseInt(slider.value)+1;
-
-	roll_update_new(slider.value, SUBTRACT_MIDNIGHT);
-	output.innerHTML = format_time(slider.value); // Display the default slider value
-	output_ts.innerHTML = slider.value;//format_time(slider.value); // Display the default slider value
-
-};
-
-button_forward_10.onclick = function(){
-
-	let pre_click=slider.value;
-	slider.value=parseInt(slider.value)+10;
-
-	roll_update_new(slider.value, SUBTRACT_MIDNIGHT);
-	output.innerHTML = format_time(slider.value); // Display the default slider value
-	output_ts.innerHTML = slider.value;//
-
-};
+	//stop timer prematurely
+	button_stop.onclick = function(){
+		console.log('Stopping Timer');
+		clearInterval(ticking_timer);
+	};
 
 
-button_forward_60.onclick = function(){
+	//button skip forward to closest reading
+	button_skip_f.onclick = function(){
+		
+		let found_next=roll_to_adjacent(parseInt(slider.value), 'forward');
+		
+		if (found_next){
+			let time_delta=Math.abs(found_next - parseInt(slider.value));
+			console.log('NEXT READING FOUND AT ', found_next, 't_delta is ', time_delta, 'original ts ', slider.value);				 
+			slider.value=parseInt(slider.value)+time_delta; //add the time delta
+			output.innerHTML = format_time(slider.value); // Display the default slider value
+			output_ts.innerHTML = slider.value;//
 
-	let pre_click=slider.value;
-	slider.value=parseInt(slider.value)+60;
+		}
+		
+	}
+	//button skip backward to closest reading
+	button_skip_b.onclick = function(){
+		let found_previous=roll_to_adjacent(parseInt(slider.value), 'backward');
+		if (found_previous){
+			let time_delta=Math.abs(found_previous - parseInt(slider.value));
+			console.log('PREV READING FOUND AT ', found_previous, 't_delta is ', time_delta, 'original ts ', slider.value);				 
+			slider.value=parseInt(slider.value)-time_delta; //subtract the time delta
+			output.innerHTML = format_time(slider.value); // Display the default slider value
+			output_ts.innerHTML = slider.value;//
+		}
+				
+		
+	}
+	
+	//----------------------------------------------------------//
+	//-------define all forward and backward button events------//
+	//----------------------------------------------------------//
 
-	roll_update_new(slider.value, SUBTRACT_MIDNIGHT);
-	output.innerHTML = format_time(slider.value); // Display the default slider value
-	output_ts.innerHTML = slider.value;//format_time(slider.value); // Display the default slider value
+	function traverse_time(direction, seconds){
 
-};
+			for(let i=0; i<seconds;i++){
+				if(direction=='forward'){
+					slider.value=parseInt(slider.value)+1; //add one second
+					//console.log('forward', slider.value, i)
+				}
 
-button_forward_300.onclick = function(){
+				if(direction=='backward'){
+					slider.value=parseInt(slider.value)-1; //subtract one second
+					//console.log('backward', slider.value, i)
+				}
+				
+				check_for_splash(slider.value);	
 
-	let pre_click=slider.value;
-	slider.value=parseInt(slider.value)+300;
+			}
+			
 
-	roll_update_new(slider.value, SUBTRACT_MIDNIGHT);
-	output.innerHTML = format_time(slider.value); // Display the default slider value
-	output_ts.innerHTML = slider.value;//
+		output.innerHTML = format_time(slider.value); // Display the default slider value
+		output_ts.innerHTML = slider.value;//
+		
+	}
 
-};
+	//---------------forward------------------//
 
-//---------------backward------------------//
+	button_forward_1.onclick = function(){
+		traverse_time('forward', 1);
+	};
 
-button_backward_1.onclick = function(){
-	//slider.value-=300;
-	slider.value=parseInt(slider.value)-1;
-	output.innerHTML =format_time(slider.value);
-	output_ts.innerHTML = slider.value;//
-
-	roll_update_new(slider.value, SUBTRACT_MIDNIGHT);
-	output.innerHTML = format_time(slider.value); // Display the default slider value
-};
-
-
-button_backward_10.onclick = function(){
-	//slider.value-=300;
-	slider.value=parseInt(slider.value)-10;
-	output.innerHTML =format_time(slider.value);
-	roll_update_new(slider.value, SUBTRACT_MIDNIGHT);
-	output.innerHTML = format_time(slider.value); // Display the default slider value
-	output_ts.innerHTML = slider.value;//
-
-};
-
-button_backward_60.onclick = function(){
-	//slider.value-=300;
-	slider.value=parseInt(slider.value)-60;
-	output.innerHTML =format_time(slider.value);
-	output_ts.innerHTML = slider.value;//
-
-	roll_update_new(slider.value, SUBTRACT_MIDNIGHT);
-	output.innerHTML = format_time(slider.value); // Display the default slider value
-};
-
-
-button_backward_300.onclick = function(){
-	//slider.value-=300;
-	slider.value=parseInt(slider.value)-300;
-	output.innerHTML =format_time(slider.value);
-	roll_update_new(slider.value, SUBTRACT_MIDNIGHT);
-	output.innerHTML = format_time(slider.value); // Display the default slider value
-	output_ts.innerHTML = slider.value;//
-
-};
-
-
-//----------end define button events----------------//
-
-//------------------------------------------------------//
-//----------------define slider events------------------//
-//------------------------------------------------------//
+	button_forward_10.onclick = function(){
+		traverse_time('forward', 10);
+	};
 
 
-// Update the current slider value (each time you drag the slider handle)
-slider.oninput = function() {
-  output.innerHTML =format_time(this.value);
-  output_ts.innerHTML = this.value;//
-  roll_update_new(this.value, SUBTRACT_MIDNIGHT);
-  
-}
+	button_forward_60.onclick = function(){
+		traverse_time('forward', 60);
+	};
 
-//when moving voronoi slider, redraw the heatmap
-slider_voronoi.oninput = function() {
-  output_voronoi.innerHTML =this.value;
-	DIST_POW=this.value
-	roll_update_new(get_hours(slider.value), SUBTRACT_MIDNIGHT);
-}
+	button_forward_300.onclick = function(){
+		traverse_time('forward', 300);
+	};
 
+	//---------------backward------------------//
+
+	button_backward_1.onclick = function(){
+		traverse_time('backward', 1);
+	};
 
 
-//document.getElementById("myRange").value = "75";
-document.getElementById("myRange").min=parseInt(start);
-let start_plus24=parseInt(start)+86400;
-document.getElementById("myRange").max=parseInt(start_plus24);
-document.getElementById("myRange").value=parseInt(end);
+	button_backward_10.onclick = function(){
+		traverse_time('backward', 10);
+	};
 
-output.innerHTML = format_time(parseInt(end));
-output_ts.innerHTML = 'UNIX_TS';//
+	button_backward_60.onclick = function(){
+		traverse_time('backward', 60);
+	};
+
+
+	button_backward_300.onclick = function(){
+		traverse_time('backward', 300);
+	};
+
+
+	//----------end define button events----------------//
+
+	//------------------------------------------------------//
+	//----------------define slider events------------------//
+	//------------------------------------------------------//
+
+
+	// Update the current slider value (each time you drag the slider handle)
+	slider.oninput = function() {
+		let unix_timestamp=this.value;
+	  
+	 	output.innerHTML =format_time(unix_timestamp);
+	  	output_ts.innerHTML = unix_timestamp;
+	  	check_for_splash(unix_timestamp);
+	}
+
+	//when moving voronoi slider, redraw the heatmap
+	slider_voronoi.oninput = function() {
+		DIST_POW=this.value;
+
+		output_voronoi.innerHTML =DIST_POW;
+		//roll_update(get_hours(slider.value), SUBTRACT_MIDNIGHT);
+	}
+
+	//define time constant for 24 skip
+	let start_plus24=parseInt(start)+86400;
+
+	//define slider range values
+	document.getElementById("myRange").min=parseInt(start);
+	document.getElementById("myRange").max=parseInt(start_plus24);
+	document.getElementById("myRange").value=parseInt(end);
+
+	output.innerHTML = format_time(parseInt(end));
+	output_ts.innerHTML = 'UNIX_TS';//placeholder text value
 
 }
 
