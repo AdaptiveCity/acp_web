@@ -498,8 +498,9 @@ class RotasHeatMap {
         //whereas we declare periodic updates to be less importnat and hence smaller splashes are drawn
 
         //if !motion_trigger, draw a smaller circle
-        let final_radius = motion_trigger == true ? parent.circle_radius * 10 : parent.circle_radius * 5;
-
+        let final_radius = 5;//motion_trigger == true ? parent.circle_radius * 10 : parent.circle_radius * 5;
+        
+		console.log('MOTION ', acp_id, motion_trigger);
         //get the sensor's position
         let position = {
             'x': d3.select('#' + acp_id + "_bim").attr('cx'),
@@ -524,8 +525,8 @@ class RotasHeatMap {
             let ms_delay2 = splash_index * 440;
 
             //two colors, each opposite end of the colorscheme
-            let colorA = parent.color_scheme(-Infinity);
-            let colorB = parent.color_scheme(Infinity);
+            let colorA = motion_trigger == true ? 'white':parent.color_scheme(-Infinity);
+            let colorB = motion_trigger == true ? 'black':parent.color_scheme(Infinity);
 
             //inline function definition for circles
             let create_circle = function (delay_sample, color_sample) {
@@ -637,7 +638,9 @@ class RotasHeatMap {
                     'payload': results['readings'][sensor].payload_cooked, // change with jsonPath -- charts.js example
 
                     'features': results['sensor_types'][sensor_type].features,
-                    'acp_ts': results['readings'][sensor].acp_ts
+                    'acp_ts': results['readings'][sensor].acp_ts,
+                    'acp_feed_ts': results['readings'][sensor].acp_feed_ts
+
                 }
 
                 if (parent.crates_with_sensors[results['sensors'][sensor].crate_id] == undefined) {
@@ -689,7 +692,7 @@ class RotasHeatMap {
 
                 if (new_value != old_value) {
                     any_updates = true;
-                  //  console.log('new', feature, 'is', new_value, '(was ' + old_value + ')')
+                   // console.log('new', feature, 'is', new_value, '(was ' + old_value + ')')
                 }
 
                 parent.sensor_data[acp_id].payload[feature] = new_payload[feature];
@@ -1237,39 +1240,39 @@ class RotasHeatMap {
 
 
 
-	rotas_redraw(parent){
-   parent.get_min_max(parent,  parent.feature);
-        //reset the colorbar
-        parent.set_colorbar(parent);
-	
-		d3.selectAll('.'+SELECTED_CRATE+'_rect').nodes().forEach(rect => {
-
-let loc_list=JSON.parse("["+rect.dataset.loc+"]");                               
-
-   let loc = {
-                x: parseFloat(loc_list[0]),
-                y: parseFloat(loc_list[1]),
-                scale: parseFloat(loc_list[2])
-            }
-
-                    let cell_value = parent.get_cell_value(parent, SELECTED_CRATE, loc).toFixed(2); //round to 2dec places ;
-        		    let color = parent.color_scheme(cell_value);
-        		    
-					         d3.select(rect)
-								.style("fill", function (d) {
-                                    return color
-             					                   })                 
-           				.attr('data-value', cell_value)
-           				.on("mouseover", function (d) {
-           				console.log('setting color bar value to ', cell_value)
-                    			parent.set_cbar_value(parent, cell_value)
-               						 })
-               			 .on("mouseout", function (d) {
-                   		 d3.select('#hover_val').remove();
-                				})
-			
-		})
+rotas_redraw(parent){
+	   parent.get_min_max(parent,  parent.feature);
+	   //reset the colorbar
+	    parent.set_colorbar(parent);
 		
+	d3.selectAll('.'+SELECTED_CRATE+'_rect').nodes().forEach(rect => {
+
+	let loc_list=JSON.parse("["+rect.dataset.loc+"]");                               
+
+	   let loc = {
+	                x: parseFloat(loc_list[0]),
+	                y: parseFloat(loc_list[1]),
+	                scale: parseFloat(loc_list[2])
+	            }
+
+	                    let cell_value = parent.get_cell_value(parent, SELECTED_CRATE, loc).toFixed(2); //round to 2dec places ;
+	        		    let color = parent.color_scheme(cell_value);
+	        		    
+						         d3.select(rect)
+									.style("fill", function (d) {
+	                                    return color
+	             					                   })                 
+	           				.attr('data-value', cell_value)
+	           				.on("mouseover", function (d) {
+	           				console.log('setting color bar value to ', cell_value)
+	                    			parent.set_cbar_value(parent, cell_value)
+	               						 })
+	               			 .on("mouseout", function (d) {
+	                   		 d3.select('#hover_val').remove();
+	                				})
+				
+			})
+			
                   
      
 	}
@@ -1774,7 +1777,9 @@ function check_for_splash(unix_ts){
 	
 		console.log('INCOMING SPLASH [',(i+1),'/',time_bus_list.length,']', time_bus_sensor, unix_ts);
 
-       	rt_heatmap.draw_splash(rt_heatmap, time_bus_sensor, true);
+		let motion_bool=check_payload_motion(time_bus_list[i]);
+
+       	rt_heatmap.draw_splash(rt_heatmap, time_bus_sensor, motion_bool);
 	}
 
 }
@@ -1796,14 +1801,14 @@ function roll_to_adjacent(unix_ts, direction){
 
 	//find the nearest timestamp in the future
 	if (direction=='forward'){
-		console.log('forward ', 'found:', closest_value,'OG', unix_ts)
+		//console.log('forward ', 'found:', closest_value,'OG', unix_ts)
 
 		if(closest_value>unix_ts){
 			nearest_adjacent= closest_value;
 		}
 		else{
 			//if nearest is less than current
-			console.log('is new less than og?',(closest_value<unix_ts));
+			//console.log('is new less than og?',(closest_value<unix_ts));
 			let next_index=timestamp_list.indexOf(closest_value)+1;
 			let ts_list_len=timestamp_list.length;
 
@@ -1814,13 +1819,13 @@ function roll_to_adjacent(unix_ts, direction){
 
 	//find the nearest timestamp in the past
 	if (direction=='backward'){
-		console.log('backward ', 'found:', closest_value,'OG', unix_ts)
+		//console.log('backward ', 'found:', closest_value,'OG', unix_ts)
 		if(closest_value<unix_ts){
 			nearest_adjacent= closest_value;
 		}
 		else{
 			//if nearest is less than current
-			console.log('is new less than og?',(closest_value<unix_ts));
+			//console.log('is new less than og?',(closest_value<unix_ts));
 			let prev_index=timestamp_list.indexOf(closest_value)-1;
 			 nearest_adjacent = (prev_index >= 0) ? timestamp_list[prev_index] :  false;
 			
@@ -1839,7 +1844,9 @@ function roll_to_adjacent(unix_ts, direction){
 		
 			console.log('INCOMING SPLASH [',(i+1),'/',time_bus_list.length,']', time_bus_sensor, unix_ts);
 
-	       	rt_heatmap.draw_splash(rt_heatmap, time_bus_sensor, true);
+			let motion_bool=check_payload_motion(time_bus_list[i]);
+
+	       	rt_heatmap.draw_splash(rt_heatmap, time_bus_sensor, motion_bool);
 		}
 	}
 
@@ -1847,6 +1854,18 @@ function roll_to_adjacent(unix_ts, direction){
 		
 }
 
+function check_payload_motion(message){
+	
+		//check for motion events
+		let payload=message.payload_cooked;
+		let motion_event=false;
+		if ("motion" in payload){
+			if(payload.motion>0){
+				motion_event=true;	
+			}
+		}
+		return motion_event;
+}
 
 function get_url_param(parameter){
 	const queryString = window.location.search;
@@ -1854,154 +1873,220 @@ function get_url_param(parameter){
 	return urlParams.get(parameter);
 }
 
-function roll_update(time, sub_mid){
+function roll_heatmap(ts_input, sub_mid){
 
-let timing=true;
+	let time= get_hours(ts_input)
+	//console.log('rolling rolling rolling');
+	let timing=true;
 
 	const map = (value, x1, y1, x2, y2) => (value - x1) * (y2 - x2) / (y1 - x1) + x2;
+
     let param_date=get_url_param('date');
 
-let midnight;
-//let now;
+	let midnight;
+	//let now;
 
 	let midnight_date;
 
-let time_prefab;
-let time_calc;
-let preselected_date;
+	let time_prefab;
+	let time_calc;
+	let preselected_date;
+
 	//if there's no date specified use the preselected date	
 	if(!param_date){
-	console.log('date==today')
-	//solve this mess because I think what happens is 
-	//there is a mismatch between the ranges of now and then
-	//and midnight then vs the time specified
+
+		console.log('date==today')
+		//solve this mess because I think what happens is 
+		//there is a mismatch between the ranges of now and then
+		//and midnight then vs the time specified
 		//no preselected date, select now
 		preselected_date=Math.floor(Date.now() / 1000)//CHANGE THIS TO NOT NOW BUT DATE
 		time_prefab=new Date();
 		time_calc=time_prefab.setHours(time[0],time[1],0,0)/1000;
 		midnight_date=new Date();
 		midnight_date.setHours(0,0,0,0);
-		midnight=midnight_date.getTime()/1000;
-	}else{
-		let selected_date=new Date(param_date);
-		//midnight
-		midnight=Math.floor(selected_date.valueOf()/1000);
+		midnight=midnight_date.getTime()/1000;}
 
-		preselected_date=selected_date.setHours(23,59,0,0)/1000;
+		else{
+
+			let selected_date=new Date(param_date);
+			//midnight
+			midnight=Math.floor(selected_date.valueOf()/1000);
+
+			preselected_date=selected_date.setHours(23,59,0,0)/1000;
+			
+			time_calc=selected_date.setHours(time[0],time[1],0,0)/1000;
+
+			//	console.log('\nmidnight1',format_time(midnight),midnight, '\nmidnight2',format_time(preselected_date),preselected_date,'\ntime_cal',format_time(time_calc),time_calc);
+		}
+
+	if(timing){
+
+		 console.time('[TOTAL RETRIEVAL TIME LAPSED]');
 		
-		time_calc=selected_date.setHours(time[0],time[1],0,0)/1000;
-
-	//	console.log('\nmidnight1',format_time(midnight),midnight, '\nmidnight2',format_time(preselected_date),preselected_date,'\ntime_cal',format_time(time_calc),time_calc);
 	}
 
-if(timing){
-
-	 console.time('[TOTAL RETRIEVAL TIME LAPSED]');
-	
-}
-	for (let i =0; i<ALL_SENSORS.length;i++){
+		let ts_analysis=[];
 
 
-		let sensor=ALL_SENSORS[i];
+		for (let i =0; i<ALL_SENSORS.length;i++){
 
 
-		let reading_length=FULL_DATA[sensor].readings.length;
+			let sensor=ALL_SENSORS[i];
 
-		let adjusted_index=parseInt(map(time_calc, parseInt(midnight), parseInt(preselected_date), 0,reading_length));
-	//	console.log(time_calc, parseInt(midnight), parseInt(preselected_date), 0,reading_length, '---', adjusted_index);
 
-		//let sliced_arr=FULL_DATA[sensor].readings.slice(adjusted_index-20,adjusted_index+20);
-//		console.log('SLICED ARR',sliced_arr);
-        let index_start=0;//adjusted_index-30;
-        let index_finish=reading_length-1;//adjusted_index+30;
+			let reading_length=FULL_DATA[sensor].readings.length;
 
-		//index_start=(index_start<0)?0:index_start;
-		//index_finish=(index_finish>reading_length-1)?reading_length-1:index_finish;
+			let adjusted_index=parseInt(map(time_calc, parseInt(midnight), parseInt(preselected_date), 0,reading_length));
+			//console.log(time_calc, parseInt(midnight), parseInt(preselected_date), 0,reading_length, '---', adjusted_index);
 
-		//index_start=0;
-		//index_finish=reading_length-1;
+			//let sliced_arr=FULL_DATA[sensor].readings.slice(adjusted_index-20,adjusted_index+20);
+			//console.log('SLICED ARR',sliced_arr);
+	        let index_start=0;//adjusted_index-30;
+	        let index_finish=reading_length-1;//adjusted_index+30;
 
-		let full_data_copy=FULL_DATA;
-		let new_index=recursiveFunction(full_data_copy[sensor].readings,time_calc,index_start,index_finish);
+			//index_start=(index_start<0)?0:index_start;
+			//index_finish=(index_finish>reading_length-1)?reading_length-1:index_finish;
+
+			//index_start=0;
+			//index_finish=reading_length-1;
+
+			let full_data_copy=FULL_DATA;
+			let new_index=recursiveFunction(full_data_copy[sensor].readings,time_calc,index_start,index_finish);
+			
+			if(new_index==false){
+				console.log('BINARY SEARCH FAILED, using ',adjusted_index)
+			}
+			
+			new_index=new_index==false?adjusted_index:new_index;		
+			//console.log('adj_index',adjusted_index);
+	  		//let msg=FULL_DATA[sensor].readings[adjusted_index];
+	  		//	console.log('MSG fail',reading_length, new_index);
+	  		
+			let msg=FULL_DATA[sensor].readings[new_index];
+			let msg2=FULL_DATA[sensor].readings[new_index];
 		
-		if(new_index==false){
-			console.log('BINARY SEARCH FAILED, using ',adjusted_index)
-		}
-		
-		new_index=new_index==false?adjusted_index:new_index;		
-		//console.log('adj_index',adjusted_index);
-  //let msg=FULL_DATA[sensor].readings[adjusted_index];
-  	//	console.log('MSG fail',reading_length, new_index);
-  		
-		let msg=FULL_DATA[sensor].readings[new_index];
-		let msg2=FULL_DATA[sensor].readings[new_index];
-	
 
-		//sensor step
-		//be wary that some sensors have 5x fewer readings than others, notably
-		//elsys-co2-0559f2 
-		//elsys-co2-0559f3
-		//elsys-co2-0559fb 
-		SENSOR_INDICES[sensor]=new_index;
-	//	console.log('MSG: ',msg);
-		 rt_heatmap.feature=get_url_param('feature');
+			//sensor step
+			//be wary that some sensors have 5x fewer readings than others, notably
+			//elsys-co2-0559f2 
+			//elsys-co2-0559f3
+			//elsys-co2-0559fb 
+			SENSOR_INDICES[sensor]=new_index;
+			//console.log('MSG: ',msg);
 
-let msg_object;
+			rt_heatmap.feature=get_url_param('feature');
 
-		console.log('INCOMING FLASH ', sensor);
-       rt_heatmap.draw_splash(rt_heatmap, sensor, true);
+			let msg_object;
+
+			//console.log('INCOMING FLASH ', sensor);
+	       	//rt_heatmap.draw_splash(rt_heatmap, sensor, true);
+
+		//	console.log('new msg', msg,msg.acp_ts );
+			ts_analysis.push(parseInt(msg.acp_ts));
 
 
-		if(sub_mid){
-		
-		let midnight_reading=FULL_DATA[sensor].readings[0].payload_cooked[rt_heatmap.feature];
-		let midnight_ts=FULL_DATA[sensor].readings[0].acp_ts;
-		
-		let selected_reading=FULL_DATA[sensor].readings[new_index].payload_cooked[rt_heatmap.feature];
-		
-		console.log(sensor, new_index, selected_reading);
-		
-		let midnight_delta=selected_reading-midnight_reading;
-		
-		 msg_object=JSON.parse(JSON.stringify(msg));
-		
-		msg_object.payload_cooked[rt_heatmap.feature]=midnight_delta;	
-		
-		console.log(sensor,selected_reading,'-',midnight_reading,  format_time(midnight_ts),	msg_object.payload_cooked[rt_heatmap.feature]);
+			if(sub_mid){
+			
+				let midnight_reading=FULL_DATA[sensor].readings[0].payload_cooked[rt_heatmap.feature];
+				let midnight_ts=FULL_DATA[sensor].readings[0].acp_ts;
+				
+				let selected_reading=FULL_DATA[sensor].readings[new_index].payload_cooked[rt_heatmap.feature];
+				
+				console.log(sensor, new_index, selected_reading);
+				
+				let midnight_delta=selected_reading-midnight_reading;
+				
+				 msg_object=JSON.parse(JSON.stringify(msg));
+				
+				msg_object.payload_cooked[rt_heatmap.feature]=midnight_delta;	
+				
+				console.log(sensor,selected_reading,'-',midnight_reading,  format_time(midnight_ts),	msg_object.payload_cooked[rt_heatmap.feature]);
 
-		}
+			}
 
-	//	console.log('FINAL_TIME '+sensor, format_time(msg.acp_ts))
+			//console.log('FINAL_TIME '+sensor, format_time(msg.acp_ts))
 
-       if(sub_mid){
-    	//console.log('MSG:', msg_object.payload_cooked[rt_heatmap.feature]);
+      	 if(sub_mid){
+    			//console.log('MSG:', msg_object.payload_cooked[rt_heatmap.feature]);
+				rt_heatmap.update_sensor_data(rt_heatmap, msg_object);
+	   	}
+	   	else{
+				//console.log('MSG:',msg, msg.payload_cooked[rt_heatmap.feature]);
+				rt_heatmap.update_sensor_data(rt_heatmap, msg);
+	    }
 
-		//rt_heatmap.update_sensor_data(rt_heatmap, msg_object); 
-	   	
-       }else{
-
-       	//console.log('MSG:',msg, msg.payload_cooked[rt_heatmap.feature]);
-
-		//rt_heatmap.update_sensor_data(rt_heatmap, msg); 
-	
-       }//	rt_heatmap.update_crate_heatmap(rt_heatmap, SELECTED_CRATE, sensor);
-
-
+	      //	rt_heatmap.update_crate_heatmap(rt_heatmap, SELECTED_CRATE, sensor);
 
       
 		}
-	  //get min/max for the selected feature
+
+		ts_analysis.sort();
+		// console.log('requested-ts',ts_input);
+		 describe_list(ts_analysis, ts_input);
+		  // //get min/max for the selected feature
  		 rt_heatmap.get_min_max(rt_heatmap,  rt_heatmap.feature);
         //reset the colorbar
         rt_heatmap.set_colorbar(rt_heatmap);
 
 	    rt_heatmap.rotas_redraw(rt_heatmap);
 
+
 	if(timing){
 
 		// console.timeEnd('[HEATMAP REDRAW]');
 		 	 console.timeEnd('[TOTAL RETRIEVAL TIME LAPSED]');
 	}
+
+}
+
+function describe_list(list, requested){	
+//	console.log('LIST', list);
+	function std(numbersArr) {
+	    // CALCULATE AVERAGE
+	    var total = 0;
+	    for(var key in numbersArr) 
+	       total += numbersArr[key];
+	    var meanVal = total / numbersArr.length;
+	    // CALCULATE AVERAGE
+	  
+	    // CALCULATE STANDARD DEVIATION
+	    var SDprep = 0;
+	    for(var key in numbersArr) 
+	       SDprep += Math.pow((parseFloat(numbersArr[key]) - meanVal),2);
+	    var SDresult = Math.sqrt(SDprep/(numbersArr.length-1));
+	    // CALCULATE STANDARD DEVIATION
+	
+	    return SDresult;       
+	}
+
+	function median(values){
+	  if(values.length ===0) throw new Error("No inputs");
+	
+	  values.sort(function(a,b){
+	    return a-b;
+	  });
+	
+	  var half = Math.floor(values.length / 2);
+	  
+	  if (values.length % 2)
+	    return values[half];
+	  
+	  return (values[half - 1] + values[half]) / 2.0;
+	}
+
+	const average = list.reduce((a, b) => a + b, 0) / list.length;
+
+//	console.log('REQUESTED',requested,'MEAN: ', requested-average, 'MEDIAN ',requested- median(list), 'STD ',std(list), 'min/max delta: ', list[list.length-1]-list[0]);
+
+	console.log(
+		'\nREQUESTED:',	requested,get_hours(requested).toString(),
+		'\nMEAN △:', 	Math.abs(((requested-average)/60).toFixed(1)),'min', 
+		'\nMEDIAN △:',	Math.abs(((requested- median(list))/60).toFixed(1)),'min', 
+		'\nSTD:',			(std(list)/60).toFixed(1), 'min',
+		'\nmin/max △: ', ((list[list.length-1]-list[0])/60).toFixed(1),'min'
+		
+		);
 
 }
 
@@ -2117,6 +2202,8 @@ function initiate_rotas_ui(start, end){
 			let time_delta=Math.abs(found_next - parseInt(slider.value));
 			console.log('NEXT READING FOUND AT ', found_next, 't_delta is ', time_delta, 'original ts ', slider.value);				 
 			slider.value=parseInt(slider.value)+time_delta; //add the time delta
+
+			roll_heatmap(slider.value, false);
 			output.innerHTML = format_time(slider.value); // Display the default slider value
 			output_ts.innerHTML = slider.value;//
 
@@ -2157,7 +2244,12 @@ function initiate_rotas_ui(start, end){
 				check_for_splash(slider.value);	
 
 			}
-			
+
+		//just a thought - will change later:
+		//only update the heatmap if traversing in large intervals
+		if(seconds>59){
+				roll_heatmap(slider.value, false);
+		}
 
 		output.innerHTML = format_time(slider.value); // Display the default slider value
 		output_ts.innerHTML = slider.value;//
@@ -2218,6 +2310,7 @@ function initiate_rotas_ui(start, end){
 	 	output.innerHTML =format_time(unix_timestamp);
 	  	output_ts.innerHTML = unix_timestamp;
 	  	check_for_splash(unix_timestamp);
+	  	roll_heatmap(unix_timestamp, false);
 	}
 
 	//when moving voronoi slider, redraw the heatmap
