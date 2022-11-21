@@ -1,6 +1,6 @@
 {% extends "cdbb.html" %}
 {% load static %}
-{% block title %}CDBB Space Home{% endblock %}
+{% block title %}CDBB Splash Home{% endblock %}
 
 {% block head %}
 
@@ -18,7 +18,13 @@ Space
         </a>
     </div>
     <div class="breadcrumb">
-         &gt; Space
+         &gt;
+        <a href="{% url 'space_home' %}">
+            Space
+        </a>
+    </div>
+    <div class="breadcrumb">
+         &gt; Splash
     </div>
 </div>
 {% endblock %}
@@ -27,64 +33,69 @@ Space
 
 <div class="card">
         <div class="card_title">
-            Space
+        	GF corridor
         </div>
-        <div class="card_image">
-            <a class="card_link" href="{% url 'space_map' %}">
-                <img src="{% static 'space/images/space.png' %}"/>
-            </a>
-        </div>
-        <div class="card_text">
-            <div class="card_text_content">
-                Navigate a spatial view of our data starting with a map.
-            </div>
-        </div>
-</div>
 
-<div class="card">
-        <div class="card_title">
-            Rain
-        </div>
         <div class="card_image">
-            <a class="card_link" href="{% url 'space_rain_home' %}">
-                <img src="{% static 'space/images/floor_rain.png' %}"/>
-            </a>
-        </div>
-        <div class="card_text">
-            <div class="card_text_content">
-                View real-time heatmaps updating with live sensor data.
-            </div>
-        </div>
-</div>
-
-<div class="card">
-        <div class="card_title">
-            Splash
-        </div>
-        <div class="card_image">
-            <a class="card_link" href="{% url 'space_splash_home' %}">
+            <a class="card_link" href="{% url 'space_rotas_2000' 'corridor-middle-GF' %}">
                 <img src="{% static 'space/images/floor_splash.png' %}"/>
             </a>
         </div>
         <div class="card_text">
             <div class="card_text_content">
-                View sensor status updating with live sensor data.
+                View Rotas viz with past sensor data.
             </div>
         </div>
 </div>
 
 <div class="card">
         <div class="card_title">
-            Rotas 2000
+		 LT1 (GW20-FF)
         </div>
         <div class="card_image">
-            <a class="card_link" href="{% url 'space_rotas_home' %}">
-                <img src="{% static 'space/images/floor_rotas.png' %}"/>
+            <a class="card_link" href="{% url 'space_rotas_2000' 'GW20-FF' %}">
+                <img src="{% static 'space/images/floor_splash.png' %}"/>
             </a>
         </div>
         <div class="card_text">
             <div class="card_text_content">
-                View ROTAS visualisation for time scrubbing.
+                View Rotas2000 viz with past sensor data.
+            </div>
+        </div>
+</div>
+
+
+
+<hr/>
+
+<div class="card">
+        <div class="card_title">
+            Lockdown Lab
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'space_splash' 'll_0' %}">
+                <img src="{% static 'space/images/floor_splash.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                View sensor status with live sensor data.
+            </div>
+        </div>
+</div>
+
+<div class="card">
+        <div class="card_title">
+            VLAB
+        </div>
+        <div class="card_image">
+            <a class="card_link" href="{% url 'space_splash' 'VL0' %}">
+                <img src="{% static 'space/images/floor_splash.png' %}"/>
+            </a>
+        </div>
+        <div class="card_text">
+            <div class="card_text_content">
+                View sensor status with live sensor data.
             </div>
         </div>
 </div>

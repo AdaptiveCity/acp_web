@@ -375,6 +375,11 @@ class SplashHomeView(TemplateView):
     # Template "acp_web/cdbb/space/templates/space/splash_home.html"
     template_name = 'space/splash_home.html'
 
+
+class RotasHomeView(TemplateView):
+    # Template "acp_web/cdbb/space/templates/space/splash_home.html"
+    template_name = 'space/rotas_home.html'
+
 #Splash view aka draw ripples and check which sensors are (in)active
 class SplashView(LoginRequiredMixin, TemplateView):
     # Template from "acp_web/cdbb/space/templates/space/"

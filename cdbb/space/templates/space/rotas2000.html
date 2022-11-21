@@ -6,7 +6,7 @@
 <!-- Our style sheets -->
 <link rel="stylesheet" type="text/css" href="{% static 'space/css/floor.css' %}" />
 <link rel="stylesheet" type="text/css" href="{% static 'space/css/style.css' %}" />
-<link rel="stylesheet" type="text/css" href="{% static 'space/css/slider.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'space/css/rotas2000.css' %}" />
 
 
 <!-- Local copy of d3 -->
@@ -88,13 +88,34 @@ THIS IS ROTAS 2000 app
 
 <div class="main_content" id="main_content_id">
 
-    <div class="drawing_div" id="main_drawing_div">
-        <svg class="drawing_svg" id="drawing_svg">
-        </svg>
+	<div id='drawing_and_slider'>
+
+	    <div class="drawing_div" id="main_drawing_div">
+	        <svg class="drawing_svg" id="drawing_svg">
+	        </svg>
+
+	    </div>
 
 
+	       <div id="slidecontainer">
+            <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
 
-    </div>
+            <div id='date_time'>
+             <h2>Time: <span id="show_time"></span>&nbsp;&nbsp;&nbsp;&nbsp;	UNIX: <span id="show_unix_ts"></span></h2>
+             <h3>DATE: <span id="show_date" class='centered'></span></h3>
+          </div>
+
+          
+        </div>	
+
+     
+
+
+	   
+		 
+	</div>
+
+	 
     <div id="legend_and_buttons">
         <div id="legend_container"></div>
 
@@ -202,14 +223,8 @@ THIS IS ROTAS 2000 app
 
             <!-- close ALL_BUTTONS -->
         </div>
+
     </div>
-
-
-
-    <script>
-
-
-    </script>
 
    
     <!-- end MAIN CONTENT -->
@@ -217,16 +232,9 @@ THIS IS ROTAS 2000 app
 
 <div id='main_ui_components'>
 
-	 <div class="slidecontainer">
-	      <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
-	       <h2>Time: <span id="demo"></span></h2>
-	       <h3>UNIX: <span id="demo2"></span></h3>
-
-	 </div>
-
 	<div id='rotas_control'>
 
-		<span style="font-style: normal">&#9194;</span>
+		<span>&#9194;</span>
 
 	 	<button class="button button_back" id='button_backward_300'>-5min</button>
 	    <button class="button button_back" id='button_backward_60'>-1min</button>
@@ -236,7 +244,7 @@ THIS IS ROTAS 2000 app
 		&nbsp;&nbsp;
 	    <button class="button button_skip" id='button_skip_backward'>&#9198;</button>
 		|&nbsp;
-		<span style="font-style: normal" id="ticker">&#11035;</span>
+		<span  id="ticker">&#11035;</span>
 	    &nbsp;|
 	    <button class="button button_skip" id='button_skip_forward'>&#9197;</button>
 		&nbsp;&nbsp;
@@ -246,7 +254,7 @@ THIS IS ROTAS 2000 app
 	    <button class="button button_fwd" id='button_forward_60'>+1min</button>
 	    <button class="button button_fwd" id='button_forward_300'>+5min</button>
 
-		<span style="font-style: normal">&#9193;</span>
+		<span>&#9193;</span>
 	</div>
 
 	<br>	
@@ -261,6 +269,41 @@ THIS IS ROTAS 2000 app
 		
  		<button class="button button_control_1" id='button_play'>Play &#9199;</button>
     	<button class="button button_control_2" id='button_stop'>Stop &#9208;</button> 
+	</div>
+
+	<br>
+	
+	<div id='toggle_controls' >
+		<div id='toggle_splash'>
+			<!-- Rounded switch -->
+			<!-- <label class="switch"> -->
+		  		<!-- <input id='toggle_splash_switch' type="checkbox"> -->
+		  		<!-- <span class="slider_switch round"></span> -->
+			<!-- </label> -->
+			<!-- <span > Toggle <em>Splashes</em> </span> -->
+
+			<button type="button"  id='toggle_splash_switch'>Toggle Splashes</button>
+
+		</div>
+
+		<div id='toggle_rotas'>
+			<label class="switch">
+		  		<input id='toggle_rotas_switch' type="checkbox">
+		  		<span class="slider_switch round"></span>
+			</label>
+			<span class='v-centered'> Toggle <em>Rotas</em> </span>
+			
+		</div>
+		<br>
+		<div id='toggle_update_heatmap'>
+			<button type="button" id='update_heatmap_button'>Update Heatmap</button>
+		</div>
+
+			<br>
+		<div id='toggle_update_heatmap_midnight'>
+			<button type="button" id='update_heatmap_button_midnight'>Update Heatmap (unbiased)</button>
+		</div>
+		
 	</div>
 
 	<div id='voronoi_div' style="width:10%">
@@ -278,7 +321,6 @@ THIS IS ROTAS 2000 app
 
 </div>
 
-</div>
 
 
 <!-- TOOLTIP - will be made visible/invisible as mouse moves over sensors -->

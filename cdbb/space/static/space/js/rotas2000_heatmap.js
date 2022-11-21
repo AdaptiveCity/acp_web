@@ -4,6 +4,9 @@ const MEDIUM_REZ = 5;
 const HIGH_REZ = 3;
 const LOW_REZ = 8;
 
+
+var UPDATE_HEATMAP=true;
+var UPDATE_SPLASH=true;
 //modify to define in read_url()
 //const SELECTED_CRATE='GW20-FF';
 console.log('URL ID, ', window.location.pathname);
@@ -205,6 +208,26 @@ class RotasHeatMap {
         });
 
 
+
+	//------------------------------------------------------//
+	  //connect to rt monitor
+        document.getElementById('toggle_rotas_switch').addEventListener('click', () => {
+        console.log('doing rotas');
+        do_rotas();
+        UPDATE_HEATMAP=false;
+        UPDATE_SPLASH=true;
+        });
+
+          //connect to rt monitor
+        document.getElementById('toggle_splash_switch').addEventListener('mouseup', () => {
+
+		UPDATE_HEATMAP=!UPDATE_HEATMAP;
+        UPDATE_SPLASH=!UPDATE_SPLASH;
+         console.log('toggling splashes', UPDATE_HEATMAP, UPDATE_SPLASH);
+
+        });
+
+	//------------------------------------------------------//
 
     }
 
@@ -577,39 +600,39 @@ class RotasHeatMap {
     }
 
 
-    handle_sensors_metadata_d3(parent){
-    	    	
-    	const queryString = window.location.search;
-    	const urlParams = new URLSearchParams(queryString);
-    	const date = urlParams.get('date');
-    	const feature = urlParams.get('feature');
-
-		//let floor_number=determine_floor();
-
-    	let	url='http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_floor_feature/WGB/'+FLOOR_NUMBER+'/'+feature+'/?metadata=true&date='+date;
-
-		console.log('QUERY URL', url);
-    	
-    	if(date){
-    		url+='?date='+String(date)+'/'
-    		console.log('selected date is ',date);
-    	}
-    	
-    	 //load get_floor_feature url
-    	 d3.json(url, {crossOrigin: "anonymous"})
-
-    	        	.then(function (received_data) {
-   	        	  		parent.init();
-
-    		        	//console.log('DATA RECEIVO URL', received_data);
-      					//console.log('DATA RECEIVO API', API_READINGS_INFO);
-	   	        	    parent.handle_sensors_metadata(parent, API_READINGS_INFO); 
-						//do_rotas();
-
-
-   	      });
-
-   	}
+    // handle_sensors_metadata_d3(parent){
+    	    	// 
+    	// const queryString = window.location.search;
+    	// const urlParams = new URLSearchParams(queryString);
+    	// const date = urlParams.get('date');
+    	// const feature = urlParams.get('feature');
+// 
+		// //let floor_number=determine_floor();
+// 
+    	// let	url='http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_floor_feature/WGB/'+FLOOR_NUMBER+'/'+feature+'/?metadata=true&date='+date;
+// 
+		// console.log('QUERY URL', url);
+    	// 
+    	// if(date){
+    		// url+='?date='+String(date)+'/'
+    		// console.log('selected date is ',date);
+    	// }
+    	// 
+    	 // //load get_floor_feature url
+    	 // d3.json(url, {crossOrigin: "anonymous"})
+// 
+    	        	// .then(function (received_data) {
+   	        	  		// parent.init();
+// 
+    		        	// //console.log('DATA RECEIVO URL', received_data);
+      					// //console.log('DATA RECEIVO API', API_READINGS_INFO);
+	   	        	    // parent.handle_sensors_metadata(parent, API_READINGS_INFO);
+						// //do_rotas();
+// 
+// 
+   	      // });
+// 
+   	// }
 
     // Returns a "list object" (i.e. dictionary on acp_id) of sensors on
     // given floor#/coordinate system
@@ -1544,10 +1567,10 @@ if(date){
 
 			console.log(all_sensors);
 			FULL_DATA=received_data;
-			
-			
-			FULL_DATA_OG=JSON.parse(JSON.stringify(FULL_DATA));
 
+			//make a deep copy of the original
+			FULL_DATA_OG = JSON.parse(JSON.stringify(FULL_DATA));
+			
 			ALL_SENSORS=all_sensors;
 
 			console.log('updating:')
@@ -1779,7 +1802,9 @@ function check_for_splash(unix_ts){
 
 		let motion_bool=check_payload_motion(time_bus_list[i]);
 
-       	rt_heatmap.draw_splash(rt_heatmap, time_bus_sensor, motion_bool);
+		if(UPDATE_SPLASH){
+			rt_heatmap.draw_splash(rt_heatmap, time_bus_sensor, motion_bool);
+		}	
 	}
 
 }
@@ -1846,7 +1871,11 @@ function roll_to_adjacent(unix_ts, direction){
 
 			let motion_bool=check_payload_motion(time_bus_list[i]);
 
-	       	rt_heatmap.draw_splash(rt_heatmap, time_bus_sensor, motion_bool);
+			if(UPDATE_SPLASH){
+				rt_heatmap.draw_splash(rt_heatmap, time_bus_sensor, motion_bool);
+			}
+
+	       	
 		}
 	}
 
@@ -1882,6 +1911,7 @@ function roll_heatmap(ts_input, sub_mid){
 	const map = (value, x1, y1, x2, y2) => (value - x1) * (y2 - x2) / (y1 - x1) + x2;
 
     let param_date=get_url_param('date');
+	rt_heatmap.feature=get_url_param('feature');
 
 	let midnight;
 	//let now;
@@ -1921,19 +1951,21 @@ function roll_heatmap(ts_input, sub_mid){
 		}
 
 	if(timing){
-
 		 console.time('[TOTAL RETRIEVAL TIME LAPSED]');
-		
 	}
 
 		let ts_analysis=[];
 
+		if(sub_mid){
+			console.log('running midnight bias', sub_mid);
+
+			FULL_DATA=midnight_bias(FULL_DATA);
+		}
+	
 
 		for (let i =0; i<ALL_SENSORS.length;i++){
 
-
 			let sensor=ALL_SENSORS[i];
-
 
 			let reading_length=FULL_DATA[sensor].readings.length;
 
@@ -1945,12 +1977,6 @@ function roll_heatmap(ts_input, sub_mid){
 	        let index_start=0;//adjusted_index-30;
 	        let index_finish=reading_length-1;//adjusted_index+30;
 
-			//index_start=(index_start<0)?0:index_start;
-			//index_finish=(index_finish>reading_length-1)?reading_length-1:index_finish;
-
-			//index_start=0;
-			//index_finish=reading_length-1;
-
 			let full_data_copy=FULL_DATA;
 			let new_index=recursiveFunction(full_data_copy[sensor].readings,time_calc,index_start,index_finish);
 			
@@ -1959,71 +1985,29 @@ function roll_heatmap(ts_input, sub_mid){
 			}
 			
 			new_index=new_index==false?adjusted_index:new_index;		
-			//console.log('adj_index',adjusted_index);
-	  		//let msg=FULL_DATA[sensor].readings[adjusted_index];
-	  		//	console.log('MSG fail',reading_length, new_index);
-	  		
-			let msg=FULL_DATA[sensor].readings[new_index];
-			let msg2=FULL_DATA[sensor].readings[new_index];
-		
 
+			let msg=FULL_DATA[sensor].readings[new_index];
+
+		if(sub_mid){
+			let msg_og=FULL_DATA_OG[sensor].readings[new_index];
+			console.log('current val ', msg.payload_cooked[rt_heatmap.feature], 'original ', msg_og.payload_cooked[rt_heatmap.feature])
+		}
 			//sensor step
 			//be wary that some sensors have 5x fewer readings than others, notably
 			//elsys-co2-0559f2 
 			//elsys-co2-0559f3
 			//elsys-co2-0559fb 
 			SENSOR_INDICES[sensor]=new_index;
-			//console.log('MSG: ',msg);
 
-			rt_heatmap.feature=get_url_param('feature');
-
-			let msg_object;
-
-			//console.log('INCOMING FLASH ', sensor);
-	       	//rt_heatmap.draw_splash(rt_heatmap, sensor, true);
-
-		//	console.log('new msg', msg,msg.acp_ts );
 			ts_analysis.push(parseInt(msg.acp_ts));
 
-
-			if(sub_mid){
-			
-				let midnight_reading=FULL_DATA[sensor].readings[0].payload_cooked[rt_heatmap.feature];
-				let midnight_ts=FULL_DATA[sensor].readings[0].acp_ts;
-				
-				let selected_reading=FULL_DATA[sensor].readings[new_index].payload_cooked[rt_heatmap.feature];
-				
-				console.log(sensor, new_index, selected_reading);
-				
-				let midnight_delta=selected_reading-midnight_reading;
-				
-				 msg_object=JSON.parse(JSON.stringify(msg));
-				
-				msg_object.payload_cooked[rt_heatmap.feature]=midnight_delta;	
-				
-				console.log(sensor,selected_reading,'-',midnight_reading,  format_time(midnight_ts),	msg_object.payload_cooked[rt_heatmap.feature]);
-
-			}
-
-			//console.log('FINAL_TIME '+sensor, format_time(msg.acp_ts))
-
-      	 if(sub_mid){
-    			//console.log('MSG:', msg_object.payload_cooked[rt_heatmap.feature]);
-				rt_heatmap.update_sensor_data(rt_heatmap, msg_object);
-	   	}
-	   	else{
-				//console.log('MSG:',msg, msg.payload_cooked[rt_heatmap.feature]);
-				rt_heatmap.update_sensor_data(rt_heatmap, msg);
-	    }
-
-	      //	rt_heatmap.update_crate_heatmap(rt_heatmap, SELECTED_CRATE, sensor);
-
+			rt_heatmap.update_sensor_data(rt_heatmap, msg);
+	 
       
 		}
 
-		ts_analysis.sort();
 		// console.log('requested-ts',ts_input);
-		 describe_list(ts_analysis, ts_input);
+		 describe_delta_list(ts_analysis, ts_input);
 		  // //get min/max for the selected feature
  		 rt_heatmap.get_min_max(rt_heatmap,  rt_heatmap.feature);
         //reset the colorbar
@@ -2040,7 +2024,64 @@ function roll_heatmap(ts_input, sub_mid){
 
 }
 
-function describe_list(list, requested){	
+function midnight_bias(sensor_readings){
+
+	//sensor_readings aka FULL_DATA as a an object with sensor acp_ids as keys, with lists as readings following that
+
+	let midnight_list=[];
+
+	Object.keys(sensor_readings).forEach((sensor)=>{
+
+		if(sensor_readings[sensor].readings.length>0){
+
+			let midnight_reading=sensor_readings[sensor].readings[0].payload_cooked[rt_heatmap.feature];
+
+			midnight_list.push(midnight_reading);
+
+		}
+				
+	});
+
+	let midnight_stats=describe_list(midnight_list,0);
+
+	Object.keys(sensor_readings).forEach((sensor)=>{
+
+		let readings_list=sensor_readings[sensor].readings;
+		let readings_len=readings_list.length;
+		
+		if(readings_len>0){
+
+			let midnight_reading=sensor_readings[sensor].readings[0].payload_cooked[rt_heatmap.feature];
+			
+			console.log(sensor,'midnight_reading', midnight_reading, midnight_stats);
+		
+			for(let u =0; u<readings_len;u++){
+					let readings_entry=readings_list[u];
+					
+					readings_entry.payload_cooked[rt_heatmap.feature]=readings_entry.payload_cooked[rt_heatmap.feature]-midnight_reading;
+
+					readings_entry.payload_cooked[rt_heatmap.feature]=readings_entry.payload_cooked[rt_heatmap.feature]+midnight_stats['median'];
+			
+				}
+			// sensor_readings[sensor].readings.forEach((reading, i)=>{
+		// 
+		// });
+	
+			
+		}
+
+	
+				
+	});
+
+		return sensor_readings;
+}
+
+
+
+function describe_delta_list(list, requested){	
+
+	list=list.sort()
 //	console.log('LIST', list);
 	function std(numbersArr) {
 	    // CALCULATE AVERAGE
@@ -2090,6 +2131,64 @@ function describe_list(list, requested){
 
 }
 
+function describe_list(list, rounded){	
+	list=list.sort()
+
+//	console.log('LIST', list);
+	function std(numbersArr) {
+	    // CALCULATE AVERAGE
+	    var total = 0;
+	    for(var key in numbersArr) 
+	       total += numbersArr[key];
+	    var meanVal = total / numbersArr.length;
+	    // CALCULATE AVERAGE
+	  
+	    // CALCULATE STANDARD DEVIATION
+	    var SDprep = 0;
+	    for(var key in numbersArr) 
+	       SDprep += Math.pow((parseFloat(numbersArr[key]) - meanVal),2);
+	    var SDresult = Math.sqrt(SDprep/(numbersArr.length-1));
+	    // CALCULATE STANDARD DEVIATION
+	
+	    return SDresult;       
+	}
+
+	function median(values){
+	  if(values.length ===0) throw new Error("No inputs");
+	
+	  values.sort(function(a,b){
+	    return a-b;
+	  });
+	
+	  var half = Math.floor(values.length / 2);
+	  
+	  if (values.length % 2)
+	    return values[half];
+	  
+	  return (values[half - 1] + values[half]) / 2.0;
+	}
+
+	const average = list.reduce((a, b) => a + b, 0) / list.length;
+
+//	console.log('REQUESTED',requested,'MEAN: ', requested-average, 'MEDIAN ',requested- median(list), 'STD ',std(list), 'min/max delta: ', list[list.length-1]-list[0]);
+
+	console.log(
+		'\nMEAN :', 	average.toFixed(rounded), 
+		'\nMEDIAN :',	median(list).toFixed(rounded), 
+		'\nSTD:',		std(list).toFixed(rounded), 
+		'\nmin/max △: ',(list[list.length-1]-list[0]).toFixed(rounded)
+		
+		);
+
+		return {
+				'mean':	parseFloat(average.toFixed(rounded)), 
+				'median':parseFloat(median(list).toFixed(rounded)), 
+				'std':	parseFloat(std(list).toFixed(rounded)), 
+				'delta':parseFloat((list[list.length-1]-list[0]).toFixed(rounded))
+			}
+
+}
+
 ///-----PROBABLY NEED TO RENAME THIS FUNCTION BECAUSE IT IS REPOSNSIBLE FOR Ui
 function initiate_rotas_ui(start, end){
 
@@ -2102,8 +2201,10 @@ function initiate_rotas_ui(start, end){
 	//----------define slider inputs----------------//
 
 	let slider = document.getElementById("myRange");
-	let output = document.getElementById("demo");
-	let output_ts = document.getElementById("demo2");
+	let output = document.getElementById("show_time");
+	let output_ts = document.getElementById("show_unix_ts");
+	let output_date = document.getElementById("show_date");
+
 
 	//output.innerHTML = format_time(slider.value); // Display the default slider value
 	let current_value=slider.value;
@@ -2119,8 +2220,15 @@ function initiate_rotas_ui(start, end){
 
 	console.log('selected_time',current_value);
 
+	 document.getElementById('update_heatmap_button').addEventListener('mouseup', () => {
+				roll_heatmap(slider.value, false);	
+        });
 
-	//----------define button inputs----------------//
+      document.getElementById('update_heatmap_button_midnight').addEventListener('mouseup', () => {
+				roll_heatmap(slider.value, true);	
+        });
+
+	//----------define control button inputs----------------//
 
 	let button_play=document.getElementById("button_play");
 	let button_stop=document.getElementById("button_stop");
@@ -2139,7 +2247,7 @@ function initiate_rotas_ui(start, end){
 	let button_backward_60=document.getElementById("button_backward_60");
 	let button_backward_300=document.getElementById("button_backward_300");
 
-	//-------------end button inputs----------------//
+	//-------------end control button inputs----------------//
 
 
 	//-------------d3.js housekeeping----------------//
@@ -2166,15 +2274,37 @@ function initiate_rotas_ui(start, end){
 		let duration=document.getElementById("duration").value==''?60:document.getElementById("duration").value;
 		let initial_duration=duration;
 		let speed=(document.getElementById("speed").value==''?1:document.getElementById("speed").value);
+		let speed_multipler =(1/speed)*1000;
+
+
+
 		
+		//TODO: fix this mess
 		ticking_timer = setInterval(function(){
-			console.log('timer ', duration)
+			console.log('timer ', duration, initial_duration);
 
 		  if(duration <= 0){
 		    clearInterval(ticking_timer);
 			console.log('timer done')
 		  } else {
+
+	  		  if(initial_duration<=60){
+		  		document.getElementById('button_forward_1').click();
+			  }
+			   if((initial_duration>60) && (initial_duration<=300)){
+		  	document.getElementById('button_forward_10').click();
+			  }
+			   if((initial_duration>300) && (initial_duration<=600)){
+		  	document.getElementById('button_forward_60').click();
+			  }
+			  
+			  if(initial_duration>600){
+		  	document.getElementById('button_forward_300').click();
+			  }
+			  else{
 		  	document.getElementById('button_forward_1').click();
+			  }
+
 		  
 			//update the ticker box	⬛	is &#11035;⬜ is &#11036;
 			document.getElementById('ticker').innerHTML=(duration%2==0)?'&#11036':'&#11035';
@@ -2182,8 +2312,26 @@ function initiate_rotas_ui(start, end){
 		  	console.log('timer ticking ',duration,duration%2==0)
 
 		  }
-		  duration -= 1;
-		}, (1/speed)*1000);
+
+			  if(initial_duration<=60){
+		duration -= 1; 		 
+			  }
+			   if(initial_duration>60 && initial_duration<=300){
+		duration -= 10; 		 
+			  }
+			   if(initial_duration>300 && initial_duration<=600){
+		duration -= 60; 		 
+			  }
+			  
+			  if(initial_duration>600 ){
+		duration -= 300; 		 
+			  }
+			  else{
+		duration -= 1; 		 
+			  }
+			  
+
+		},speed_multipler);
 	};
 
 	//stop timer prematurely
@@ -2203,7 +2351,10 @@ function initiate_rotas_ui(start, end){
 			console.log('NEXT READING FOUND AT ', found_next, 't_delta is ', time_delta, 'original ts ', slider.value);				 
 			slider.value=parseInt(slider.value)+time_delta; //add the time delta
 
-			roll_heatmap(slider.value, false);
+			if(UPDATE_HEATMAP){
+				roll_heatmap(slider.value, false);	
+			}			
+			
 			output.innerHTML = format_time(slider.value); // Display the default slider value
 			output_ts.innerHTML = slider.value;//
 
@@ -2216,6 +2367,11 @@ function initiate_rotas_ui(start, end){
 		if (found_previous){
 			let time_delta=Math.abs(found_previous - parseInt(slider.value));
 			console.log('PREV READING FOUND AT ', found_previous, 't_delta is ', time_delta, 'original ts ', slider.value);				 
+
+			if(UPDATE_HEATMAP){
+				roll_heatmap(slider.value, false);	
+			}			
+
 			slider.value=parseInt(slider.value)-time_delta; //subtract the time delta
 			output.innerHTML = format_time(slider.value); // Display the default slider value
 			output_ts.innerHTML = slider.value;//
@@ -2247,9 +2403,14 @@ function initiate_rotas_ui(start, end){
 
 		//just a thought - will change later:
 		//only update the heatmap if traversing in large intervals
-		if(seconds>59){
-				roll_heatmap(slider.value, false);
-		}
+		// if(seconds>59){
+				// roll_heatmap(slider.value, false);
+		// }
+
+		if(UPDATE_HEATMAP){
+				roll_heatmap(slider.value, false);	
+		}			
+					
 
 		output.innerHTML = format_time(slider.value); // Display the default slider value
 		output_ts.innerHTML = slider.value;//
@@ -2494,10 +2655,10 @@ function load_graph(){
 
 function test_graph(){
 
-	
+	const base_width=d3.select("#drawing_svg").node().getBoundingClientRect().width;
 	// set the dimensions and margins of the graph
 	const margin = {top: 10, right: 30, bottom: 30, left: 60},
-	    width = 460 - margin.left - margin.right,
+	    width = base_width - margin.left - margin.right,
 	    height = 400 - margin.top - margin.bottom;
 	
 	// append the svg object to the body of the page
