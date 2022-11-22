@@ -137,7 +137,7 @@ class RotasHeatMap {
         //-------MISC STYLING END------//
 
 
-		this.value_ranges={'temperature':[14,21],'co2':[380,600], 'humidity':[30,55],'vdd':[3500,3700]};
+		this.value_ranges={'temperature':[13,21],'co2':[380,600], 'humidity':[30,55],'vdd':[3500,3700]};
 			this.value_ranges_subtr={'temperature':[-1,5],'co2':[-40,100], 'humidity':[30,55],'vdd':[3500,3700]};
 
         //--------RT MONITOR MISC----------//
@@ -2467,9 +2467,14 @@ function initiate_rotas_ui(start, end){
 	// Update the current slider value (each time you drag the slider handle)
 	slider.oninput = function() {
 		let unix_timestamp=this.value;
+		console.log('slider value is ', this.value);
 	  
 	 	output.innerHTML =format_time(unix_timestamp);
 	  	output_ts.innerHTML = unix_timestamp;
+
+	  	let ts_date = new Date(unix_timestamp * 1000);
+	  	output_date.innerHTML=ts_date.toLocaleDateString("en-GB")
+	  			
 	  	check_for_splash(unix_timestamp);
 	  	roll_heatmap(unix_timestamp, false);
 	}
@@ -2545,172 +2550,294 @@ function get_hours(UNIX_timestamp){
 	let time=[hour,min];
 	  return time;
 }
-//////////////////////////////////////////////////
-
-function load_graph(){
-
-	let url_link="http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_crate_chart/wgb/FN07/";
-		// set the dimensions and margins of the graph
-	const margin = {top: 10, right: 30, bottom: 30, left: 60},
-	    width = window.innerWidth - margin.left - margin.right,
-	    height = 400 - margin.top - margin.bottom;
-	
-	// append the svg object to the body of the page
-	const svg = d3.select("#my_dataviz")
-	  .append("svg")
-	    .attr("width", width + margin.left + margin.right)
-	    .attr("height", height + margin.top + margin.bottom)
-	  .append("g")
-	    .attr("transform", `translate(${margin.left},${margin.top})`);
-
-
-	    	//Read the data
-	d3.json(url_link,{crossOrigin: "anonymous"})
-		.then(function(data) {
-				let datum=[];
-				data['readings'].forEach(
-								 (element) =>{
-											 try{
-												 datum.push({'date':parseInt(element.acp_ts), 'value':element.payload_cooked[rt_heatmap.feature]});
-												 console.log({'date':parseInt(element.acp_ts), 'value':element.payload_cooked[rt_heatmap.feature]});
-												 }
-											 catch(err){
-				    							 //console.log('skipping',format_time(parseInt(element.acp_ts)));
-													 }
-											 }
-										 );
-				//console.log(datum);
-	  			console.log('done');
-
-
-
-
-
-	    // Add X axis --> it is a date format
-	    // const x = d3.scaleLinear()
-	      // .domain(d3.extent(datum, d => d.date))
-	      // .range([ 0, width ]);
-	      // 
-	    // svg.append("g")
-	      // .attr("transform", "translate(0," + height + ")")
-	      // .call(d3.axisBottom(x))   ;
-
-	        let len=datum.length-1;
-	        var x = d3.scaleTime()
-	          .domain([datum[0].acp_ts,datum[len].acp_ts ])
-	          .range([0, width]);
-	          
-	        var xAxis = d3.axisBottom(x)
-	          .tickFormat(d3.timeFormat("%H:%M:%S"))
-	          .ticks(50);
-	          
-	        svg.append("g")
-	          .attr("class", "x axis")
-	          .attr("transform", "translate(0," + height + ")")
-	          .call(xAxis)
-	          .selectAll("text")
-	          .attr("y", -5)
-	          .attr("x", 30)
-	          .attr("transform", "rotate(90)")
-
-	    // Add Y axis
-	    const y = d3.scaleLinear()
-	      .domain( [380, 600])
-	      .range([ height, 0 ]);
-	    svg.append("g")
-	      .call(d3.axisLeft(y));
-
-	      
-	    // // Add the line
-	    svg.append("path")
-	      .datum(datum)
-	      .attr("fill", "none")
-	      .attr("stroke", "#FFFFFF")
-	      .attr("stroke-width", 1.5)
-	      .attr("d", d3.line()
-	        .x(d => x(d.date))
-	        .y(d => y(d.value))
-	        )
-	    // Add the points
-	    svg
-	      .append("g")
-	      .selectAll("dot")
-	      .data(data)
-	      .join("circle")
-	        .attr("cx", d => x(d.date))
-	        .attr("cy", d => y(d.value))
-	        .attr("r", 10)
-	        .attr("fill", "#FFFFFF")
-	
-
-
-
-
-
-
-	  			
-	    					}
-	 	);
-}
 
 function test_graph(){
 
 	const base_width=d3.select("#drawing_svg").node().getBoundingClientRect().width;
 	// set the dimensions and margins of the graph
-	const margin = {top: 10, right: 30, bottom: 30, left: 60},
+	const margin = {top: 10, right: 50, bottom: 50, left: 60},
 	    width = base_width - margin.left - margin.right,
 	    height = 400 - margin.top - margin.bottom;
-	
+
+
+	console.log('base width', width)
 	// append the svg object to the body of the page
 	const svg = d3.select("#my_dataviz")
 	  .append("svg")
 	    .attr("width", width + margin.left + margin.right)
 	    .attr("height", height + margin.top + margin.bottom)
 	  .append("g")
-	    .attr("transform", `translate(${margin.left},${margin.top})`);
+	    .attr("transform", `translate(${margin.left},${margin.top})`)
+
+	    // .on('mousemove', (event) => {
+	          // var coords = d3.pointer( event );
+	          // console.log( coords[0], coords[1] ) // log the mouse x,y position
+	        // });
+
+	        
+   const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+     const date = urlParams.get('date');
+
+		      
+
+	const URL='http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_crate_chart/wgb/GW20-FF/?date='+date.toString();
+	const url2='"https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/connectedscatter.csv"';
+console.log('query url is ', URL);
+
+	let timeFormat = d3.timeFormat("%H:%M");
+
+	d3.json(URL, 
+		function(datezzo){
+			console.log('datezzo graph', datezzo.readings);
+			return {readings: datezzo.readings }
+		   //return { date : d3.timeParse("%Y-%m-%d")(d.date), value : d.value
+		    
+		  }).then(
+		  // Now I can use this dataset:
+		  function(data,d,i) {
+
+
+
+		  	     svg.append("g")
+		      .attr('class', 'bgr')
+		      .append('rect')
+   		      .attr('id', 'bgr_rect')
+		      .attr('y', 0)
+		      .attr('x', 0)
+		      .attr('height',height)
+		      .attr('width',width)
+   		      .attr('opacity',0.95)
+		      .style('fill', 'white');
+
+		      
+		  let readings= data.readings;
+			console.log('data graph', data.readings,d,i);
+
+		  
+		    // Add X axis --> it is a date format
+		    const x = d3.scaleLinear()
+		      .domain(d3.extent(readings, function(d){
+				return d.acp_ts*1000;})
+		      )
+		      .range([ 0, width ]);
+
+		      
+		    svg.append("g")
+		      .attr('class', 'x-ticks')
+		      .attr("transform", "translate(0," + height + ")")
+		      .call(
+		      	d3.axisBottom(x)
+		      		.ticks(28)
+		          	.tickPadding(5)
+      			    .tickFormat(timeFormat)
+      			  //  .nice()
+
+		       )
+		       .selectAll("text")
+		           .attr("transform", "translate(-10,10)rotate(-45)")
+		           .style("text-anchor", "end")
+		           .style("font-size", 20);
+		         //  .style("fill", "#69a3b2")
+		     
+		          //.tickFormat(timeFormat);
+
+		    // Add Y axis
+		    const y1 = d3.scaleLinear()
+              .domain([rt_heatmap.value_ranges['co2'][0], rt_heatmap.value_ranges['co2'][1]])
+		     // .domain( [8000, 9200])
+		      .range([ height, 0 ]);
+		      
+			const y2 = d3.scaleLinear()
+              .domain([rt_heatmap.value_ranges['temperature'][0], rt_heatmap.value_ranges['temperature'][1]])
+		     // .domain( [8000, 9200])
+		      .range([ height, 0 ]);
+		      
+
+		    svg.append("g")
+		      .call(d3.axisLeft(y1));
+
+		    svg.append("g")
+			      .call(
+			      	d3.axisRight(y2)
+			      )
+			      .attr("transform", "translate("+width+",0)rotate(0)");//.orient("right");
+
+		    // Add the line
+		    svg.append("path")
+		      .datum(readings)
+		      .attr("fill", "none")
+		      .attr("stroke", "#69b3a2")
+		      .attr("stroke-width", 1.5)
+		      .attr("d", d3.line()
+		        .x(d => x(d.acp_ts*1000))
+		        .y(d => y2(d.payload_cooked['temperature']))
+		        )
+
+
+		         // Add the line
+		    svg.append("path")
+		      .datum(readings)
+		      .attr("fill", "none")
+		      .attr("stroke", "#ff9633")
+		      .attr("stroke-width", 1.5)
+		      .attr("d", d3.line()
+		        .x(d => x(d.acp_ts*1000))
+		        .y(d => y1(d.payload_cooked['co2']))
+		        )
+
+		        
+   // Add the points
+		    svg
+		      .append("g")
+		      .selectAll("dot")
+		      .data(readings)
+		      .join("circle")
+		        .attr("cx", d => x(d.acp_ts*1000))
+		        .attr("cy", d => y1(d.payload_cooked['co2']))
+		        .attr("r", 5)
+		        .attr("fill", "#ff9633");
+
+		        
+		    // Add the points
+		    svg
+		      .append("g")
+		      .selectAll("dot")
+		      .data(readings)
+		      .join("circle")
+		        .attr("cx", d => x(d.acp_ts*1000))
+		        .attr("cy", d => y2(d.payload_cooked['temperature']))
+		        .attr("r", 5)
+		        .attr("fill", "#69b3a2");
+
+
+
+
+
+   const reverse_x = d3.scaleLinear()
+		      .domain([0,width])
+		      .range(d3.extent(readings, function(d){
+		      				return d.acp_ts*1000;}));
+
+  // Add the line
+		    svg
+		      .append("g")
+		        svg.append("line")
+		        .attr('id', 'plot_line')
+		  //    .datum(readings)
+				.attr('x1', function (d) {return x(readings[10].acp_ts*1000)})
+				.attr('y1', 0)
+				.attr('x2',  function (d) {return x(readings[10].acp_ts*1000)})
+				.attr('y2', height)
+		    //  .attr("fill", "none")
+		      	.attr("stroke", "red")
+		      	.attr("stroke-width", 3)
+		      	.attr("cursor", "move")
+		      	      .call(d3.drag()
+		      	        .on('start', dragStart)
+		      	        .on('drag', dragging)
+		      	        .on('end', dragEnd)
+		      	      )
+		      	  
+		      
+		      	  
+ 		  .on('mousemove', (event) => {
+	          let coords_local = d3.pointer( event );
+
+	          console.log(event);
+	         
+	          d3.select(event.target)
+	         			.attr("stroke-width", 6)
+	          		//	.attr('x1', function (d) { return coords_local[0]+25}) // log the mouse x,y position})
+	          		//	.attr('x2', function (d) {return x(readings[10].acp_ts*1000)})      
+	        		})
+
+ 				.on('mouseout', function (d) {d3.select(this).attr("stroke-width", 3)});
+
+
+
+
+
+    function dragStart(event,d){
+        d3.select(this)
+          .style("stroke", "black")  
+      }
+      
+    function dragging(event,d){
+        var xCoor = event.x;
+        var yCoor = event.y;
+
+        d3.select(this)
+          .attr("x1", xCoor)
+          .attr("x2", xCoor);
+		 let unix_ts=parseInt(reverse_x(xCoor)/1000);
+          console.log(xCoor, unix_ts, get_hours(unix_ts));
+
+		let output = document.getElementById("show_time");
+		let output_ts = document.getElementById("show_unix_ts");
+		let output_date = document.getElementById("show_date");
+	    let slider = document.getElementById("myRange");
+
+		let ts_date = new Date(unix_ts * 1000);
+		output_date.innerHTML=ts_date.toLocaleDateString("en-GB")
+	    document.getElementById('myRange').value=unix_ts.toString();
+	    console.log('bottom_slider value is', unix_ts)
+		output.innerHTML =format_time(unix_ts);
+	  	output_ts.innerHTML = unix_ts;
+	  	check_for_splash(unix_ts);
+	  	roll_heatmap(unix_ts, false);
+
+      }
+      
+      function dragEnd(event,d){
+        d3.select(this)
+          .style("stroke", "red")
+      }
+		        
+		})
 	
-	//Read the data
-	d3.csv("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/connectedscatter.csv",
-	  // When reading the csv, I must format variables:
-	  function(d){
-	    return { date : d3.timeParse("%Y-%m-%d")(d.date), value : d.value }
-	  }).then(
-	  // Now I can use this dataset:
-	  function(data) {
-	    // Add X axis --> it is a date format
-	    const x = d3.scaleTime()
-	      .domain(d3.extent(data, d => d.date))
-	      .range([ 0, width ]);
-	    svg.append("g")
-	      .attr("transform", "translate(0," + height + ")")
-	      .call(d3.axisBottom(x));
-	    // Add Y axis
-	    const y = d3.scaleLinear()
-	      .domain( [8000, 9200])
-	      .range([ height, 0 ]);
-	    svg.append("g")
-	      .call(d3.axisLeft(y));
-	    // Add the line
-	    svg.append("path")
-	      .datum(data)
-	      .attr("fill", "none")
-	      .attr("stroke", "#69b3a2")
-	      .attr("stroke-width", 1.5)
-	      .attr("d", d3.line()
-	        .x(d => x(d.date))
-	        .y(d => y(d.value))
-	        )
-	    // Add the points
-	    svg
-	      .append("g")
-	      .selectAll("dot")
-	      .data(data)
-	      .join("circle")
-	        .attr("cx", d => x(d.date))
-	        .attr("cy", d => y(d.value))
-	        .attr("r", 5)
-	        .attr("fill", "#69b3a2")
-	})
+	// //Read the data
+	// d3.csv(url2,
+	  // // When reading the csv, I must format variables:
+	  // function(d){
+	    // return { date : d3.timeParse("%Y-%m-%d")(d.date), value : d.value }
+	  // }).then(
+	  // // Now I can use this dataset:
+	  // function(data) {
+	    // // Add X axis --> it is a date format
+	    // const x = d3.scaleTime()
+	      // .domain(d3.extent(data, d => d.date))
+	      // .range([ 0, width ]);
+	    // svg.append("g")
+	      // .attr("transform", "translate(0," + height + ")")
+	      // .call(d3.axisBottom(x));
+	    // // Add Y axis
+	    // const y = d3.scaleLinear()
+	      // .domain( [8000, 9200])
+	      // .range([ height, 0 ]);
+	    // svg.append("g")
+	      // .call(d3.axisLeft(y));
+	    // // Add the line
+	    // svg.append("path")
+	      // .datum(data)
+	      // .attr("fill", "none")
+	      // .attr("stroke", "#69b3a2")
+	      // .attr("stroke-width", 1.5)
+	      // .attr("d", d3.line()
+	        // .x(d => x(d.date))
+	        // .y(d => y(d.value))
+	        // )
+	    // // Add the points
+	    // svg
+	      // .append("g")
+	      // .selectAll("dot")
+	      // .data(data)
+	      // .join("circle")
+	        // .attr("cx", d => x(d.date))
+	        // .attr("cy", d => y(d.value))
+	        // .attr("r", 5)
+	        // .attr("fill", "#69b3a2")
+	// })
 	
 	
 	
