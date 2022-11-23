@@ -23,6 +23,9 @@ let FULL_DATA_OG={};
 let ALL_SENSORS=[];
 let SENSOR_INDICES={};
 
+let reverse_slider_scaling;
+let direct_slider_scaling;
+
 
 let TIME_BUS={};
 
@@ -2259,6 +2262,14 @@ function initiate_rotas_ui(start, end){
 		d3.selectAll('.sensor_node').attr('pointer-events', 'none');
 	};
 
+
+	//remove user interaction with sensors circles 
+	let load_scatterplot=document.getElementById("load_scatterplot");
+
+	load_scatterplot.onclick = function(){
+		scatter_plot_init();
+	};
+
 	//-------------d3.js housekeeping----------------//
 
 
@@ -2349,7 +2360,10 @@ function initiate_rotas_ui(start, end){
 		if (found_next){
 			let time_delta=Math.abs(found_next - parseInt(slider.value));
 			console.log('NEXT READING FOUND AT ', found_next, 't_delta is ', time_delta, 'original ts ', slider.value);				 
-			slider.value=parseInt(slider.value)+time_delta; //add the time delta
+
+			let next_ts=parseInt(slider.value)+time_delta; //Add the time delta
+			slider.value=next_ts;
+			update_main_plot(next_ts)
 
 			if(UPDATE_HEATMAP){
 				roll_heatmap(slider.value, false);	
@@ -2368,11 +2382,14 @@ function initiate_rotas_ui(start, end){
 			let time_delta=Math.abs(found_previous - parseInt(slider.value));
 			console.log('PREV READING FOUND AT ', found_previous, 't_delta is ', time_delta, 'original ts ', slider.value);				 
 
+			let next_ts=parseInt(slider.value)-time_delta; //subtract the time delta
+			slider.value=next_ts;
+			update_main_plot(next_ts)
+			
 			if(UPDATE_HEATMAP){
 				roll_heatmap(slider.value, false);	
 			}			
-
-			slider.value=parseInt(slider.value)-time_delta; //subtract the time delta
+			
 			output.innerHTML = format_time(slider.value); // Display the default slider value
 			output_ts.innerHTML = slider.value;//
 		}
@@ -2384,16 +2401,28 @@ function initiate_rotas_ui(start, end){
 	//-------define all forward and backward button events------//
 	//----------------------------------------------------------//
 
+	function update_main_plot(unix_ts){
+	  	if(direct_slider_scaling!=undefined){
+			d3.select('#plot_line')
+			.attr('x1', function(d){return direct_slider_scaling(unix_ts) })	  		
+			.attr('x2', function(d){return direct_slider_scaling(unix_ts) })	  	
+	  	}
+	}
+
 	function traverse_time(direction, seconds){
 
 			for(let i=0; i<seconds;i++){
 				if(direction=='forward'){
-					slider.value=parseInt(slider.value)+1; //add one second
+					let new_val=parseInt(slider.value)+1//add one second
+					slider.value=new_val; //add one second
+					 update_main_plot(new_val);
 					//console.log('forward', slider.value, i)
 				}
 
 				if(direction=='backward'){
-					slider.value=parseInt(slider.value)-1; //subtract one second
+						let new_val=parseInt(slider.value)-1;//sub one second
+					slider.value=new_val; 
+					 update_main_plot(new_val);
 					//console.log('backward', slider.value, i)
 				}
 				
@@ -2477,6 +2506,9 @@ function initiate_rotas_ui(start, end){
 	  			
 	  	check_for_splash(unix_timestamp);
 	  	roll_heatmap(unix_timestamp, false);
+
+	  update_main_plot(unix_timestamp);
+
 	}
 
 	//when moving voronoi slider, redraw the heatmap
@@ -2551,7 +2583,7 @@ function get_hours(UNIX_timestamp){
 	  return time;
 }
 
-function test_graph(){
+function scatter_plot_init(){
 
 	const base_width=d3.select("#drawing_svg").node().getBoundingClientRect().width;
 	// set the dimensions and margins of the graph
@@ -2581,7 +2613,7 @@ function test_graph(){
 
 		      
 
-	const URL='http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_crate_chart/wgb/GW20-FF/?date='+date.toString();
+	const URL='http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_crate_chart/wgb/'+CRATE_ID+'/?date='+date.toString();
 	const url2='"https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/connectedscatter.csv"';
 console.log('query url is ', URL);
 
@@ -2589,8 +2621,8 @@ console.log('query url is ', URL);
 
 	d3.json(URL, 
 		function(datezzo){
-			console.log('datezzo graph', datezzo.readings);
-			return {readings: datezzo.readings }
+	//		console.log('datezzo graph', datezzo.readings);
+//			return {readings: datezzo.readings }
 		   //return { date : d3.timeParse("%Y-%m-%d")(d.date), value : d.value
 		    
 		  }).then(
@@ -2663,28 +2695,28 @@ console.log('query url is ', URL);
 			      )
 			      .attr("transform", "translate("+width+",0)rotate(0)");//.orient("right");
 
-		    // Add the line
-		    svg.append("path")
-		      .datum(readings)
-		      .attr("fill", "none")
-		      .attr("stroke", "#69b3a2")
-		      .attr("stroke-width", 1.5)
-		      .attr("d", d3.line()
-		        .x(d => x(d.acp_ts*1000))
-		        .y(d => y2(d.payload_cooked['temperature']))
-		        )
+		    // // Add the line
+		    // svg.append("path")
+		      // .datum(readings)
+		      // .attr("fill", "none")
+		      // .attr("stroke", "#69b3a2")
+		      // .attr("stroke-width", 1.5)
+		      // .attr("d", d3.line()
+		        // .x(d => x(d.acp_ts*1000))
+		        // .y(d => y2(d.payload_cooked['temperature']))
+		        // )
 
 
-		         // Add the line
-		    svg.append("path")
-		      .datum(readings)
-		      .attr("fill", "none")
-		      .attr("stroke", "#ff9633")
-		      .attr("stroke-width", 1.5)
-		      .attr("d", d3.line()
-		        .x(d => x(d.acp_ts*1000))
-		        .y(d => y1(d.payload_cooked['co2']))
-		        )
+		         // // Add the line
+		    // svg.append("path")
+		      // .datum(readings)
+		      // .attr("fill", "none")
+		      // .attr("stroke", "#ff9633")
+		      // .attr("stroke-width", 1.5)
+		      // .attr("d", d3.line()
+		        // .x(d => x(d.acp_ts*1000))
+		        // .y(d => y1(d.payload_cooked['co2']))
+		        // )
 
 		        
    // Add the points
@@ -2714,10 +2746,15 @@ console.log('query url is ', URL);
 
 
 
-   const reverse_x = d3.scaleLinear()
+    reverse_slider_scaling = d3.scaleLinear()
 		      .domain([0,width])
 		      .range(d3.extent(readings, function(d){
 		      				return d.acp_ts*1000;}));
+
+	 direct_slider_scaling = d3.scaleLinear()
+		      .domain(d3.extent(readings, function(d){
+		      		      				return d.acp_ts;}))//possibly multply by 1000
+		      .range([0,width]);
 
   // Add the line
 		    svg
@@ -2770,7 +2807,7 @@ console.log('query url is ', URL);
         d3.select(this)
           .attr("x1", xCoor)
           .attr("x2", xCoor);
-		 let unix_ts=parseInt(reverse_x(xCoor)/1000);
+		 let unix_ts=parseInt(reverse_slider_scaling(xCoor)/1000);
           console.log(xCoor, unix_ts, get_hours(unix_ts));
 
 		let output = document.getElementById("show_time");
@@ -2796,48 +2833,7 @@ console.log('query url is ', URL);
 		        
 		})
 	
-	// //Read the data
-	// d3.csv(url2,
-	  // // When reading the csv, I must format variables:
-	  // function(d){
-	    // return { date : d3.timeParse("%Y-%m-%d")(d.date), value : d.value }
-	  // }).then(
-	  // // Now I can use this dataset:
-	  // function(data) {
-	    // // Add X axis --> it is a date format
-	    // const x = d3.scaleTime()
-	      // .domain(d3.extent(data, d => d.date))
-	      // .range([ 0, width ]);
-	    // svg.append("g")
-	      // .attr("transform", "translate(0," + height + ")")
-	      // .call(d3.axisBottom(x));
-	    // // Add Y axis
-	    // const y = d3.scaleLinear()
-	      // .domain( [8000, 9200])
-	      // .range([ height, 0 ]);
-	    // svg.append("g")
-	      // .call(d3.axisLeft(y));
-	    // // Add the line
-	    // svg.append("path")
-	      // .datum(data)
-	      // .attr("fill", "none")
-	      // .attr("stroke", "#69b3a2")
-	      // .attr("stroke-width", 1.5)
-	      // .attr("d", d3.line()
-	        // .x(d => x(d.date))
-	        // .y(d => y(d.value))
-	        // )
-	    // // Add the points
-	    // svg
-	      // .append("g")
-	      // .selectAll("dot")
-	      // .data(data)
-	      // .join("circle")
-	        // .attr("cx", d => x(d.date))
-	        // .attr("cy", d => y(d.value))
-	        // .attr("r", 5)
-	        // .attr("fill", "#69b3a2")
-	// })
+
 	
 	
 	
