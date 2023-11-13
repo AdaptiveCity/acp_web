@@ -43,7 +43,7 @@ function init() {
 
     feature_select_el = document.getElementById("form_feature");
     feature_select_el2 = document.getElementById("form_feature2");
-    console.log(feature_select_el, feature_select_el2)
+    // console.log("FEATURE SELECTION",feature_select_el, feature_select_el2)
 
     chart_tooltip_el = d3.select('#chart_tooltip'); //document.getElementById('chart_tooltip');
 
@@ -94,22 +94,40 @@ function handle_readings(results) {
     }
     loading_el.className = 'loading_hide'; // set style "display: none"
 
+    const params = new URLSearchParams(window.location.search);
+    let feature_id_2 = params.get('feature2'); // Replace 'parameterName' with your parameter key
 
-    //make the secondary feature none
-    document.getElementById('form_feature2').value = 'none';
-
+    if(feature_id_2!=null){
+        document.getElementById('form_feature2').value = feature_id_2;
+    }
+    else{
+        //make the secondary feature none
+        document.getElementById('form_feature2').value = 'none';
+    }
+  
     //exrtact all features with ranges --needed for mouseover viz
     let all_features = sensor_metadata['acp_type_info']['features'];
 
     //append the rest of the features with their ranges to the object
     feature['all_features'] = all_features;
 
-    if (feature != null) {
+    if (feature != null && feature_id_2==null) {
         set_date_onclicks(feature['feature_id']);
 
         draw_chart(readings, feature);
 
-    } else {
+    } 
+    else if(feature != null & feature_id_2!=null){
+        // draw_chart(readings, feature, feature[feature2]);
+        // console.log("yo",feature, feature_id_2,all_features[feature_id_2])
+        let feature2=all_features[feature_id_2];
+
+        feature2['all_features'] = all_features;
+
+        set_date_onclicks(feature['feature_id']);
+        draw_chart(readings, feature,feature2);
+    }
+    else {
         report_error('FEATURE', 'Metadata not available for this sensor.');
     }
 }
@@ -161,11 +179,11 @@ function init_feature_select(readings, sensor_metadata) {
         let copy = option.cloneNode(true);
 
         feature_select_el.appendChild(option);
-        console.log('append A', feature_select_el, option)
+        // console.log('append A', feature_select_el, option)
 
 
         feature_select_el2.appendChild(copy);
-        console.log('append B', feature_select_el2, copy)
+        // console.log('append B', feature_select_el2, copy)
 
     }
     let option_none = document.createElement('option');
@@ -239,6 +257,9 @@ function onchange_secondary_select(e, readings, features) {
         features[feature_id2]['all_features'] = features;
 
         console.log(features, features[feature_id1]['all_features'], features[feature_id2]['all_features'])
+       
+        console.log("updating url", feature_id1, plot_date,feature_id2);
+        update_url(feature_id1, plot_date,feature_id2);
 
         draw_chart(readings, features[feature_id1], features[feature_id2]);
 
@@ -1076,10 +1097,15 @@ function hide_reading_popup() {
     reading_popup_el.style.display = "none";
 }
 
-function update_url(feature, date) {
+function update_url(feature, date, feature2='none') {
+    console.log("updating URL");
     var searchParams = new URLSearchParams(window.location.search)
     searchParams.set("feature", feature);
     searchParams.set("date", date);
+    if (feature2!='none'){
+        searchParams.set("feature2", feature2);
+        console.log("set", feature, feature2,"and", date);
+    }
     var newRelativePathQuery = window.location.pathname + '?' + searchParams.toString();
     history.pushState(null, '', newRelativePathQuery);
 }
