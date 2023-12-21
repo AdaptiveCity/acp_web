@@ -32,19 +32,25 @@ class SpaceRenderMap {
     // Display the map, not yet populated with sensors / buildings.
     init_map() {
 
-        var stamenToner = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}.png', {
-            attribution: 'Map tiles by Stamen Design, CC BY 3.0 - Map data © OpenStreetMap',
-            subdomains: 'abcd',
-            minZoom: 0,
-            maxZoom: 20,
-            ext: 'png'
+        var open_tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data © OpenStreetMap',
+            maxZoom: 19
         });
+
+        //var stamenToner = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}.png', {
+        //    attribution: 'Map tiles by Stamen Design, CC BY 3.0 - Map data © OpenStreetMap',
+        //    subdomains: 'abcd',
+        //    minZoom: 0,
+        //    maxZoom: 20,
+        //    ext: 'png'
+        //});
 
         var cambridge = new L.LatLng(52.21, 0.087);
         this.map = new L.Map("map", {
             center: cambridge,
             zoom: 16,
-            layers: [stamenToner],
+            //layers: [stamenToner],
+            layers: [open_tiles]
         });
 
 
