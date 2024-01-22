@@ -643,6 +643,8 @@ class RotasHeatMap {
     handle_sensors_metadata(parent, results) {
 
         console.log("handle_sensors_metadata() loaded", results);
+        const length = Object.keys(results).length;
+        console.log("total entried", length);
 
         //iterate through results to extract data required to show sensors on the floorplan
         for (let sensor in results['sensors']) {
@@ -686,8 +688,9 @@ class RotasHeatMap {
             } catch (error) {
                 console.log('sensor not found:', sensor, '\n', error)
             }
+
         }
-        console.log('crates w sensors', parent.crates_with_sensors)
+        console.log('crates w sensors', parent.crates_with_sensors);
     }
 
     //when a new message arrives, we want to update our data structures
@@ -1001,6 +1004,7 @@ class RotasHeatMap {
         //iterate through all sensors in the selected crate
         //and calculate the distance from the sensor to the 
         //selected cell (rect)
+        console.log("crate", crate, parent.crates_with_sensors);
         parent.crates_with_sensors[crate].forEach(sensor => {
 
             //if the sensor does not have the requested feature (e.g. co2), skip it
