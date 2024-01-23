@@ -27,6 +27,7 @@
 <!-- <script type='text/javascript' src="{% static 'space/js/rotas2000_heatmap.js' %}"></script> -->
 
 <!-- Cerberus-Rotas -->
+<script type='text/javascript' src="{% static 'space/js/seats.js' %}"></script>
 <script type='text/javascript' src="{% static 'space/js/cerberus_rotas.js' %}"></script>
 
 
@@ -104,6 +105,7 @@ Ghost Clusters
 
 	    </div>
 
+       
 
 	       <!-- <div id="slidecontainer">
             <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
@@ -117,7 +119,10 @@ Ghost Clusters
         </div>	 -->
 
      
-
+        <div class="drawing_div2" id="secondary_drawing_div">
+	        <svg class="drawing_svg2" id="scatterplot_svg" style="padding: 1em;">
+	        </svg>
+        </div>
 
 	   
 		 
@@ -229,7 +234,7 @@ Ghost Clusters
     <!-- end MAIN CONTENT -->
 </div>
 
-<div id='main_ui_components'>
+<!-- <div id='main_ui_components'>
 
 	<div id='rotas_control'>
 
@@ -274,13 +279,7 @@ Ghost Clusters
 	
 	<div id='toggle_controls' >
 		<div id='toggle_splash'>
-			<!-- Rounded switch -->
-			<!-- <label class="switch"> -->
-		  		<!-- <input id='toggle_splash_switch' type="checkbox"> -->
-		  		<!-- <span class="slider_switch round"></span> -->
-			<!-- </label> -->
-			<!-- <span > Toggle <em>Splashes</em> </span> -->
-
+		
 			<button type="button"  id='toggle_splash_switch'>Toggle Splashes</button>
 
 		</div>
@@ -302,10 +301,6 @@ Ghost Clusters
 
 			<br>
 		<button type="button" id='load_scatterplot'>load scaterplot</button>
-
-		<!-- <div id='toggle_update_heatmap_midnight'> -->
-			<!-- <button type="button" id='update_heatmap_button_midnight'>Update Heatmap (unbiased)</button> -->
-		<!-- </div> -->
 		
 	</div>
 	<div id="my_dataviz"></div> 
@@ -318,7 +313,7 @@ Ghost Clusters
 	
 
 </div>
-
+ -->
 
 
 <!-- TOOLTIP - will be made visible/invisible as mouse moves over sensors -->

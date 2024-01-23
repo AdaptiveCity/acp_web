@@ -1,10 +1,14 @@
- #drawing_and_slider {
+ /* #drawing_and_slider {
     width: 70%;
     height: 90%;
-    /* max-width: 10%; */
     border: 1px dashed red;
-  } 
-  
+  }  */
+      /* max-width: 10%; */
+
+      #main_drawing_div{
+        float: left;
+
+      }
   #slidecontainer, #main_ui_components {
     margin: 2em;
     padding: 2em;
