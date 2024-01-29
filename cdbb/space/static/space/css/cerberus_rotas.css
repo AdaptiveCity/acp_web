@@ -124,4 +124,8 @@
     -ms-transform: translateY(-50%);
     transform: translateY(-50%);
   }
-  
+  #third_drawing_div {
+    width: 100%; /* Adjust as needed */
+    height: 100%; /* Adjust as needed */
+    border: 1px solid black; /* Temporarily, to see the div boundaries */
+}

@@ -1,13 +1,16 @@
 "use strict"
 
 class SVGImageChart {
-    constructor(svgId, mainDivId, imageUrl, jsonDataUrl, scatterSvgId, scatterDivId) {
+    constructor(svgId, mainDivId, imageUrl, jsonDataUrl,jsonWeekUrl, scatterSvgId, scatterDivId) {
         this.svg = d3.select(`#${svgId}`);
         this.mainDiv = d3.select(`#${mainDivId}`);
         this.scatterSvg = d3.select(`#${scatterSvgId}`);
         this.scatterDiv = d3.select(`#${scatterDivId}`);
         this.imageUrl = imageUrl;
         this.jsonDataUrl = jsonDataUrl;
+        this.jsonWeekUrl = jsonWeekUrl;
+
+        
         this.init();
     }
 
@@ -52,8 +55,92 @@ class SVGImageChart {
             this.svg.attr("width", boundingRect.width)
                     .attr("height", boundingRect.height);
         });
+    
+    
+        console.log(this.jsonWeekUrl);
+
+                // Load data and create the bar chart
+        d3.json(this.jsonWeekUrl).then(data => {
+            console.log("Weeks' data");
+            console.log(data);
+            let cookedData = this.parseDataWeek(data);
+            this.createVerticalBarChart(cookedData, 125, 250); // Adjust width and height as needed
+        });
+
     }
 
+
+// Function to parse data
+ parseDataWeek(data) {
+     console.log(data, data.readings)
+    return data.readings
+        .map(d => ({ crowdcount: d.payload_cooked["crowdcount"], date: new Date(d.filepath) }));
+      //  .filter(d => d.crowdcount > -1);
+}
+
+// Function to create vertical bar chart with horizontal bars
+createVerticalBarChart(data, width, height) {
+    const margin = { top: 50, right: 5, bottom: 25, left: 50 },
+        fullWidth = width + margin.left + margin.right,
+        fullHeight = height + margin.top + margin.bottom;
+
+    const yScale = d3.scaleBand()
+        .range([0, height])
+        .padding(0.1)
+        .domain([0, 1, 2, 3, 4, 5, 6]); // Days of the week indices
+
+    const xScale = d3.scaleLinear()
+        .range([0, width])
+        .domain([0, d3.max(data, d => d.crowdcount)]);
+
+    const svg = d3.select("#third_drawing_div")
+        .append("svg")
+        .attr("width", fullWidth)
+        .attr("height", fullHeight)
+      .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    svg.selectAll(".bar")
+        .data(data)
+      .enter().append("rect")
+        .attr("class", "bar")
+        .attr("y", d => yScale(d.date.getDay()))
+        .attr("height", yScale.bandwidth())
+        .attr("x", 0)
+        .style("fill", "blue")
+        .attr("width", d => xScale(d.crowdcount));
+
+    svg.append("g")
+        .call(d3.axisLeft(yScale).tickFormat(index => ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][index]));
+
+    svg.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(xScale).ticks(5));
+
+   
+    // Function to format date as DD/MM/YYYY
+    function formatDate(date) {
+        let d = date;//new Date(date * 1000);
+        let day = ('0' + d.getDate()).slice(-2);
+        let month = ('0' + (d.getMonth() + 1)).slice(-2);
+        let year = d.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
+
+    // Adding the title with date range
+   
+    console.log("parsed data",data);
+   const minDate = formatDate(data[0]["date"]);//formatDate(d.date);
+    const maxDate = formatDate(data[data.length-1]["date"]);;//formatDate(d.date);
+    
+    svg.append("text")
+       .attr("x", (width / 2))             
+       .attr("y", 0 - (margin.top / 2))
+       .attr("text-anchor", "middle")  
+       .style("font-size", "12px") 
+    //    .style("text-decoration", "underline")  
+       .text(`${minDate} - ${maxDate}`);
+}
 
 
     initializeScatterplot(w,h) {
@@ -274,8 +361,10 @@ document.addEventListener("DOMContentLoaded", () => {
      const date = urlParams.get('date');
 
 		      
+const CERBERUS_ACP_ID="cerberus-middle-lt1";
+  const URL="http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_day_cerberus/"+CERBERUS_ACP_ID+"/?date="+date.toString();
+  const URL_WEEK="http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_week_cerberus/"+CERBERUS_ACP_ID+"/?date="+date.toString();
 
-  const URL="http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_day_cerberus/cerberus-middle-lt1/?date="+date.toString();
   ///?date=2024-01-19  
 
 
@@ -283,6 +372,7 @@ document.addEventListener("DOMContentLoaded", () => {
         "drawing_svg", "main_drawing_div",
         "http://adacity-jb.al.cl.cam.ac.uk/static_web/space/images/LT1_seating_uncompressed.png",
         URL,
+        URL_WEEK,
         "scatterplot_svg", "secondary_drawing_div"
     );
 });
