@@ -168,17 +168,43 @@ createVerticalBarChart(data, width, height) {
             .domain([0, d3.max(this.cookedData, d => d.crowdcount)]);
             //.domain([0, 264]);
 
-        // Data binding and rendering for bars
-        this.scatterSvg.selectAll(".bar")
-            .data(this.cookedData)
-            .enter().append("rect")
-            .attr("class", "bar")
-            .attr("x", d => xScale(d.acp_ts))
-            .attr("width", 1)
-            .attr("y", d => yScale(d.crowdcount))
-            .attr("height", d => height - yScale(d.crowdcount))
-            .style("fill", "red")
-            .style("opacity", 0.1);
+        // // Data binding and rendering for bars
+        // this.scatterSvg.selectAll(".bar")
+        //     .data(this.cookedData)
+        //     .enter().append("rect")
+        //     .attr("class", "bar")
+        //     .attr("x", d => xScale(d.acp_ts))
+        //     .attr("width", 1)
+        //     .attr("y", d => yScale(d.crowdcount))
+        //     .attr("height", d => height - yScale(d.crowdcount))
+        //     .style("fill", "red")
+        //     .style("opacity", 0.1);
+
+        // Data binding and rendering for scatterplot
+
+
+     var lineGenerator = d3.line()
+     .x(d => xScale(d.acp_ts))
+     .y(d => yScale(d.crowdcount));
+ 
+     this.scatterSvg.append("path")
+     .datum(this.cookedData) // Binds data to the line
+     .attr("class", "line") // Assigns a class for styling
+     .attr("d", lineGenerator)
+     .style("fill", "none")
+     .style("stroke", "red")
+     .style("stroke-width", "1px");
+
+this.scatterSvg.selectAll(".dot")
+.data(this.cookedData)
+.enter().append("circle")
+.attr("class", "dot")
+.attr("cx", d => xScale(d.acp_ts)) // x position based on 'acp_ts'
+.attr("cy", d => yScale(d.crowdcount)) // y position based on 'crowdcount'
+.attr("r", 3) // Radius of the circles
+.style("fill", "red")
+.style("opacity", 0.1);
+
 
         // Adding axes with rotated x-axis ticks
         this.scatterSvg.append("g")
@@ -194,6 +220,23 @@ createVerticalBarChart(data, width, height) {
      this.scatterSvg.append("g")
      .attr("transform", `translate(${0}, 0)`) // Move y-axis to the right
      .call(d3.axisRight(yScale).ticks(10).tickFormat(d3.format(".0f")));
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
 
                // Define scales
                const reverseSliderScaling = d3.scaleLinear()
@@ -359,9 +402,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const queryString = window.location.search;
         const urlParams = new URLSearchParams(queryString);
      const date = urlParams.get('date');
-
+     const type = urlParams.get('type');
 		      
-const CERBERUS_ACP_ID="cerberus-middle-lt1";
+const CERBERUS_ACP_ID="cerberus-"+type+"-lt1";
   const URL="http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_day_cerberus/"+CERBERUS_ACP_ID+"/?date="+date.toString();
   const URL_WEEK="http://adacity-jb.al.cl.cam.ac.uk/api/readings/get_week_cerberus/"+CERBERUS_ACP_ID+"/?date="+date.toString();
 
