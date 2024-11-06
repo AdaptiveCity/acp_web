@@ -9,7 +9,7 @@ class SVGImageChart {
         this.imageUrl = imageUrl;
         this.jsonDataUrl = jsonDataUrl;
         this.jsonWeekUrl = jsonWeekUrl;
-
+        this.xScale=d3.scaleLinear();
         
         this.init();
     }
@@ -143,14 +143,21 @@ createVerticalBarChart(data, width, height) {
 }
 
 
-    initializeScatterplot(w,h) {
-        // Set up the dimensions and styles for the second SVG
-        const scatterWidth = w; // Set appropriate width
-        const scatterHeight = h; // Set appropriate height
+initializeScatterplot(w, h) {
+    const scatterWidth = w;
+    const scatterHeight = h;
 
-        this.scatterSvg.attr("width", scatterWidth).attr("height", scatterHeight);
-        this.scatterDiv.style("width", `${scatterWidth}px`).style("height", `${scatterHeight}px`);
-    }
+    this.scatterSvg.attr("width", scatterWidth).attr("height", scatterHeight);
+    this.scatterDiv.style("width", `${scatterWidth}px`).style("height", `${scatterHeight}px`);
+
+    // Update slider scales to align with xScale
+    this.reverseSliderScaling = d3.scaleLinear()
+        .domain([0, scatterWidth])
+        .range([new Date().setHours(8, 0, 0, 0), new Date().setHours(20, 0, 0, 0)]);
+
+    this.directSliderScaling = this.xScale;  // Use the xScale directly for the slider
+}
+
 
     createScatterplot(w,h) {
 
@@ -159,10 +166,18 @@ createVerticalBarChart(data, width, height) {
         console.log(this.cookedData);
         let halfOfCookedData = Math.floor(this.cookedData.length/2);
         // Create scales and axes
-        const xScale = d3.scaleTime()
-            .range([0, width])
-            .domain(d3.extent(this.cookedData, d => d.acp_ts));
+        // const xScale = d3.scaleTime()
+        //     .range([0, width])
+        //     .domain(d3.extent(this.cookedData, d => d.acp_ts));
 
+        this.xScale = d3.scaleTime()
+            .range([0, width])
+            .domain([
+                new Date().setHours(8, 0, 0, 0),  // 8 am
+                new Date().setHours(20, 0, 0, 0)  // 8 pm
+            ]);
+
+            console.log("BOUNGIORNO");
         const yScale = d3.scaleLinear()
             .range([height, 0])
             .domain([0, d3.max(this.cookedData, d => d.crowdcount)]);
@@ -184,7 +199,7 @@ createVerticalBarChart(data, width, height) {
 
 
      var lineGenerator = d3.line()
-     .x(d => xScale(d.acp_ts))
+     .x(d => this.xScale(d.acp_ts))
      .y(d => yScale(d.crowdcount));
  
      this.scatterSvg.append("path")
@@ -199,9 +214,9 @@ this.scatterSvg.selectAll(".dot")
 .data(this.cookedData)
 .enter().append("circle")
 .attr("class", "dot")
-.attr("cx", d => xScale(d.acp_ts)) // x position based on 'acp_ts'
+.attr("cx", d => this.xScale(d.acp_ts)) // x position based on 'acp_ts'
 .attr("cy", d => yScale(d.crowdcount)) // y position based on 'crowdcount'
-.attr("r", 3) // Radius of the circles
+.attr("r", 2) // Radius of the circles
 .style("fill", "red")
 .style("opacity", 0.1);
 
@@ -209,12 +224,12 @@ this.scatterSvg.selectAll(".dot")
         // Adding axes with rotated x-axis ticks
         this.scatterSvg.append("g")
         .attr("transform", `translate(0, ${height})`)
-        .call(d3.axisBottom(xScale).ticks(20))
+        .call(d3.axisBottom(this.xScale).ticks(24))
         .selectAll("text")  
         .style("text-anchor", "end")
         .attr("dx", "-.8em")
         .attr("dy", ".15em")
-        .attr("transform", "rotate(-65)"); // Rotate the text
+        .attr("transform", "rotate(-90)"); // Rotate the text
 
      // Adjust y-axis to be on the right side
      this.scatterSvg.append("g")
@@ -308,6 +323,8 @@ this.scatterSvg.selectAll(".dot")
             .attr("x2", xCoor);
 
         let unix_ts = parseInt(this.reverseSliderScaling(xCoor) / 1000);
+        // let unix_ts = this.reverseSliderScaling(xCoor);
+
         // console.log(xCoor, unix_ts);
 
         // Find the closest point in cookedData to the line
@@ -342,31 +359,29 @@ this.scatterSvg.selectAll(".dot")
     }
     
     findClosestDataPoint(xCoor) {
-        const directSliderScaling = d3.scaleLinear()
-            .domain(d3.extent(this.cookedData, d => d.acp_ts))
-            .range([0, parseInt(this.scatterSvg.attr("width"))]);
-
+        // Use xScale directly to align with scatterplot and slider positions
         let minDistance = Infinity;
         let closestData = null;
-
+    
         this.cookedData.forEach(d => {
-            let scaledX = directSliderScaling(d.acp_ts);
+            // Map acp_ts to x-axis position using xScale
+            let scaledX = this.xScale(d.acp_ts);
             let distance = Math.abs(scaledX - xCoor);
-
+    
             if (distance < minDistance) {
                 minDistance = distance;
                 closestData = d;
             }
         });
-
+    
         if (closestData) {
             console.log("Closest data: ", closestData.acp_ts);
-
-            return closestData
+            return closestData;
         }
-
-        return {}
+    
+        return {};
     }
+    
     dragEnd(event) {
         d3.select(this).style("stroke", "white");
     }

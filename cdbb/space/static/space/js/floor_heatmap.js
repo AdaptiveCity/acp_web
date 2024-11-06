@@ -96,7 +96,8 @@ class HeatMap {
 
         //declare the main colorscheme for the heatmap
         //https://observablehq.com/@d3/color-schemes ; set by 'd3.interpolate'+color-scheme
-        this.color_scheme = d3.scaleSequential(d3.interpolatePlasma) //interpolateViridis//interpolatePlasma//interpolateInferno
+        //this.color_scheme = d3.scaleSequential(d3.interpolatePlasma) //interpolateViridis//interpolatePlasma//interpolateInferno
+        this.color_scheme = d3.scaleSequential(d3.interpolateTurbo); //interpolateViridis//interpolatePlasma//interpolateInferno/RdYlGn
 
         //make a global c_conf reference from the parent class;
         //this creates a colorbar svg on the right side of the screen
