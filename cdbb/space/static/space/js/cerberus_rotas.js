@@ -236,7 +236,7 @@ this.scatterSvg.selectAll(".dot")
      .attr("transform", `translate(${0}, 0)`) // Move y-axis to the right
      .call(d3.axisRight(yScale).ticks(10).tickFormat(d3.format(".0f")));
 
-
+console.log("hi");
 
 
 
