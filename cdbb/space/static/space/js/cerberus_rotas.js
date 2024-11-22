@@ -78,9 +78,8 @@ class SVGImageChart {
       //  .filter(d => d.crowdcount > -1);
 }
 
-// Function to create vertical bar chart with horizontal bars
 createVerticalBarChart(data, width, height) {
-    const margin = { top: 50, right: 5, bottom: 25, left: 50 },
+    const margin = { top: 50, right: 5, bottom: 50, left: 70 }, // Adjusted bottom margin for x-axis label
         fullWidth = width + margin.left + margin.right,
         fullHeight = height + margin.top + margin.bottom;
 
@@ -117,30 +116,33 @@ createVerticalBarChart(data, width, height) {
         .attr("transform", `translate(0,${height})`)
         .call(d3.axisBottom(xScale).ticks(5));
 
-   
+    // Add x-axis label
+    svg.append("text")
+        .attr("text-anchor", "middle")
+        .attr("x", width / 2)
+        .attr("y", height + 40) // Position below the x-axis
+        .style("font-size", "14px")
+        .text("Crowdcount");
+
+    // Add y-axis label
+    svg.append("text")
+        .attr("text-anchor", "middle")
+        .attr("transform", "rotate(-90)")
+        .attr("x", (-height / 2))
+        .attr("y", -64) // Position to the left of the y-axis
+        .style("font-size", "9px")
+        .text("Day of the Week");
+
     // Function to format date as DD/MM/YYYY
     function formatDate(date) {
-        let d = date;//new Date(date * 1000);
+        let d = date; // new Date(date * 1000);
         let day = ('0' + d.getDate()).slice(-2);
         let month = ('0' + (d.getMonth() + 1)).slice(-2);
         let year = d.getFullYear();
         return `${day}/${month}/${year}`;
     }
-
-    // Adding the title with date range
-   
-    console.log("parsed data",data);
-   const minDate = formatDate(data[0]["date"]);//formatDate(d.date);
-    const maxDate = formatDate(data[data.length-1]["date"]);;//formatDate(d.date);
-    
-    svg.append("text")
-       .attr("x", (width / 2))             
-       .attr("y", 0 - (margin.top / 2))
-       .attr("text-anchor", "middle")  
-       .style("font-size", "12px") 
-    //    .style("text-decoration", "underline")  
-       .text(`${minDate} - ${maxDate}`);
 }
+
 
 
 initializeScatterplot(w, h) {
@@ -165,38 +167,30 @@ initializeScatterplot(w, h) {
         const height = parseInt(this.scatterSvg.attr("height"))-50;
         console.log(this.cookedData);
         let halfOfCookedData = Math.floor(this.cookedData.length/2);
+      
         // Create scales and axes
-        // const xScale = d3.scaleTime()
-        //     .range([0, width])
-        //     .domain(d3.extent(this.cookedData, d => d.acp_ts));
-
+        const timeExtent = [
+            new Date(d3.min(this.cookedData, d => d.acp_ts)).setHours(8, 0, 0, 0),
+            new Date(d3.max(this.cookedData, d => d.acp_ts)).setHours(20, 0, 0, 0)
+        ];
+        
         this.xScale = d3.scaleTime()
             .range([0, width])
-            .domain([
-                new Date().setHours(8, 0, 0, 0),  // 8 am
-                new Date().setHours(20, 0, 0, 0)  // 8 pm
-            ]);
+            .domain(timeExtent.map(ts => new Date(ts))); // Convert back to Date objects
+        
 
             console.log("BOUNGIORNO");
+
+        // const yScale = d3.scaleLinear()
+        //     .range([height, 0])
+        //     .domain([0, d3.max(this.cookedData, d => d.crowdcount)]);
         const yScale = d3.scaleLinear()
             .range([height, 0])
-            .domain([0, d3.max(this.cookedData, d => d.crowdcount)]);
-            //.domain([0, 264]);
+            .domain(d3.extent(this.cookedData, d => d.crowdcount));
 
-        // // Data binding and rendering for bars
-        // this.scatterSvg.selectAll(".bar")
-        //     .data(this.cookedData)
-        //     .enter().append("rect")
-        //     .attr("class", "bar")
-        //     .attr("x", d => xScale(d.acp_ts))
-        //     .attr("width", 1)
-        //     .attr("y", d => yScale(d.crowdcount))
-        //     .attr("height", d => height - yScale(d.crowdcount))
-        //     .style("fill", "red")
-        //     .style("opacity", 0.1);
+            
 
         // Data binding and rendering for scatterplot
-
 
      var lineGenerator = d3.line()
      .x(d => this.xScale(d.acp_ts))
@@ -210,48 +204,53 @@ initializeScatterplot(w, h) {
      .style("stroke", "red")
      .style("stroke-width", "1px");
 
-this.scatterSvg.selectAll(".dot")
-.data(this.cookedData)
-.enter().append("circle")
-.attr("class", "dot")
-.attr("cx", d => this.xScale(d.acp_ts)) // x position based on 'acp_ts'
-.attr("cy", d => yScale(d.crowdcount)) // y position based on 'crowdcount'
-.attr("r", 2) // Radius of the circles
-.style("fill", "red")
-.style("opacity", 0.1);
+    this.scatterSvg.selectAll(".dot")
+    .data(this.cookedData)
+    .enter().append("circle")
+    .attr("class", "dot")
+    .attr("cx", d => this.xScale(d.acp_ts)) // x position based on 'acp_ts'
+    .attr("cy", d => yScale(d.crowdcount)) // y position based on 'crowdcount'
+    .attr("r", 2) // Radius of the circles
+    .style("fill", "red")
+    .style("opacity", 0.1);
+// Adding axes with uniform HH:MM formatting
+this.scatterSvg.append("g")
+    .attr("transform", `translate(0, ${height})`)
+    .call(d3.axisBottom(this.xScale)
+        .ticks(24)
+        .tickFormat(d3.timeFormat("%H:%M"))) // Format ticks as HH:MM
+    .selectAll("text")  
+    .style("text-anchor", "end")
+    .attr("dx", "-.8em")
+    .attr("dy", ".15em")
+    .attr("transform", "rotate(-90)"); // Optional rotation for better readability
 
+// X-axis label
+this.scatterSvg.append("text")
+    .attr("text-anchor", "middle")
+    .attr("x", width / 2)
+    .attr("y", height + 50) // Adjust based on margin
+    .style("font-size", "14px")
+    .text("Time");
 
-        // Adding axes with rotated x-axis ticks
-        this.scatterSvg.append("g")
-        .attr("transform", `translate(0, ${height})`)
-        .call(d3.axisBottom(this.xScale).ticks(24))
-        .selectAll("text")  
-        .style("text-anchor", "end")
-        .attr("dx", "-.8em")
-        .attr("dy", ".15em")
-        .attr("transform", "rotate(-90)"); // Rotate the text
+// Y-axis with axis name
+this.scatterSvg.append("g")
+    .call(d3.axisLeft(yScale).ticks(10))
+    .append("text")
+    .attr("text-anchor", "middle")
+    .attr("transform", `rotate(-90)`)
+    .attr("x", -height / 2)
+    .attr("y", -40) // Adjust for positioning
+    .style("font-size", "14px")
+    .text("People");
+
 
      // Adjust y-axis to be on the right side
      this.scatterSvg.append("g")
      .attr("transform", `translate(${0}, 0)`) // Move y-axis to the right
      .call(d3.axisRight(yScale).ticks(10).tickFormat(d3.format(".0f")));
 
-console.log("hi");
-
-
-
- 
-
-
-
-
-
-
-
-
-
-
-
+        console.log("hi");
 
                // Define scales
                const reverseSliderScaling = d3.scaleLinear()
@@ -406,11 +405,18 @@ getOccupiedSeats(entry, seats, width, height) {
     return occupiedSeats;
 }
 
+    // parseData(data) {
+    //     return data.readings
+    //         .map(d => ({ ...d.payload_cooked, acp_ts: new Date(d.acp_ts * 1000) }))
+    //         .filter(d => d.crowdcount > -1);
+    // }
     parseData(data) {
-        return data.readings
+        this.cookedData = data.readings
             .map(d => ({ ...d.payload_cooked, acp_ts: new Date(d.acp_ts * 1000) }))
             .filter(d => d.crowdcount > -1);
+        return this.cookedData;
     }
+    
 }
 
 document.addEventListener("DOMContentLoaded", () => {
